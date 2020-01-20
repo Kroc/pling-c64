@@ -1,3 +1,7 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
 
 IS_IMMEDIATE            = %10000000
 IS_HIDDEN               = %01000000

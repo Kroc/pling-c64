@@ -7,7 +7,7 @@ SET ACME=bin\acme\acme.exe -I "src"
 %ACME% -v2 ^
     --format cbm ^
     --outfile "build\pling-x16.prg" ^
-    -- "src/pling-x16.acme"
+    -- "src/prg_pling_x16.acme"
 
 SET X16EMU="bin\x16emu\x16emu.exe"
 

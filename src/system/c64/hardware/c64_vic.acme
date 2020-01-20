@@ -1,0 +1,120 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+;===============================================================================
+
+;                                 hex     ¦ nybble
+.VIC_BLACK                      = $00     ; %0000
+.VIC_WHITE                      = $01     ; %0001
+.VIC_RED                        = $02     ; %0010
+.VIC_CYAN                       = $03     ; %0011
+.VIC_PURPLE                     = $04     ; %0100
+.VIC_GREEN                      = $05     ; %0101
+.VIC_BLUE                       = $06     ; %0110
+.VIC_YELLOW                     = $07     ; %0111
+.VIC_ORANGE                     = $08     ; %1000
+.VIC_BROWN                      = $09     ; %1001
+.VIC_LTRED                      = $0a     ; %1010
+.VIC_DKGREY                     = $0b     ; %1011
+.VIC_GREY                       = $0c     ; %1100
+.VIC_LTGREEN                    = $0d     ; %1101
+.VIC_LTBLUE                     = $0e     ; %1110
+.VIC_LTGREY                     = $0f     ; %1111
+
+!addr {
+
+.VIC_BORDER                     = $d020
+.VIC_BACKGROUND                 = $d021
+
+; the sprite pointers are stored in the unused space directly after the screen
+; RAM (default $0400) since the screen is 1'000 chars long and there are 24
+; bytes available there. these constants are offsets you should add to your
+; screen location. sprites in memory must be aligned to 64 bytes, so the value
+; used in the sprite pointers is the offset of the sprite from the beginning
+; of the selected VIC bank, divided by 64
+;
+; for example, if the VIC bank is set to 1 ($4000..$8000) and sprites are
+; stored at $6800 then the first sprite index is $A0 (+$2800 / 64)
+
+.VIC_SPRITE0_PTR                = $03f8
+.VIC_SPRITE1_PTR                = $03f9
+.VIC_SPRITE2_PTR                = $03fa
+.VIC_SPRITE3_PTR                = $03fb
+.VIC_SPRITE4_PTR                = $03fc
+.VIC_SPRITE5_PTR                = $03fd
+.VIC_SPRITE6_PTR                = $03fe
+.VIC_SPRITE7_PTR                = $03ff
+
+.VIC_SPRITE0_X                  = $d000
+.VIC_SPRITE0_Y                  = $d001
+.VIC_SPRITE1_X                  = $d002
+.VIC_SPRITE1_Y                  = $d003
+.VIC_SPRITE2_X                  = $d004
+.VIC_SPRITE2_Y                  = $d005
+.VIC_SPRITE3_X                  = $d006
+.VIC_SPRITE3_Y                  = $d007
+.VIC_SPRITE4_X                  = $d008
+.VIC_SPRITE4_Y                  = $d009
+.VIC_SPRITE5_X                  = $d00a
+.VIC_SPRITE5_Y                  = $d00b
+.VIC_SPRITE6_X                  = $d00c
+.VIC_SPRITE6_Y                  = $d00d
+.VIC_SPRITE7_X                  = $d00e
+.VIC_SPRITE7_Y                  = $d00f
+
+.VIC_SPRITES_X                  = $d010
+
+.VIC_SCREEN_CTL1                = $d011 ; screen-control register
+.VIC_SCREEN_CTL2                = $d016
+
+.VIC_SCREEN_VERT                = $d011 ; vertical scroll offset (bits 0-2)
+.VIC_SCREEN_HORZ                = $d016 ; horizontal scroll offset (bits 0-2)
+
+.VIC_SCANLINE                   = $d012
+
+.VIC_LIGHT_X                    = $d013
+.VIC_LIGHT_Y                    = $d014
+
+.VIC_SPRITE_ENABLE              = $d015
+
+.VIC_SPRITE_DBLHEIGHT           = $d017
+.VIC_SPRITE_DBLWIDTH            = $d01d
+
+.VIC_LAYOUT                     = $d018
+
+.VIC_INTERRUPT_STATUS           = $d019
+.VIC_INTERRUPT_CONTROL          = $d01a
+
+.INTERRUPT_RASTER               = %0001
+.INTERRUPT_BGCOLLISION          = %0010
+.INTERRUPT_SPCOLLISION          = %0100
+.INTERRUPT_LIGHTPEN             = %1000
+
+.VIC_SPRITE_PRIORITY            = $d01b
+
+.VIC_SPRITE_MULTICOLOR          = $d01c
+
+.VIC_SPRITE_SPCOLLISION         = $d01e
+.VIC_SPRITE_BGCOLLISION         = $d01f
+
+.VIC_BORDER                     = $d020
+.VIC_BACKGROUND                 = $d021
+
+.VIC_BKGND_EXTRA1               = $d022 ; extended background colour 1
+.VIC_BKGND_EXTRA2               = $d023 ; extended background colour 2
+.VIC_BKGND_EXTRA3               = $d024 ; extended background colour 3
+
+.VIC_SPRITE_EXTRA1              = $d025 ; sprite extra colour 1
+.VIC_SPRITE_EXTRA2              = $d026 ; sprite extra colour 2
+
+.VIC_SPRITE0_COLOR              = $d027
+.VIC_SPRITE1_COLOR              = $d028
+.VIC_SPRITE2_COLOR              = $d029
+.VIC_SPRITE3_COLOR              = $d02a
+.VIC_SPRITE4_COLOR              = $d02b
+.VIC_SPRITE5_COLOR              = $d02c
+.VIC_SPRITE6_COLOR              = $d02d
+.VIC_SPRITE7_COLOR              = $d02e
+
+}

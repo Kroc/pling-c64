@@ -1,3 +1,12 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+
+; BASIC programs starting address
+!addr   .basic_start    = $0801
+; BASIC/KERNAL input buffer
+!addr   .input_buffer   = $0200
 
 ; device numbers:
 ;-------------------------------------------------------------------------------

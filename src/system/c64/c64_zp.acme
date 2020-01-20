@@ -1,0 +1,24 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; "zp.acme" : Pling zero-page layout for C64
+;===============================================================================
+
+; Pling's stack currently works downwards from $FF to $80
+; TODO: may have to move due to KERNAL zp-usage?
+;
+!addr   pl_stack        = $ff
+
+; $00/$01 are not available on the C64 as these are the CPU port
+; (see "c64/system/c64.acme")
+;
+; base address of Pling's private zp-space:
++alloc  $02
++addr   ~pl_zp
+
+; address of the last defined term
+; (updated when new terms are added)
++word   ~pl_last
+; the address of the next free byte of memory
++word   ~pl_here

@@ -1,3 +1,8 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+
 ; these are the absolute bear minimum of words that *have* to be implemented
 ; in native assembly language in order to port the rest of Pling
 

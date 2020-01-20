@@ -1,3 +1,7 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
 
 ; input ( -- )
 ;===============================================================================
@@ -15,18 +19,18 @@ input:
         cmp # $d                ; is the key RETURN?
         beq +                   ; if yes, quit reading
 
-        sta pl_buffer_line, x   ; add the key-code to the buffer
+        sta .input_buffer, x    ; add the key-code to the buffer
         inx                     ; move to the next character
         cpx # 81                ; have we hit the end of the line?
         bne -
 
 +       jsr .kernal_chrout      ; actually print the RETURN (go to next line)
-        stz pl_buffer_line, x   ; append a null-terminator to the line
+        stz .input_buffer, x    ; append a null-terminator to the line
 
         ; set the read cursor to the line-buffer
-        lda #< pl_buffer_line
+        lda #< .input_buffer
         sta pl_buffer_addr_lo
-        lda #> pl_buffer_line
+        lda #> .input_buffer
         sta pl_buffer_addr_hi
         ; reset the buffer index to the start
         stz pl_buffer_index_lo

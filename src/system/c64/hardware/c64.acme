@@ -1,0 +1,43 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+;===============================================================================
+
+!cpu    6510
+
+!source "system/c64/hardware/c64_cia.acme"
+!source "system/c64/hardware/c64_vic.acme"
+!source "system/c64/hardware/c64_kernal.acme"
+
+;-------------------------------------------------------------------------------
+!macro  bit_skip1 {
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        !byte $24
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+}
+;-------------------------------------------------------------------------------
+!macro  bit_skip2 {
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        !byte $2c
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+}
+;-------------------------------------------------------------------------------
+; "halt & catch fire"
+;
+!macro  hcf {
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        !byte $f2
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+}
+
+; CPU port: memory layout & Datasette
+;===============================================================================
+; memory address $00/$01 is hard-wired to the C64's 6510 CPU; the "processor
+; port", $01, controls the memory layout of the C64 as well as the Datasette.
+; the "data direction" register, $00, controls which bits of the processor port
+; can be written to, allowing you to mask out writes to certain bits -- e.g.
+; ignore writes to the Datasette when changing memory layout
+
+.CPU_MASK               = $00   ; data direction register
+.CPU_CONTROL            = $01   ; processor port (memory layout and Datasette)

@@ -1,5 +1,7 @@
-!source "x16\x16.acme"
-
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
 ;===============================================================================
 !addr   {
 
@@ -7,14 +9,6 @@
 ; and works downwards from $80 to $00
 ;
 pl_stack                = $80
-
-; TODO: data types?
-;
-;pl_type                 = $40
-;
-; %?-------     = 0: lo, 1: hi
-; %?0000000     = value (lo / hi) 
-; %?1000000     = address (lo / hi)
 
 ; without X16 BASIC, we have $A9..$FF available
 ; and we use this for any other zero-page related
@@ -50,43 +44,4 @@ pl_here                 = $fe
 pl_here_lo              = $fe
 pl_here_hi              = $ff
 
-; the 80-char line-input buffer used by the X16 KERNAL
-; (it's actually 81 bytes to allow for a final terminator)
-;
-pl_buffer_line          = $200
-
 }
-
-;===============================================================================
-!source "boot_basic.acme"
-
-;===============================================================================
-; take control of the machine...
-;
-init:
-        ;-----------------------------------------------------------------------
-        stz x16_via1+0
-
-        jsr .kernal_primm
-        !pet    $d, "pling!", $d, $d, 0
-
-        lda #< init_here
-        sta pl_here_lo
-        lda #> init_here
-        sta pl_here_hi
-
-        lda #< last_term
-        sta pl_last_lo
-        lda #> last_term
-        sta pl_last_hi
-
-        jsr input
-
-        jmp *
-
-; pre-compiled terminology:
-;===============================================================================
-!source "terms.acme"
-
-init_here:
-last_term = .prev_term

@@ -1,0 +1,26 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+;===============================================================================
+; this is a BASIC bootstrap for auto-starting a machine-language program
+; from disk or tape. it's a simple 1-line BASIC program that automatically
+; jumps to the machine language code immediately after the BASIC code
+;
+* = .basic_start
+;===============================================================================
+        !word @end              ; pointer to next BASIC line
+
+        !word 64                ; line-number
+        !byte $9e               ; `SYS`
+
+        ; address of machine-code address in decimal:
+        !byte '0' + @asm % 10000 / 1000
+        !byte '0' + @asm %  1000 /  100
+        !byte '0' + @asm %   100 /   10
+        !byte '0' + @asm %    10
+        
+        !byte 0                 ; end-of-line
+
+@end:   !word $0000             ; end of BASIC program
+@asm:
