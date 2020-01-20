@@ -1,0 +1,17 @@
+
+IS_IMMEDIATE            = %10000000
+IS_HIDDEN               = %01000000
+IS_NO_TAIL_CALL         = %00100000
+TERMLEN_MASK            = %00011111     ; length of term name is up to 31 chars
+
+
+!set    .prev_term = 0
+
+!macro  prevTerm {
+        !word	.prev_term
+        !set    .prev_term = * - 2
+}
+
+!source "terms_nucleus.acme"
+!source "terms_core.acme"
+!source "terms_interpret.acme"

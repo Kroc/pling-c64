@@ -1,0 +1,131 @@
+
+; device numbers:
+;-------------------------------------------------------------------------------
+; some KERNAL routines ask for device numbers
+;
+.DEV_KEY                = 0     ; keyboard
+.DEV_EMU                = 1     ; emulator host-access
+.DEV_RS232              = 2     ; RS232 serial port
+.DEV_SCR                = 3     ; the screen
+.DEV_DRV8               = 8     ; disk drive "8"
+.DEV_DRV9               = 9     ; disk drive "9"
+.DEV_DRV10              = 10    ; ...
+.DEV_DRV11              = 11    ; ...
+.DEV_DRV12              = 12    ; ...
+.DEV_DRV13              = 13    ; ...
+.DEV_DRV14              = 14    ; ...
+.DEV_DRV15              = 15    ; ...
+
+; zero-page addresss used by the KERNAL
+!addr {
+
+.ZP_KERNAL_DEV          = $ba   ; last-used device, e.g. drive 8
+}
+
+; KERNAL vectors:
+;-------------------------------------------------------------------------------
+; the X16 allows hijacking of the ROM routines via a number of vectors in RAM
+; that the user can change to their own routines
+!addr {
+
+; vector for the interrupt routine.
+; default value is $EA31
+.kernal_vector_irq      = $0314
+
+; vector for `BRK` instruction interrupt
+.kernal_vector_brk      = $0316
+
+; vector for the KERNAL's handling of the Non-Maskable Interrupt
+.kernal_vector_nmi      = $0318
+
+; vector for the KERNAL's `OPEN` routine
+.kernal_vector_open     = $031a
+
+; vector for the KERNAL's `CLOSE` routine
+.kernal_vector_close    = $031c
+
+; vector for the KERNAL's `CHKIN` routine
+.kernal_vector_chkin    = $031e
+
+; vector for the KERNAL's `CHKOUT` routine.
+.kernal_vector_chkout   = $0320
+
+; vector for the KERNAL's `CLRCHN` routine
+.kernal_vector_clrchn   = $0322
+
+; vector for the KERNAL's `CHRIN` routine
+.kernal_vector_chrin    = $0324
+
+; vector for the KERNAL's `CHROUT` routine
+.kernal_vector_chrout   = $0326
+
+; vector for the KERNAL's `STOP` routine
+.kernal_vector_stop     = $0328
+
+; vector for the KERNAL's `GETIN` routine
+.kernal_vector_getin    = $032a
+
+; vector for the KERNAL's `CLALL` routine
+.kernal_vector_clall    = $032c
+
+; vector for the KERNAL's `LOAD` routine
+.kernal_vector_load     = $0330
+
+; vector for the KERNAL's `SAVE` routine
+.kernal_vector_save     = $0332
+
+; KERNAL routines:
+;-------------------------------------------------------------------------------
+.kernal_scinit          = $ff81
+.kernal_ioinit          = $ff84
+.kernal_ramtas          = $ff87
+.kernal_restor          = $ff8a
+.kernal_vector          = $ff8d
+.kernal_setmsg          = $ff90
+.kernal_lstnsa          = $ff93
+.kernal_talksa          = $ff96
+.kernal_membot          = $ff99
+.kernal_memtop          = $ff9c
+.kernal_scnkey          = $ff9f
+.kernal_settmo          = $ffa2
+.kernal_iecin           = $ffa5
+.kernal_iecout          = $ffa8
+.kernal_untalk          = $ffab
+.kernal_unlstn          = $ffae
+.kernal_listen          = $ffb1
+.kernal_talk            = $ffb4
+.kernal_readst          = $ffb7
+.kernal_setlfs          = $ffba
+.kernal_setnam          = $ffbd
+.kernal_open            = $ffc0
+.kernal_close           = $ffc3
+.kernal_chkin           = $ffc6
+.kernal_chkout          = $ffc9
+.kernal_clrchn          = $ffcc
+.kernal_chrin           = $ffcf
+.kernal_chrout          = $ffd2
+.kernal_load            = $ffd5
+.kernal_save            = $ffd8
+.kernal_settim          = $ffdb
+.kernal_rdtim           = $ffde
+.kernal_stop            = $ffe1
+.kernal_getin           = $ffe4
+.kernal_clall           = $ffe7
+.kernal_udtim           = $ffea
+.kernal_screen          = $ffed
+.kernal_plot            = $fff0
+.kernal_iobase          = $fff3
+
+; C128 compatible APIs:
+.kernal_close_all       = $ff4d
+.kernal_boot_call       = $ff53
+.kernal_swapper         = $ff5f
+.kernal_pfkey           = $ff65
+.kernal_fetch           = $ff74
+.kernal_stash           = $ff77
+.kernal_cmpare          = $ff7a
+.kernal_primm           = $ff7d
+.kernal_lkupsa          = $ff8a
+.kernal_lkupa           = $ff8d
+
+}

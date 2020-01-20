@@ -1,0 +1,171 @@
+; these are the absolute bear minimum of words that *have* to be implemented
+; in native assembly language in order to port the rest of Pling
+
+; set ( b addr.w -- )
+;===============================================================================
+; stores the byte (3rd on stack) at the address (1st & 2nd bytes).
+; all bytes are consumed
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    3, "set"
+store:
+        lda pl_stack+2, x       ; get value to store (3rd byte)
+        sta (pl_stack, x)       ; store via the address on the stack
+
+        inx                     ; consume...
+        inx                     ; three...
+        inx                     ; bytes
+
+        rts
+
+; get ( addr.w -- b )
+;===============================================================================
+; reads a byte from the address on the stack, (consuming the address)
+; and pushes the value to the stack
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    3, "get"
+fetch:
+        lda (pl_stack, x)
+        inx
+        sta pl_stack, x
+
+        rts
+
+; dup ( b -- b b )
+;===============================================================================
+; duplicate the byte on top of the stack
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    3, "dup"
+dup:
+        dex
+        lda pl_stack+1, x
+        sta pl_stack, x
+        rts
+
+; drop ( b -- )
+;===============================================================================
+; forget the top-most byte on the stack,
+; moving the stack down to the next byte
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    4, "drop"
+drop:
+        inx
+        rts
+
+; and ( b1 b2 -- b )
+;===============================================================================
+; bitwise AND the two bytes on top of the stack
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    3, "and"
+and_b:
+        lda pl_stack+1, x
+        and pl_stack+0, x
+        inx
+        sta pl_stack+0, x
+        
+        rts
+
+; or (b1 b2 -- b)
+;===============================================================================
+; bitwise OR the two bytes on top of the stack
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    2, "or"
+or:
+        lda pl_stack+1, x
+        ora pl_stack+0, x
+        inx
+        sta pl_stack+0, x
+        
+        rts
+
+; xor (b1 b2 -- b)
+;===============================================================================
+; bitwise XOR the two bytes on top of the stack
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    3, "xor"
+xor:
+        lda pl_stack+1, x
+        eor pl_stack+0, x
+        inx
+        sta pl_stack+0, x
+        
+        rts
+
+; + ( b1 b2 -- b )
+;===============================================================================
+; add the two bytes on top of the stack
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    1, "+"
+add_b:
+        clc
+        lda pl_stack, x
+        adc pl_stack+1, x
+        sta pl_stack+1, x
+        inx
+
+        rts
+
+; execute ( addr.w -- )
+;===============================================================================
+; execute the address on top of the stack
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    7, "execute"
+execute:
+        ; we must reduce the stack by 2 bytes before we jump!
+        inx
+        inx
+        ; 65C02: do a jump directly from the parameter stack,
+        ; with +2 to compensate for already having popped the stack
+        jmp (pl_stack+2, x)
+
+;;; 6502:
+;;        lda pl_stack, x
+;;        sta @addr+1
+;;        inx
+;;        lda pl_stack, x
+;;        sta @addr+2
+;;        inx
+;;
+;;@addr:  jmp $8888
+
+;;; hold ( b -- )
+;;;===============================================================================
+;;; takes the byte on top of the [data] stack and places it on the return stack.
+;;; all bytes that are held *MUST* be released, otherwise the return address will
+;;; be corrupted and the system will crash
+;;;
+;;; known as ">R" in Forth
+;;;
+;;;-------------------------------------------------------------------------------
+;;        +prevTerm
+;;        !pet    4, "hold"
+;;hold:
+;;        pla
+;;        sta @addr+1
+;;        pla
+;;        sta @addr+1
+;;
+;;        lda pl_stack, x
+;;        inx
+;;        pha
+;;
+;;@addr:  jmp $8888
+        
+        

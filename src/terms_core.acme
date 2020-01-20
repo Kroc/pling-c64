@@ -1,0 +1,62 @@
+; TODO: once we get the Pling assembler working, port all of this to Pling
+
+; clear ( -- )
+;===============================================================================
+; clear the screen
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    3, "cls"
+clear:
+        lda # $93               ; CLR-HOME
+        jmp .kernal_chrout
+
+; swap ( b1 b2 -- b2 b1 )
+;===============================================================================
+; swap the top two bytes
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    4, "swap"
+swap:
+        lda pl_stack, x
+        ldy pl_stack+1, x
+        sta pl_stack+1, x
+        sty pl_stack, x
+        rts
+
+; \n ( -- )
+;===============================================================================
+; push a carriage-return on to the stack
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    2, "\\n"
+newline:
+        dex
+        lda # $d
+        sta pl_stack, x
+        
+        rts
+
+; +.w ( w1 w2 -- w )
+;===============================================================================
+; add the two words (2 bytes each) on top of the stack.
+; we implement this natively, rather than in Pling,
+; to handle the carry quickly and efficiently
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    3, "+.w"
+add_w:
+        clc
+        lda pl_stack+0, x       ; word1, lo-byte
+        adc pl_stack+2, x       ; word2, lo-byte
+        sta pl_stack+2, x       ; result, lo-byte
+        lda pl_stack+1, x       ; word1, hi-byte
+        adc pl_stack+3, x       ; word2, hi-byte
+        sta pl_stack+3, x       ; result, hi-byte
+        inx
+        inx
+        
+        rts

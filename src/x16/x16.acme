@@ -1,0 +1,20 @@
+!cpu    65c02
+
+!addr {
+
+x16_zp              = $00       ; zero-page address
+x16_stack           = $100      ; hardware stack
+x16_loram           = $800      ; first user-space area of low-RAM
+x16_io              = $9f00     ; I/O base address
+x16_audio           = $9f00     ; audio I/O ($9F00..$9F1F)
+x16_vera            = $9f20     ; video I/O ($9F20..$9F3F)
+x16_via1            = $9f60     ; VIA#1 ($9F60..$9F6F)
+x16_via2            = $9f70     ; VIA#1 ($9F70..$9F7F)
+x16_rtc             = $9f80     ; Real Time Clock ($9F80..$9F8F)
+x16_hiram           = $a000     ; banked high-RAM ($A000..$BFFF, 8KB)
+x16_rom             = $c000     ; banked ROM area ($C000..$FFFF, 16KB)
+
+}
+
+!source "x16\x16_kernal.acme"
+!source "x16\x16_vera.acme"

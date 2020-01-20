@@ -1,0 +1,40 @@
+{
+    "editor.insertSpaces": true,
+    "editor.wordWrap": "wordWrapColumn",
+    "editor.wordWrapColumn": 80,
+    "editor.rulers": [
+        80
+    ],
+    "[asm]": {
+        "editor.tabSize": 8
+    },
+    "[markdown]": {
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.wordWrap": "wordWrapColumn"
+    },
+    "search.exclude": {
+        "bin": true,
+        "build": true,
+    },
+    // the TODO-tree extension is recommended
+    // for finding the TODOs scattered in the code
+    "todo-tree.filtering.excludeGlobs": [
+        // exclude any source that might be
+        // in our 3rd-party binaries folder
+        "bin",
+        // these folders contain generated content
+        "build",
+    ],
+    "spellright.language": [
+        "en"
+    ],
+    "spellright.documentTypes": [
+        "markdown",
+        "latex",
+        "plaintext"
+    ],
+    "files.exclude": {
+        "bin": true
+    }
+}

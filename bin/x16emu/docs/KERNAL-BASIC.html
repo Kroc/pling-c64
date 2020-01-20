@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Commander X16 KERNAL/BASIC/DOS ROM</title>
+  <style>
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="github-pandoc.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<h1 id="commander-x16-basickernaldosgeos-rom">Commander X16 BASIC/KERNAL/DOS/GEOS ROM</h1>
+<p>This is the Commander X16 ROM containing BASIC, KERNAL, DOS and GEOS. BASIC and KERNAL are derived from the <a href="https://github.com/mist64/c64rom">Commodore 64 versions</a>. GEOS is derived from the <a href="https://github.com/mist64/geos">C64/C128 version</a>.</p>
+<ul>
+<li>BASIC is fully compatible with Commodore BASIC V2.</li>
+<li>KERNAL
+<ul>
+<li>supports the complete $FF81+ API.</li>
+<li>has the same zero page and $0200-$033C memory layout as the C64.</li>
+<li>does not support tape (device 1).</li>
+</ul></li>
+<li>GEOS is fully compatible with the C64 version.</li>
+</ul>
+<h2 id="releases-and-building">Releases and Building</h2>
+<p><a href="https://travis-ci.org/commanderx16/x16-emulator"><img alt="Travis (.org)" src="https://img.shields.io/travis/commanderx16/x16-rom.svg?label=CI&logo=travis&logoColor=white&style=for-the-badge"></a></p>
+<p>Each <a href="https://github.com/commanderx16/x16-emulator/releases">release of the X16 emulator</a> includes a compatible build of <code>rom.bin</code>. If you wish to build this yourself (perhaps because you're also building the emulator) see below.</p>
+<blockquote>
+<p><strong>WARNING:</strong> The emulator will currently work only with a contemporary version of <code>rom.bin</code>; earlier or later versions are likely to fail.</p>
+</blockquote>
+<h3 id="building-the-rom">Building the ROM</h3>
+<p>Building this source code requires only <a href="https://www.gnu.org/software/make/">GNU Make</a> and the <a href="https://cc65.github.io/">cc65</a> assembler. GNU Make is almost invariably available as a system package with any Linux distribution; cc65 less often so.</p>
+<ul>
+<li>Red Hat: <code>sudo yum install make cc65</code></li>
+<li>Debian: <code>sudo apt-get install make</code></li>
+</ul>
+<p>On macOS, cc65 in <a href="https://brew.sh/">homebrew</a>, which must be installed before issuing the following command:</p>
+<ul>
+<li>macOS: <code>brew install cc65</code></li>
+</ul>
+<p>If cc65 is not available as a package on your system, you'll need to install or build/install it per the instructions below.</p>
+<p>Once the prerequisites are available, type <code>make</code> to build <code>rom.bin</code>. To use that with the emulator, copy it to the same directory as the <code>x16emu</code> binary or use <code>x16emu -rom .../path/to/rom.bin</code>.</p>
+<h3 id="buildinginstalling-cc65">Building/Installing cc65</h3>
+<h4 id="linux-builds-from-source">Linux Builds from Source</h4>
+<p>You'll need the basic set of tools for building C programs:</p>
+<ul>
+<li>Debian/Ubuntu: <code>sudo apt-get install build-essential git</code></li>
+</ul>
+<p>The cc65 source is <a href="https://cc65.github.io/">on GitHub</a>; clone and build it with:</p>
+<pre><code>git clone https://github.com/cc65/cc65.git
+make -j4    # -j4 may be left off; it merely speeds the build
+</code></pre>
+<p>This will leave the binaries in the <code>bin/</code> subdirectory; you may use thes directly by adding them to your path, or install them to a standard directory:</p>
+<pre><code>#   This assumes you have ~/.local/bin in your path.
+make install PREFIX=~/.local
+</code></pre>
+<h4 id="building-and-packages-for-other-systems">Building and Packages for Other Systems</h4>
+<p>Consult the Nesdev Wiki <a href="https://wiki.nesdev.com/w/index.php/Installing_CC65">Installing CC65</a> page for some hints, including Windows installs. However, the Debian packages they suggest from <a href="https://spiro.trikaliotis.net/debian">trikaliotis.net</a> appear to have signature errors.</p>
+<h2 id="new-features">New Features</h2>
+<ul>
+<li>F-keys: F1: <code>LIST</code> F2: <code>MONITOR</code> F3: <code>RUN</code> F4: &lt;switch 40/80&gt; F5: <code>LOAD</code> F6: <code>SAVE"</code> F7: <code>DOS"$</code> F8: <code>DOS</code></li>
+<li>New BASIC instructions
+<ul>
+<li><code>MONITOR</code>: see below.</li>
+<li><code>DOS</code>: no argument: read disk status. "8" or "9" as an argument: switch default drive. "$" as an argument: show directory. all other arguments: send DOS command</li>
+<li><code>VPEEK</code>(bank, offset), <code>VPOKE</code> bank, offset, value to access video memory. "offset" is 16 bits, "bank" is bits 16-19 of the linear address. Note that the tokens for the new BASIC commands have not been finalized yet, so loading a BASIC program that uses the new keywords in a future version of the ROM will break!</li>
+</ul></li>
+<li>Support for <code>$</code> and <code>%</code> in BASIC expressions for hex and binary</li>
+<li><code>LOAD</code> prints the start and end(+1) addresses</li>
+<li>Integrated Monitor derived from the <a href="https://github.com/mist64/final_cartridge">Final Cartridge III</a>.
+<ul>
+<li><code>O00</code>..<code>OFF</code> to switch ROM and RAM banks</li>
+<li><code>OV0</code>..<code>OV4</code> to switch to video address space</li>
+</ul></li>
+<li>FAT32-formatted SD card as drive 8 as a full IEC (TALK/LISTEN &amp; CBM DOS) compatible device:
+<ul>
+<li>read directory</li>
+<li>load file</li>
+<li>send "I" command</li>
+<li>read status</li>
+<li>everything else is unimplemented</li>
+</ul></li>
+<li>Some new KERNAL APIs (to be documented)</li>
+</ul>
+<h2 id="big-todos">Big TODOs</h2>
+<ul>
+<li>DOS needs more features.</li>
+<li>BASIC needs more features.</li>
+<li>RS232 and IEC are not working.</li>
+<li>PS/2 and SD have issues on real hardware.</li>
+</ul>
+<h2 id="rom-map">ROM Map</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Bank</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>KERNAL</td>
+<td>character sets (uploaded into VRAM), MONITOR, KERNAL</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>KEYBD</td>
+<td>Keyboard layout tables</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>CBDOS</td>
+<td>The computer-based CBM-DOS for FAT32 SD cards</td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td>GEOS</td>
+<td>GEOS KERNAL</td>
+</tr>
+<tr class="odd">
+<td>4</td>
+<td>BASIC</td>
+<td>BASIC interpreter</td>
+</tr>
+<tr class="even">
+<td>5-7</td>
+<td>–</td>
+<td><em>[Currently unused]</em></td>
+</tr>
+</tbody>
+</table>
+<h2 id="ram-map">RAM Map</h2>
+<ul>
+<li>fixed RAM:
+<ul>
+<li>$0000-$0400 KERNAL/BASIC/DOS system variables</li>
+<li>$0400-$0800 currently unused</li>
+<li>$0800-$9F00 BASIC RAM</li>
+</ul></li>
+<li>banked RAM:
+<ul>
+<li>banks 0-254: free for applications</li>
+<li>bank 255: DOS buffers and variables</li>
+</ul></li>
+</ul>
+<h2 id="credits">Credits</h2>
+<p>KERNAL, BASIC and GEOS additions, DOS: Michael Steil, <a href="https://www.pagetable.com/">www.pagetable.com</a>; 2-clause BSD license</p>
+<p>FAT32 and SD card drivers: Copyright (c) 2018 Thomas Woinke, Marko Lauke, <a href="https://steckschwein.de">www.steckschein.de</a>; MIT License</p>
+<h2 id="release-notes">Release Notes</h2>
+<h3 id="release-36-berlin">Release 36 ("Berlin")</h3>
+<ul>
+<li><p>API Features</p>
+<ul>
+<li>added console API for text-based interfaces with proportional font and styles support: console_init, console_put_char, console_get_char</li>
+<li>added memory API:
+<ul>
+<li>memory_fill</li>
+<li>memory_copy</li>
+<li>memory_crc</li>
+<li>memory_decompress (LZSA2)</li>
+</ul></li>
+<li>added sprite API: sprite_set_image, sprite_set_position</li>
+<li>renamed GRAPH_LL to FB (framebuffer)</li>
+<li>GRAPH_init takes an FB graphics driver as an argument</li>
+</ul></li>
+<li><p>KERNAL features</p>
+<ul>
+<li>detect SD card on TALK and LISTEN, properly fall back to serial</li>
+<li>joystick scanning is done automatically in VBLANK IRQ; no need to call it manually any more</li>
+<li>added VERA UART driver (device 2)</li>
+<li>bank 1 is now the default after startup; KERNAL won't touch it</li>
+<li>sprites and layer 0 are cleared on RESET</li>
+<li>changed F5 to LOAD":* (filename required for IEEE devices)</li>
+<li>GRAPH_move_rect supports overlapping [gaekwad]</li>
+</ul></li>
+<li><p>BASIC</p>
+<ul>
+<li>default LOAD/SAVE device is now 8</li>
+<li>added RESET statement [Ingo Hinterding]</li>
+<li>added CLS statement [Ingo Hinterding]</li>
+</ul></li>
+<li><p>CHARSET</p>
+<ul>
+<li>fixed capital Ö [Ingo Hinterding]</li>
+<li>Changed Û, î, ã to be more consistent [Ingo Hinterding]</li>
+</ul></li>
+<li><p>bug fixes</p>
+<ul>
+<li>COLOR statement with two arguments</li>
+<li>PEEK for ROM addresses</li>
+<li>keyboard code no longer changes RAM bank</li>
+<li>fixed clock update</li>
+<li>fixed side effects of Ctrl+A and color control codes [codewar65]</li>
+</ul></li>
+<li><p>misc</p>
+<ul>
+<li>added 3 more tests, start with "TEST1"/"TEST2"/"TEST3" in BASIC:</li>
+<li>TEST0: existing misc graphics test</li>
+<li>TEST1: console text rendering, character wrapping</li>
+<li>TEST2: console text rendering, word wrapping</li>
+<li>TEST3: console text input, echo</li>
+</ul></li>
+</ul>
+<h3 id="release-35">Release 35</h3>
+<ul>
+<li><p>API Fetures</p>
+<ul>
+<li>new KERNAL API: low-level and high-level 320x200@256c bitmap graphics</li>
+<li>new KERNAL API: get mouse state</li>
+<li>new KERNAL API: get joystick state</li>
+<li>new KERNAL API: get/set date and time (old RDTIM call is now a 24 bit timer)</li>
+<li>new floating point API, jump table at $FC00 on ROM bank 4 (BASIC)</li>
+</ul></li>
+<li><p>KERNAL Features</p>
+<ul>
+<li>invert fg/bg color control code (Ctrl+A) [Daniel Mecklenburg Jr]</li>
+</ul></li>
+<li><p>BASIC</p>
+<ul>
+<li>added <code>COLOR &lt;fg, bg&gt;</code> statement to set text color</li>
+<li>added <code>JOY(n)</code> function (arg 1 for joy1, arg 2 for joy2)</li>
+<li>added <code>TEST</code> statement to start graphics API unit test</li>
+<li><code>CHAR</code> statement supports PETSCII control codes (instead of GEOS control codes), including color codes</li>
+</ul></li>
+<li><p>misc</p>
+<ul>
+<li>KERNAL variables for keyboard/mouse/clock drivers were moved from $0200-$02FF to RAM bank #0</li>
+<li>$8F (set PETSCII-UC even if ISO) printed first after reset [Mikael O. Bonnier]</li>
+</ul></li>
+<li><p>bug fixes:</p>
+<ul>
+<li>got rid of $2c partial instruction skip [Joshua Scholar]</li>
+<li>fixed TI/TI$</li>
+<li>fixed CBDOS infinite loop</li>
+<li>zp address 0 is no longer overwritten by mouse code</li>
+<li>mouse scanning is disabled if mouse is off</li>
+<li>VERA state is correctly saved/restored by IRQ code</li>
+</ul></li>
+</ul>
+<h3 id="release-34">Release 34</h3>
+<ul>
+<li>new layout for zero page and KERNAL/BASIC variables:
+<ul>
+<li>$00-$7F available to the user</li>
+<li>($02-$52 are used if using BASIC graphics commands)</li>
+<li>$80-$A3 used by KERNAL and DOS</li>
+<li>$A4-$A8 reserved for KERNAL/DOS/BASIC</li>
+<li>$A9-$FF used by BASIC</li>
+</ul></li>
+<li>new BASIC statements:
+<ul>
+<li><code>SCREEN &lt;mode&gt;</code> (0: 40x30, 2: 80x60, 128: graphics)</li>
+<li><code>PSET &lt;x&gt;, &lt;y&gt;, &lt;color&gt;</code></li>
+<li><code>LINE &lt;x1&gt;, &lt;y1&gt;, &lt;x2&gt;, &lt;y2&gt;, &lt;color&gt;</code></li>
+<li><code>FRAME &lt;x1&gt;, &lt;y1&gt;, &lt;x2&gt;, &lt;y2&gt;, &lt;color&gt;</code></li>
+<li><code>RECT &lt;x1&gt;, &lt;y1&gt;, &lt;x2&gt;, &lt;y2&gt;, &lt;color&gt;</code></li>
+<li><code>CHAR &lt;x&gt;, &lt;y&gt;, &lt;color&gt;, &lt;string&gt;</code></li>
+<li><code>MOUSE &lt;n&gt;</code> (0: off, 1: on)</li>
+</ul></li>
+<li>new BASIC functions:
+<ul>
+<li><code>MX</code> (mouse X coordinate)</li>
+<li><code>MY</code> (mouse Y coordinate)</li>
+<li><code>MB</code> (mouse button; 1: left, 2: right, 4: third)</li>
+</ul></li>
+<li>new KERNAL calls:
+<ul>
+<li><code>MOUSE</code>: configure mouse</li>
+<li><code>SCRMOD</code>: set screen mode</li>
+</ul></li>
+<li>new PS/2 mouse driver</li>
+<li>charsets are uploaded to VERA on demand</li>
+<li>GEOS font rendering uses less slant for faux italics characters</li>
+<li>misc GEOS KERNAL improvements and optimizations</li>
+</ul>
+<h3 id="release-33">Release 33</h3>
+<ul>
+<li>BASIC
+<ul>
+<li>additional LOAD syntax to load to a specific address <code>LOAD [filename[,device[,bank,address]]]</code></li>
+<li>LOAD into banked RAM will auto-wrap into successive banks</li>
+<li>LOAD allows trailing garbage; great to just type <code>LOAD</code> into a directory line [John-Paul Gignac]</li>
+<li>new BASIC statement: <code>VLOAD</code> to load into video RAM: <code>VLOAD [filename[,device[,bank,address]]]</code> [John-Paul Gignac]</li>
+<li>complete jump table bridge</li>
+</ul></li>
+<li>KERNAL: memory size detection</li>
+<li>KERNAL: faster IRQ entry</li>
+<li>GEOS: converted graphics library to VERA 320x200@256c</li>
+</ul>
+<h3 id="release-32">Release 32</h3>
+<ul>
+<li>correct ROM banking:
+<ul>
+<li>BASIC and KERNAL now live on separate 16 KB banks ($C000-$FFFF)</li>
+<li>BASIC <code>PEEK</code> will always access KERNAL ROM</li>
+<li>BASIC <code>SYS</code> will have BASIC ROM enabled</li>
+</ul></li>
+<li>added GEOS</li>
+<li>added <code>OLD</code> statement to recover deleted BASIC program after <code>NEW</code> or <code>RESET</code></li>
+<li>removed software RS-232, will be replaced by VERA UART later</li>
+<li>Full ISO mode support in Monitor</li>
+</ul>
+<h3 id="release-31">Release 31</h3>
+<ul>
+<li>switched to VERA 0.8 register layout; character ROM is uploaded on startup</li>
+<li>ISO mode: ISO-8859-15 character set, standard ASCII keyboard</li>
+<li>keyboard
+<ul>
+<li>completed US and UK keymaps so all C64 characters are reachable</li>
+<li>support for AltGr</li>
+<li>support for F9-F12</li>
+</ul></li>
+<li>allow hex and binary numbers in <code>DATA</code> statements [Frank Buss]</li>
+<li>switched SD card from VIA SPI to VERA SPI (works on real hardware!)</li>
+<li>fix: <code>VPEEK</code> overwriting <code>POKER</code> ($14/$15)</li>
+<li>fix: <code>STOP</code> sometimes not registering in BASIC programs</li>
+</ul>
+<h3 id="release-30">Release 30</h3>
+<ul>
+<li>support for 13 keyboard layouts; cycle through them using F9</li>
+<li><code>GETJOY</code> call will fall back to keyboard (cursor/Ctrl/Alt/Space/Return), see Programmer's Reference Guide on how to use it</li>
+<li>startup message now shows ROM revision</li>
+<li>$FF80 contains the prerelease revision (negated)</li>
+<li>the 60 Hz IRQ is now generated by VERA VSYNC</li>
+<li>fix: <code>VPEEK</code> tokenization</li>
+<li>fix: CBDOS was not correctly preserving the RAM bank</li>
+<li>fix: KERNAL no longer uses zero page $FC-$FE</li>
+</ul>
+<!-------------------------------------------------------------------->
+</body>
+</html>

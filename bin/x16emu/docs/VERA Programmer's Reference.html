@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>VERA Programmer's Reference.md</title>
+  <style>
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="github-pandoc.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<h1 id="vera-programmers-reference">VERA Programmer's Reference</h1>
+<p>Version 0.8</p>
+<p><em>Author: Frank van den Hoef</em></p>
+<p><strong>This is preliminary documentation and the specification can still change at any point.</strong></p>
+<p>This document describes the <strong>V</strong>ideo <strong>E</strong>nhanced <strong>R</strong>etro <strong>A</strong>dapter video-module.</p>
+<h1 id="external-address-space">External address space</h1>
+<table>
+    <tr>
+        <th>Reg</th>
+        <th>Addr</th>
+        <th>Name</th>
+        <th>Bit&nbsp;7</th>
+        <th>Bit&nbsp;6</th>
+        <th>Bit&nbsp;5 </th>
+        <th>Bit&nbsp;4</th>
+        <th>Bit&nbsp;3 </th>
+        <th>Bit&nbsp;2</th>
+        <th>Bit&nbsp;1 </th>
+        <th>Bit&nbsp;0</th>
+    </tr>
+    <tr>
+        <td>0</td>
+        <td>$9F20</td>
+        <td>VERA_ADDR_LO</td>
+        <td colspan="8" align="center">Address (7:0)</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>$9F21</td>
+        <td>VERA_ADDR_MID</td>
+        <td colspan="8" align="center">Address (15:8)</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>$9F22</td>
+        <td>VERA_ADDR_HI</td>
+        <td colspan="4" align="center">Increment</td>
+        <td colspan="4" align="center">Address (19:16)</td>
+    </tr>
+    <tr>
+        <td>3</td>
+        <td>$9F23</td>
+        <td>VERA_DATA0</td>
+        <td colspan="8" align="center">Data port 0</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td>$9F24</td>
+        <td>VERA_DATA1</td>
+        <td colspan="8" align="center">Data port 1</td>
+    </tr>
+    <tr>
+        <td>5</td>
+        <td>$9F25</td>
+        <td>VERA_CTRL</td>
+        <td align="center">RESET</td>
+        <td colspan="6" align="center">-</td>
+        <td align="center">ADDRSEL</td>
+    </tr>
+    <tr>
+        <td>6</td>
+        <td>$9F26</td>
+        <td>VERA_IEN</td>
+        <td colspan="4" align="center">-</td>
+        <td align="center">UART</td>
+        <td align="center">SPRCOL</td>
+        <td align="center">LINE</td>
+        <td align="center">VSYNC</td>
+    </tr>
+    <tr>
+        <td>7</td>
+        <td>$9F27</td>
+        <td>VERA_ISR</td>
+        <td colspan="4" align="center">-</td>
+        <td align="center">UART</td>
+        <td align="center">SPRCOL</td>
+        <td align="center">LINE</td>
+        <td align="center">VSYNC</td>
+    </tr>
+</table>
+
+<p>When RESET is set to 1, the FPGA will reconfigure itself. All registers will be reset. The palette RAM will be set to its default values.</p>
+<p>If ADDR_SEL = 0, register 0/1/2 contain address of data port 0, otherwise register 0/1/2 contain address of data port 1.</p>
+<p>After each access of one of the data ports the corresponding address is increment by the value associated with the corresponding increment field:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Increment value</th>
+<th>Increment amount</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>2</td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td>4</td>
+</tr>
+<tr class="odd">
+<td>4</td>
+<td>8</td>
+</tr>
+<tr class="even">
+<td>5</td>
+<td>16</td>
+</tr>
+<tr class="odd">
+<td>6</td>
+<td>32</td>
+</tr>
+<tr class="even">
+<td>7</td>
+<td>64</td>
+</tr>
+<tr class="odd">
+<td>8</td>
+<td>128</td>
+</tr>
+<tr class="even">
+<td>9</td>
+<td>256</td>
+</tr>
+<tr class="odd">
+<td>10</td>
+<td>512</td>
+</tr>
+<tr class="even">
+<td>11</td>
+<td>1024</td>
+</tr>
+<tr class="odd">
+<td>12</td>
+<td>2048</td>
+</tr>
+<tr class="even">
+<td>13</td>
+<td>4096</td>
+</tr>
+<tr class="odd">
+<td>14</td>
+<td>8192</td>
+</tr>
+<tr class="even">
+<td>15</td>
+<td>16384</td>
+</tr>
+</tbody>
+</table>
+<p>Interrupts will be generated for the interrupt sources set in VERA_IEN. VERA_ISR will indicate interrupts that have occurred. Writing a 1 to a position in VERA_ISR will clear that interrupt status.</p>
+<h2 id="internal-address-space">Internal address space</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Address range</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>$00000 - $1FFFF</td>
+<td>Video RAM</td>
+</tr>
+<tr class="even">
+<td>$F0000 - $F001F</td>
+<td>Display composer registers</td>
+</tr>
+<tr class="odd">
+<td>$F1000 - $F11FF</td>
+<td>Palette</td>
+</tr>
+<tr class="even">
+<td>$F2000 - $F200F</td>
+<td>Layer 0 registers</td>
+</tr>
+<tr class="odd">
+<td>$F3000 - $F300F</td>
+<td>Layer 1 registers</td>
+</tr>
+<tr class="even">
+<td>$F4000 - $F400F</td>
+<td>Sprite registers</td>
+</tr>
+<tr class="odd">
+<td>$F5000 - $F53FF</td>
+<td>Sprite attributes</td>
+</tr>
+<tr class="even">
+<td>$F6000 - $F6xxx</td>
+<td>Audio</td>
+</tr>
+<tr class="odd">
+<td>$F7000 - $F7001</td>
+<td>SPI</td>
+</tr>
+<tr class="even">
+<td>$F8000 - $F8003</td>
+<td>UART</td>
+</tr>
+</tbody>
+</table>
+<h2 id="display-composer">Display composer</h2>
+<table>
+    <tr>
+        <th>Register</th>
+        <th>Name</th>
+        <th>Bit&nbsp;7</th>
+        <th>Bit&nbsp;6</th>
+        <th>Bit&nbsp;5</th>
+        <th>Bit&nbsp;4</th>
+        <th>Bit&nbsp;3</th>
+        <th>Bit&nbsp;2</th>
+        <th>Bit&nbsp;1</th>
+        <th>Bit&nbsp;0</th>
+    </tr>
+    <tr>
+        <td>0</td>
+        <td>DC_VIDEO</td>
+        <td align="center">CURRENT_FIELD (RO)</td>
+        <td align="center" colspan="4">-</td>
+        <td align="center">CHROMA_DISABLE</td>
+        <td align="center" colspan="2">OUT_MODE</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>DC_HSCALE</td>
+        <td align="center" colspan="8">HSCALE</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>DC_VSCALE</td>
+        <td align="center" colspan="8">VSCALE</td>
+    </tr>
+    <tr>
+        <td>3</td>
+        <td>DC_BORDER_COLOR</td>
+        <td align="center" colspan="8">BORDER_COLOR</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td>DC_HSTART_L</td>
+        <td align="center" colspan="8">HSTART (7:0)</td>
+    </tr>
+    <tr>
+        <td>5</td>
+        <td>DC_HSTOP_L</td>
+        <td align="center" colspan="8">HSTOP (7:0)</td>
+    </tr>
+    <tr>
+        <td>6</td>
+        <td>DC_VSTART_L</td>
+        <td align="center" colspan="8">VSTART (7:0)</td>
+    </tr>
+    <tr>
+        <td>7</td>
+        <td>DC_VSTOP_L</td>
+        <td align="center" colspan="8">VSTOP (7:0)</td>
+    </tr>
+    <tr>
+        <td>8</td>
+        <td>DC_STARTSTOP_H</td>
+        <td align="center" colspan="2">-</td>
+        <td align="center">VSTOP (8)</td>
+        <td align="center">VSTART (8)</td>
+        <td align="center" colspan="2">HSTOP (9:8)</td>
+        <td align="center" colspan="2">HSTART (9:8)</td>
+    </tr>
+    <tr>
+        <td>9</td>
+        <td>DC_IRQ_LINE_L</td>
+        <td align="center" colspan="8">IRQ_LINE (7:0)</td>
+    </tr>
+    <tr>
+        <td>10</td>
+        <td>DC_IRQ_LINE_H</td>
+        <td align="center" colspan="7">-</td>
+        <td align="center">IRQ_LINE (8)</td>
+    </tr>
+</table>
+
+<table>
+<thead>
+<tr class="header">
+<th>OUT_MODE</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>Video disabled</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>VGA output</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>NTSC composite</td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td>RGB interlaced, composite sync (via VGA output)</td>
+</tr>
+</tbody>
+</table>
+<p>Setting <strong>CHROMA_DISABLE</strong> disables output of chroma in NTSC composite mode and will give a better picture on a monochrome display.</p>
+<p><strong>CURRENT_FIELD</strong> is a read-only field which reflects the active interlaced field in composite and RGB modes. (0: even, 1: odd)</p>
+<p><strong>HSCALE</strong> and <strong>VSCALE</strong> will set the fractional scaling factor of the display. Setting this value to 128 will output 1 output pixel for every input pixel. Setting this to 64 will output 2 output pixels for every input pixel.</p>
+<p><strong>BORDER_COLOR</strong> determines the palette index which is used for the non-active area of the screen.</p>
+<p><strong>HSTART</strong>/<strong>HSTOP</strong> and <strong>VSTART</strong>/<strong>VSTOP</strong> determines the active part of the screen. The values here are specified in the native 640x480 display space. HSTART=0, HSTOP=640, VSTART=0, VSTOP=480 will set the active area to the full resolution.</p>
+<p><strong>IRQ_LINE</strong> specifies at which line the <strong>LINE</strong> interrupt will be generated. For interlaced modes the interrupt will be generated each field and the LSB of <strong>IRQ_LINE</strong> is ignored.</p>
+<p>TODO:</p>
+<ul>
+<li>Hardware ID</li>
+<li>Palette selection</li>
+<li>Per layer active area</li>
+<li>Per layer scaling</li>
+<li>Remapping transparent index 0 to other entry</li>
+</ul>
+<h2 id="palette">Palette</h2>
+<p>The palette translates 8-bit color indexes into 12-bit output colors. The palette has 256 entries, each with the following format:</p>
+<table>
+    <tr>
+        <th>Offset</th>
+        <th>Bit&nbsp;7</th>
+        <th>Bit&nbsp;6</th>
+        <th>Bit&nbsp;5</th>
+        <th>Bit&nbsp;4</th>
+        <th>Bit&nbsp;3</th>
+        <th>Bit&nbsp;2</th>
+        <th>Bit&nbsp;1</th>
+        <th>Bit&nbsp;0</th>
+    </tr>
+    <tr>
+        <td>0</td>
+        <td align="center" colspan="4">Green</td>
+        <td align="center" colspan="4">Blue</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td align="center" colspan="4">-</td>
+        <td align="center" colspan="4">Red</td>
+    </tr>
+</table>
+
+<p>At reset, the palette will contain a predefined palette:</p>
+<pre><code>000,fff,800,afe,c4c,0c5,00a,ee7,d85,640,f77,333,777,af6,08f,bbb
+000,111,222,333,444,555,666,777,888,999,aaa,bbb,ccc,ddd,eee,fff
+211,433,644,866,a88,c99,fbb,211,422,633,844,a55,c66,f77,200,411
+611,822,a22,c33,f33,200,400,600,800,a00,c00,f00,221,443,664,886
+aa8,cc9,feb,211,432,653,874,a95,cb6,fd7,210,431,651,862,a82,ca3
+fc3,210,430,640,860,a80,c90,fb0,121,343,564,786,9a8,bc9,dfb,121
+342,463,684,8a5,9c6,bf7,120,241,461,582,6a2,8c3,9f3,120,240,360
+480,5a0,6c0,7f0,121,343,465,686,8a8,9ca,bfc,121,242,364,485,5a6
+6c8,7f9,020,141,162,283,2a4,3c5,3f6,020,041,061,082,0a2,0c3,0f3
+122,344,466,688,8aa,9cc,bff,122,244,366,488,5aa,6cc,7ff,022,144
+166,288,2aa,3cc,3ff,022,044,066,088,0aa,0cc,0ff,112,334,456,668
+88a,9ac,bcf,112,224,346,458,56a,68c,79f,002,114,126,238,24a,35c
+36f,002,014,016,028,02a,03c,03f,112,334,546,768,98a,b9c,dbf,112
+324,436,648,85a,96c,b7f,102,214,416,528,62a,83c,93f,102,204,306
+408,50a,60c,70f,212,434,646,868,a8a,c9c,fbe,211,423,635,847,a59
+c6b,f7d,201,413,615,826,a28,c3a,f3c,201,403,604,806,a08,c09,f0b
+</code></pre>
+<ul>
+<li>Color indexes 0-15 contain the C64 color palette.</li>
+<li>Color indexes 16-31 contain a grayscale ramp.</li>
+<li>Color indexes 32-255 contain various hues, saturation levels, brightness levels.</li>
+</ul>
+<h2 id="layer-01-registers">Layer 0/1 registers</h2>
+<table>
+    <tr>
+        <th>Register</th>
+        <th>Name</th>
+        <th>Bit&nbsp;7</th>
+        <th>Bit&nbsp;6</th>
+        <th>Bit&nbsp;5</th>
+        <th>Bit&nbsp;4</th>
+        <th>Bit&nbsp;3</th>
+        <th>Bit&nbsp;2</th>
+        <th>Bit&nbsp;1</th>
+        <th>Bit&nbsp;0</th>
+    </tr>
+    <tr>
+        <td>0</td>
+        <td>Ln_CTRL0</td>
+        <td align="center" colspan="3">MODE</td>
+        <td align="center" colspan="4">-</td>
+        <td align="center">EN</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>Ln_CTRL1</td>
+        <td align="center" colspan="2">-</td>
+        <td align="center">TILEH</td>
+        <td align="center">TILEW</td>
+        <td align="center" colspan="2">MAPH</td>
+        <td align="center" colspan="2">MAPW</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>Ln_MAP_BASE_L</td>
+        <td align="center" colspan="8">MAP_BASE (9:2)</td>
+    </tr>
+    <tr>
+        <td>3</td>
+        <td>Ln_MAP_BASE_H</td>
+        <td align="center">-</td>
+        <td align="center" colspan="7">MAP_BASE (16:10)</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td>Ln_TILE_BASE_L</td>
+        <td align="center" colspan="8">TILE_BASE (9:2)</td>
+    </tr>
+    <tr>
+        <td>5</td>
+        <td>Ln_TILE_BASE_H</td>
+        <td align="center">-</td>
+        <td align="center" colspan="8">TILE_BASE (16:10)</td>
+    </tr>
+    <tr>
+        <td>6</td>
+        <td>Ln_HSCROLL_L</td>
+        <td align="center" colspan="8">HSCROLL (7:0)</td>
+    </tr>
+    <tr>
+        <td>7</td>
+        <td>Ln_HSCROLL_H</td>
+        <td align="center" colspan="4">-</td>
+        <td align="center" colspan="4">HSCROLL (11:8)</td>
+    </tr>
+    <tr>
+        <td>8</td>
+        <td>Ln_VSCROLL_L</td>
+        <td align="center" colspan="8">VSCROLL (7:0)</td>
+    </tr>
+    <tr>
+        <td>9</td>
+        <td>Ln_VSCROLL_H</td>
+        <td align="center" colspan="4">-</td>
+        <td align="center" colspan="4">VSCROLL (11:8)</td>
+    </tr>
+</table>
+
+<p>In bitmap modes (5/6/7), the following changes apply:</p>
+<table>
+    <tr>
+        <th>Register</th>
+        <th>Name</th>
+        <th>Bit&nbsp;7</th>
+        <th>Bit&nbsp;6</th>
+        <th>Bit&nbsp;5</th>
+        <th>Bit&nbsp;4</th>
+        <th>Bit&nbsp;3</th>
+        <th>Bit&nbsp;2</th>
+        <th>Bit&nbsp;1</th>
+        <th>Bit&nbsp;0</th>
+    </tr>
+    <tr>
+        <td>7</td>
+        <td>Ln_BM_PAL_OFFS</td>
+        <td align="center" colspan="4">-</td>
+        <td align="center" colspan="4">BM_PALETTE_OFFSET</td>
+    </tr>
+</table>
+
+<p>The layer can be enabled or disabled by setting or clearing the <strong>EN</strong> bit.</p>
+<p><strong>MAP_BASE</strong> specifies the base address where tile map data is fetched from. (Note that the registers don’t specify the lower 2 bits, so the address is always aligned to a multiple of 4 bytes.)</p>
+<p><strong>TILE_BASE</strong> specifies the base address where tile data is fetched from. (Note that the registers don’t specify the lower 2 bits, so the address is always aligned to a multiple of 4 bytes.)</p>
+<p><strong>HSCROLL</strong> specifies the horizontal scroll offset. A value between 0 and 4095 can be used. Increasing the value will cause the picture to move left, decreasing will cause the picture to move right.</p>
+<p><strong>YSCROLL</strong> specifies the vertical scroll offset. A value between 0 and 4095 can be used. Increasing the value will cause the picture to move up, decreasing will cause the picture to move down.</p>
+<p><strong>MAPW</strong>, <strong>MAPH</strong> specify the map width and map height respectively:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Value</th>
+<th>Map width / height</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>32 tiles</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>64 tiles</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>128 tiles</td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td>256 tiles</td>
+</tr>
+</tbody>
+</table>
+<p><strong>TILEW</strong>, <strong>TILEH</strong> specify the tile width and tile height respectively:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Value</th>
+<th>Tile width / height</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>8</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>16</td>
+</tr>
+</tbody>
+</table>
+<h3 id="layer-display-modes">Layer display modes</h3>
+<p>Each layer supports a few different display modes, which can be selected using the MODE field:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Mode</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>Tile mode 1bpp (per-tile 16 color foreground and background color)</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>Tile mode 1bpp (per-tile 256 color foreground color and fixed background color 0)</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>Tile mode 2bpp</td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td>Tile mode 4bpp</td>
+</tr>
+<tr class="odd">
+<td>4</td>
+<td>Tile mode 8bpp</td>
+</tr>
+<tr class="even">
+<td>5</td>
+<td>Bitmap mode 2bpp</td>
+</tr>
+<tr class="odd">
+<td>6</td>
+<td>Bitmap mode 4bpp</td>
+</tr>
+<tr class="even">
+<td>7</td>
+<td>Bitmap mode 8bpp</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mode-0--16-color-text-mode">Mode 0 – 16 color text mode</h3>
+<p><strong>MAP_BASE</strong> points to a tile map containing tile map entries, which are 2 bytes each:</p>
+<table>
+    <tr>
+        <th>Offset</th>
+        <th>Bit&nbsp;7</th>
+        <th>Bit&nbsp;6</th>
+        <th>Bit&nbsp;5</th>
+        <th>Bit&nbsp;4</th>
+        <th>Bit&nbsp;3</th>
+        <th>Bit&nbsp;2</th>
+        <th>Bit&nbsp;1</th>
+        <th>Bit&nbsp;0</th>
+    </tr>
+    <tr>
+        <td>0</td>
+        <td align="center" colspan="8">Character index</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td align="center" colspan="4">Background color</td>
+        <td align="center" colspan="4">Foreground color</td>
+    </tr>
+</table>
+
+<p><strong>TILE_BASE</strong> points to the tile data.</p>
+<p>Each bit in the tile data specifies one pixel. If the bit is set the foreground color as specified in the map data is used, otherwise the background color as specified in the map data is used.</p>
+<h3 id="mode-1--256-color-text-mode">Mode 1 – 256 color text mode</h3>
+<p><strong>MAP_BASE</strong> points to a tile map containing tile map entries, which are 2 bytes each:</p>
+<table>
+    <tr>
+        <th>Offset</th>
+        <th>Bit&nbsp;7</th>
+        <th>Bit&nbsp;6</th>
+        <th>Bit&nbsp;5</th>
+        <th>Bit&nbsp;4</th>
+        <th>Bit&nbsp;3</th>
+        <th>Bit&nbsp;2</th>
+        <th>Bit&nbsp;1</th>
+        <th>Bit&nbsp;0</th>
+    </tr>
+    <tr>
+        <td>0</td>
+        <td align="center" colspan="8">Character index</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td align="center" colspan="8">Foreground color</td>
+    </tr>
+</table>
+
+<p><strong>TILE_BASE</strong> points to the tile data.</p>
+<p>Each bit in the tile data specifies one pixel. If the bit is set the foreground color as specified in the map data is used, otherwise color 0 is used (transparent).</p>
+<h3 id="mode-234--tile-mode-248bpp">Mode 2/3/4 – Tile mode 2/4/8bpp</h3>
+<p><strong>MAP_BASE</strong> points to a tile map containing tile map entries, which are 2 bytes each:</p>
+<table>
+    <tr>
+        <th>Offset</th>
+        <th>Bit&nbsp;7</th>
+        <th>Bit&nbsp;6</th>
+        <th>Bit&nbsp;5</th>
+        <th>Bit&nbsp;4</th>
+        <th>Bit&nbsp;3</th>
+        <th>Bit&nbsp;2</th>
+        <th>Bit&nbsp;1</th>
+        <th>Bit&nbsp;0</th>
+    </tr>
+    <tr>
+        <td>0</td>
+        <td align="center" colspan="8">Tile index (7:0)</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td align="center" colspan="4">Palette offset</td>
+        <td align="center">V-flip</td>
+        <td align="center">H-flip</td>
+        <td align="center" colspan="2">Tile index (9:8)</td>
+    </tr>
+</table>
+
+<p><strong>TILE_BASE</strong> points to the tile data.</p>
+<p>Each pixel in the tile data gives a color index of either 0-3 (2bpp), 0-15 (4bpp), 0-255 (8bpp). This color index is modified by the palette offset in the tile map data using the following logic:</p>
+<ul>
+<li>Color index 0 (transparent) and 16-255 are unmodified.</li>
+<li>Color index 1-15 is modified by adding 16 x palette offset.</li>
+</ul>
+<p>TODO: explanation of tile data memory organization</p>
+<h3 id="mode-567--bitmap-mode-248bpp">Mode 5/6/7 – Bitmap mode 2/4/8bpp</h3>
+<p><strong>MAP_BASE</strong> isn’t used in these modes. <strong>TILE_BASE</strong> points to the bitmap data.</p>
+<p><strong>TILEW</strong> specifies the bitmap width. TILEW=0 results in 320 pixels width and TILEW=1 results in 640 pixels width.</p>
+<p><strong>BM_PALETTE_OFFSET</strong> modifies the color indexes of the bitmap in the same way as in the tile modes.</p>
+<p>TODO: explanation of bitmap data memory organization</p>
+<h2 id="sprite-registers">Sprite registers</h2>
+<table>
+    <tr>
+        <th>Register</th>
+        <th>Name</th>
+        <th>Bit&nbsp;7</th>
+        <th>Bit&nbsp;6</th>
+        <th>Bit&nbsp;5</th>
+        <th>Bit&nbsp;4</th>
+        <th>Bit&nbsp;3</th>
+        <th>Bit&nbsp;2</th>
+        <th>Bit&nbsp;1</th>
+        <th>Bit&nbsp;0</th>
+    </tr>
+    <tr>
+        <td>0</td>
+        <td>SPR_CTRL</td>
+        <td align="center" colspan="7">-</td>
+        <td align="center">EN</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>SPR_COLLISION</td>
+        <td align="center" colspan="4">-</td>
+        <td align="center" colspan="4">Collision mask</td>
+    </tr>
+</table>
+
+<p>At the start of the vertical blank <strong>Collision mask</strong> is updated. This field indicates which groups of sprites have collided. If the field is non-zero the <strong>SPRCOL</strong> interrupt will be set. The interrupt is generated once per field / frame and can be cleared by making sure the sprites no longer collide.</p>
+<p>Collisions are only detected on lines that are actually rendered.</p>
+<h2 id="sprite-attributes">Sprite attributes</h2>
+<p>128 entries of the following format:</p>
+<table>
+    <tr>
+        <th>Offset</th>
+        <th>Bit&nbsp;7</th>
+        <th>Bit&nbsp;6</th>
+        <th>Bit&nbsp;5</th>
+        <th>Bit&nbsp;Bit&nbsp;4</th>
+        <th>Bit&nbsp;3</th>
+        <th>Bit&nbsp;2</th>
+        <th>Bit&nbsp;1</th>
+        <th>Bit&nbsp;0</th>
+    </tr>
+    <tr>
+        <td>0</td>
+        <td align="center" colspan="8">Address (12:5)</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>Mode</td>
+        <td align="center" colspan="3">-</td>
+        <td align="center" colspan="4">Address (16:13)</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td align="center" colspan="8">X (7:0)</td>
+    </tr>
+    <tr>
+        <td>3</td>
+        <td align="center" colspan="6">-</td>
+        <td align="center" colspan="2">X (9:8)</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td align="center" colspan="8">Y (7:0)</td>
+    </tr>
+    <tr>
+        <td>5</td>
+        <td align="center" colspan="6">-</td>
+        <td align="center" colspan="2">Y (9:8)</td>
+    </tr>
+    <tr>
+        <td>6</td>
+        <td align="center" colspan="4">Collision mask</td>
+        <td align="center" colspan="2">Z-depth</td>
+        <td align="center">V-flip</td>
+        <td align="center">H-flip</td>
+    </tr>
+    <tr>
+        <td>7</td>
+        <td align="center" colspan="2">Sprite height</td>
+        <td align="center" colspan="2">Sprite width</td>
+        <td align="center" colspan="4">Palette offset</td>
+    </tr>
+</table>
+
+<table>
+<thead>
+<tr class="header">
+<th>Mode</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>4 bpp</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>8 bpp</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr class="header">
+<th>Z-depth</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>Sprite disabled</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>Sprite between background and layer 0</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>Sprite between layer 0 and layer 1</td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td>Sprite in front of layer 1</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr class="header">
+<th>Sprite width / height</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>8 px</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>16 px</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>32 px</td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td>64 px</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Rendering Priority</strong> The sprite memory location dictates the order in which it is rendered. The sprite whose attributes are at the lowest location, $F5000, will be rendered in front of all other sprites; the sprite at the highest location will be rendered behind all other sprites, and so forth.</p>
+<p><strong>Palette offset</strong> works in the same way as with the layers.</p>
+<h2 id="spi-registers">SPI registers</h2>
+<table>
+    <tr>
+        <th>Register</th>
+        <th>Name</th>
+        <th>Bit&nbsp;7</th>
+        <th>Bit&nbsp;6</th>
+        <th>Bit&nbsp;5</th>
+        <th>Bit&nbsp;4</th>
+        <th>Bit&nbsp;3</th>
+        <th>Bit&nbsp;2</th>
+        <th>Bit&nbsp;1</th>
+        <th>Bit&nbsp;0</th>
+    </tr>
+    <tr>
+        <td>0</td>
+        <td>SPI_DATA</td>
+        <td align="center" colspan="8">DATA</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>SPI_CTRL</td>
+        <td align="center" colspan="6">-</td>
+        <td align="center">BUSY</td>
+        <td align="center">SELECT</td>
+    </tr>
+</table>
+
+<p>The SPI controller is connected to the SD card connector. The data rate is fixed at 12.5MHz.</p>
+<p>Start a transfer by writing to SPI_DATA. While the transfer is in progress the BUSY bit will be set. After the transfer is done, the result can be read from the SPI_DATA register.</p>
+<p>The chip select can be controlled by writing the SELECT bit. Writing 1 will assert the chip-select (logic-0) and writing 0 will release the chip-select (logic-1).</p>
+<h2 id="uart-registers">UART registers</h2>
+<table>
+    <tr>
+        <th>Register</th>
+        <th>Name</th>
+        <th>Bit&nbsp;7</th>
+        <th>Bit&nbsp;6</th>
+        <th>Bit&nbsp;5</th>
+        <th>Bit&nbsp;4</th>
+        <th>Bit&nbsp;3</th>
+        <th>Bit&nbsp;2</th>
+        <th>Bit&nbsp;1</th>
+        <th>Bit&nbsp;0</th>
+    </tr>
+    <tr>
+        <td>0</td>
+        <td>UART_DATA</td>
+        <td align="center" colspan="8">DATA</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>UART_STATUS</td>
+        <td align="center" colspan="6">-</td>
+        <td align="center">TXBUSY</td>
+        <td align="center">RXFIFO not empty</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>UART_BAUDDIV_L</td>
+        <td align="center" colspan="8">BAUDDIV (7:0)</td>
+    </tr>
+    <tr>
+        <td>3</td>
+        <td>UART_BAUDDIV_H</td>
+        <td align="center" colspan="8">BAUDDIV (15:8)</td>
+    </tr>
+</table>
+
+<p>The UART has a 512 bytes receive FIFO and a single byte transmit buffer. The BAUDDIV has to be set to select the desired baudrate. The resulting baudrate is 25000000 / (BAUDDIV+1). The default baudrate at reset is 1Mbps.</p>
+<p>Bit 0 in UART_STATUS indicates whether DATA is available. If so, data can be read by reading from UART_DATA. After this read bit 0 is updated.</p>
+<p>To send a byte, first check if TXBUSY is clear, then write the data to UART_DATA. While the UART is transmitting TXBUSY will be set.</p>
+<p>An interrupt can be generated when data is available in the RX FIFO. Use the UART bit in the VERA_IEN and VERA_ISR registers for this.</p>
+</body>
+</html>

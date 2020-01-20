@@ -1,0 +1,2 @@
+This is ACME, release 0.96.4 ("Fenchurch"), 22 Dec 2017
+  DOS/OS2/Win32 version. Compiled by Dirk Hoepfner

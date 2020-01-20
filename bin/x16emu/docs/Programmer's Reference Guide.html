@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Commander X16 Programmer's Reference Guide</title>
+  <style>
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="github-pandoc.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<h1 id="commander-x16-programmers-reference-guide">Commander X16 Programmer's Reference Guide</h1>
+<p><em>Michael Steil, <a href="mailto:mist64@mac.com">mist64@mac.com</a></em></p>
+<p><em>This is the PRELIMINARY Programmer's Reference Guide for the Commander X16 computer. Every and any information in this document can change, as the product is still in development!</em></p>
+<p><strong>Table of contents</strong></p>
+<!-- generated with https://github.com/ekalinin/github-markdown-toc -->
+
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#basic-programming">BASIC Programming</a>
+<ul>
+<li><a href="#commodore-64-compatibility">Commodore 64 Compatibility</a></li>
+<li><a href="#iso-mode">ISO Mode</a></li>
+<li><a href="#background-color">Background Color</a></li>
+<li><a href="#new-control-characters">New Control Characters</a></li>
+<li><a href="#keyboard-layouts">Keyboard Layouts</a></li>
+<li><a href="#new-statements-and-functions">New Statements and Functions</a>
+<ul>
+<li><a href="#char">CHAR</a></li>
+<li><a href="#color">COLOR</a></li>
+<li><a href="#dos">DOS</a></li>
+<li><a href="#frame">FRAME</a></li>
+<li><a href="#geos">GEOS</a></li>
+<li><a href="#joy">JOY</a></li>
+<li><a href="#line">LINE</a></li>
+<li><a href="#mon">MON</a></li>
+<li><a href="#mouse">MOUSE</a></li>
+<li><a href="#mxmymb">MX/MY/MB</a></li>
+<li><a href="#old">OLD</a></li>
+<li><a href="#pset">PSET</a></li>
+<li><a href="#rect">RECT</a></li>
+<li><a href="#reset">RESET</a></li>
+<li><a href="#screen">SCREEN</a></li>
+<li><a href="#vpeek">VPEEK</a></li>
+<li><a href="#vpoke">VPOKE</a></li>
+<li><a href="#vload">VLOAD</a></li>
+</ul></li>
+<li><a href="#other-new-features">Other New Features</a></li>
+<li><a href="#internal-representation">Internal Representation</a></li>
+</ul></li>
+<li><a href="#kernal">KERNAL</a>
+<ul>
+<li><a href="#kernal-version">KERNAL Version</a></li>
+<li><a href="#compatibility-considerations">Compatibility Considerations</a></li>
+<li><a href="#commodore-64-api-compatibility">Commodore 64 API Compatibility</a></li>
+<li><a href="#commodore-128-api-compatibility">Commodore 128 API Compatibility</a></li>
+<li><a href="#new-api-for-the-commander-x16">New API for the Commander X16</a>
+<ul>
+<li><a href="#clock">Clock</a>
+<ul>
+<li><a href="#function-name-clock_set_date_time">Function Name: clock_set_date_time</a></li>
+<li><a href="#function-name-clock_get_date_time">Function Name: clock_get_date_time</a></li>
+</ul></li>
+<li><a href="#mouse-1">Mouse</a>
+<ul>
+<li><a href="#function-name-mouse_config">Function Name: mouse_config</a></li>
+<li><a href="#function-name-mouse_get">Function Name: mouse_get</a></li>
+</ul></li>
+<li><a href="#joystick">Joystick</a>
+<ul>
+<li><a href="#function-name-joystick_scan">Function Name: joystick_scan</a></li>
+<li><a href="#function-name-joystick_get">Function Name: joystick_get</a></li>
+</ul></li>
+<li><a href="#sprites">Sprites</a>
+<ul>
+<li><a href="#function-name-sprite_set_image">Function Name: sprite_set_image</a></li>
+<li><a href="#function-name-sprite_set_position">Function Name: sprite_set_position</a></li>
+</ul></li>
+<li><a href="#framebuffer">Framebuffer</a>
+<ul>
+<li><a href="#function-name-fb_init">Function Name: FB_init</a></li>
+<li><a href="#function-name-fb_get_info">Function Name: FB_get_info</a></li>
+<li><a href="#function-name-fb_set_palette">Function Name: FB_set_palette</a></li>
+<li><a href="#function-name-fb_cursor_position">Function Name: FB_cursor_position</a></li>
+<li><a href="#function-name-fb_cursor_next_line">Function Name: FB_cursor_next_line</a></li>
+<li><a href="#function-name-fb_get_pixel">Function Name: FB_get_pixel</a></li>
+<li><a href="#function-name-fb_get_pixels">Function Name: FB_get_pixels</a></li>
+<li><a href="#function-name-fb_set_pixel">Function Name: FB_set_pixel</a></li>
+<li><a href="#function-name-fb_set_pixels">Function Name: FB_set_pixels</a></li>
+<li><a href="#function-name-fb_set_8_pixels">Function Name: FB_set_8_pixels</a></li>
+<li><a href="#function-name-fb_set_8_pixels_opaque">Function Name: FB_set_8_pixels_opaque</a></li>
+<li><a href="#function-name-fb_fill_pixels">Function Name: FB_fill_pixels</a></li>
+<li><a href="#function-name-fb_filter_pixels">Function Name: FB_filter_pixels</a></li>
+<li><a href="#function-name-fb_move_pixels">Function Name: FB_move_pixels</a></li>
+</ul></li>
+<li><a href="#graphics">Graphics</a>
+<ul>
+<li><a href="#function-name-graph_init">Function Name: GRAPH_init</a></li>
+<li><a href="#function-name-graph_clear">Function Name: GRAPH_clear</a></li>
+<li><a href="#function-name-graph_set_window">Function Name: GRAPH_set_window</a></li>
+<li><a href="#function-name-graph_set_colors">Function Name: GRAPH_set_colors</a></li>
+<li><a href="#function-name-graph_draw_line">Function Name: GRAPH_draw_line</a></li>
+<li><a href="#function-name-graph_draw_rect">Function Name: GRAPH_draw_rect</a></li>
+<li><a href="#function-name-graph_move_rect">Function Name: GRAPH_move_rect</a></li>
+<li><a href="#function-name-graph_draw_oval">Function Name: GRAPH_draw_oval</a></li>
+<li><a href="#function-name-graph_draw_image">Function Name: GRAPH_draw_image</a></li>
+<li><a href="#function-name-graph_set_font">Function Name: GRAPH_set_font</a></li>
+<li><a href="#function-name-graph_get_char_size">Function Name: GRAPH_get_char_size</a></li>
+<li><a href="#function-name-graph_put_char">Function Name: GRAPH_put_char</a></li>
+</ul></li>
+<li><a href="#console">Console</a>
+<ul>
+<li><a href="#function-name-console_init">Function Name: console_init</a></li>
+<li><a href="#function-name-console_put_char">Function Name: console_put_char</a></li>
+<li><a href="#function-name-console_get_char">Function Name: console_get_char</a></li>
+</ul></li>
+<li><a href="#other">Other</a>
+<ul>
+<li><a href="#function-name-memory_fill">Function Name: memory_fill</a></li>
+<li><a href="#function-name-memory_copy">Function Name: memory_copy</a></li>
+<li><a href="#function-name-memory_crc">Function Name: memory_crc</a></li>
+<li><a href="#function-name-memory_decompress">Function Name: memory_decompress</a></li>
+<li><a href="#function-name-monitor">Function Name: monitor</a></li>
+<li><a href="#function-name-screen_set_mode">Function Name: screen_set_mode</a></li>
+<li><a href="#function-name-screen_set_charset">Function Name: screen_set_charset</a></li>
+<li><a href="#function-name-jsrfar">Function Name: JSRFAR</a></li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li><a href="#machine-language-monitor">Machine Language Monitor</a></li>
+<li><a href="#memory-map">Memory Map</a>
+<ul>
+<li><a href="#banked-memory">Banked Memory</a></li>
+<li><a href="#rom-allocations">ROM Allocations</a></li>
+<li><a href="#ram-contents">RAM Contents</a></li>
+<li><a href="#io-area">I/O Area</a></li>
+</ul></li>
+<li><a href="#video-programming">Video Programming</a></li>
+<li><a href="#sound-programming">Sound Programming</a></li>
+<li><a href="#io-programming">I/O Programming</a></li>
+</ul>
+<h2 id="overview">Overview</h2>
+<p>The Commander X16 is a modern home computer in the philosophy of Commodore computers like the VIC-20 and the C64.</p>
+<p><strong>Features:</strong></p>
+<ul>
+<li>8-bit 65C02 CPU at 8 MHz</li>
+<li>512 KB or 2 MB RAM</li>
+<li>128 KB ROM</li>
+<li>VERA video controller
+<ul>
+<li>up to 640x480 resolution</li>
+<li>256 colors from a palette of 4096</li>
+<li>128 sprites</li>
+<li>VGA, NTSC and RGB output</li>
+</ul></li>
+<li><em>[sound controller TBD]</em></li>
+<li>Connectivity:
+<ul>
+<li>PS/2 keyboard and mouse</li>
+<li>2 NES/SNES controllers</li>
+<li>SD card</li>
+<li>Commodore Serial Bus ("IEC")</li>
+<li>several free GPIOs ("user port")</li>
+</ul></li>
+</ul>
+<p>As a modern sibling of the line of Commodore home computers, the Commander X16 is resaonably compatible with computers of that line.</p>
+<ul>
+<li>Pure BASIC programs are fully backwards compatible with the VIC-20 and the C64.</li>
+<li>POKEs for video and audio are not compatible with any Commodore computer. (There are no VIC or SID controllers, for example.)</li>
+<li>Pure machine language programs ($FF81+ KERNAL API) are compatible with Commodore computers.</li>
+</ul>
+<h2 id="basic-programming">BASIC Programming</h2>
+<h3 id="commodore-64-compatibility">Commodore 64 Compatibility</h3>
+<p>The Commander X16 BASIC interpreter is 100% backwards-compatible with the Commodore 64 one. This includes the following features:</p>
+<ul>
+<li>All statements and functions</li>
+<li>Strings, arrays, integers, floats</li>
+<li>Max. 80 character BASIC lines</li>
+<li>Printing "quote mode" control characters like cursor control and color codes, e.g.:
+<ul>
+<li><code>CHR$(147)</code>: clear screen</li>
+<li><code>CHR$(5)</code>: white text</li>
+<li><code>CHR$(18)</code>: reverse</li>
+<li><code>CHR$(14)</code>: switch to upper/lowercase font</li>
+<li><code>CHR$(142)</code>: switch to uppercase/graphics font</li>
+</ul></li>
+</ul>
+<p>Because of the differences in hardware, the following functions and statements are incompatible between C64 and X16 BASIC programs.</p>
+<ul>
+<li><code>POKE</code>: write to a memory address</li>
+<li><code>PEEK</code>: read from a memory address</li>
+<li><code>WAIT</code>: wait for memory contents</li>
+<li><code>SYS</code>: execute machine language code</li>
+</ul>
+<p>The BASIC interpreter also currently shares all problems of the C64 version, like the slow garbage collector.</p>
+<h3 id="iso-mode">ISO Mode</h3>
+<p>In addition to PETSCII, the X16 also supports the ISO-8859-15 character encoding. In ISO-8859-15 mode ("ISO mode"):</p>
+<ul>
+<li>The character set is switched from Commodore-style (with PETSCII drawing characters) to a new ASCII/ISO-8859-15 compatible set, which covers most Western European writing systems.</li>
+<li>The encoding (<code>CHR$()</code> in BASIC and <code>BSOUT</code> in machine language) now complies with ASCII and ISO-8859-15.</li>
+<li>The keyboard driver will return ASCII/ISO-8859-15 codes.</li>
+</ul>
+<p>This is the encoding:</p>
+<pre><code>   0123456789ABCDEF
+0x|                |
+1x|                |
+2x| !&quot;#$%&amp;&#39;()*+,-./|
+3x|0123456789:;&lt;=&gt;?|
+4x|@ABCDEFGHIJKLMNO|
+5x|PQRSTUVWXYZ[\]^_|
+6x|`abcdefghijklmno|
+7x|pqrstuvwxyz{|}~ |
+8x|                |
+9x|                |
+Ax| ¡¢£€¥Š§š©ª«¬ ®¯|
+Bx|°±²³Žµ¶·ž¹º»ŒœŸ¿|
+Cx|ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏ|
+Dx|ÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞß|
+Ex|àáâãäåæçèéêëìíîï|
+Fx|ðñòóôõö÷øùúûüýþÿ|
+</code></pre>
+<p>ISO mode can be enabled and disabled using two new control codes:</p>
+<ul>
+<li><code>CHR$($0F)</code>: enable ISO mode</li>
+<li><code>CHR$($8F)</code>: disable ISO mode (default)</li>
+</ul>
+<p>You can also enable ISO mode in direct mode by pressing Ctrl+<code>O</code>.</p>
+<p><strong>Important:</strong> In ISO mode, BASIC keywords need to be written in upper case, that is, they have to be entered with the Shift key down, and abbreviating keywords is no longer possible.</p>
+<h3 id="background-color">Background Color</h3>
+<p>In regular BASIC text mode, the video controller supports 16 foreground colors and 16 background colors for each character on the screen.</p>
+<p>The new "swap fg/bg color" code is useful to change the background color of the cursor, like this:</p>
+<pre><code>PRINT CHR$(1);   : REM SWAP FG/BG
+PRINT CHR$($1C); : REM SET FG COLOR TO RED
+PRINT CHR$(1);   : REM SWAP FG/BG
+</code></pre>
+<p>The new BASIC instruction <code>COLOR</code> makes this easier, but the trick above can also be used from machine code programs.</p>
+<p>To set the background color of the complete screen, it just has to be cleared after setting the color:</p>
+<pre><code>  PRINT CHR$(147);
+</code></pre>
+<h3 id="new-control-characters">New Control Characters</h3>
+<p>This is the set of all supported PETSCII control characters. Descriptions in bold indicate new codes compared to the C64:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Code</th>
+<th></th>
+<th></th>
+<th>Code</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>$00</td>
+<td>NULL</td>
+<td>-</td>
+<td>$80</td>
+</tr>
+<tr class="even">
+<td>$01</td>
+<td><strong>SWAP COLORS</strong></td>
+<td>COLOR: ORANGE</td>
+<td>$81</td>
+</tr>
+<tr class="odd">
+<td>$02 <td colspan=2 align="center"> -</td>
+<td>$82</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td>$03 <td colspan=2 align="center"> STOP/RUN</td>
+<td>$83</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>$04</td>
+<td><strong>ATTRIBUTES: UNDERLINE</strong></td>
+<td><strong>HELP</strong></td>
+<td>$84</td>
+</tr>
+<tr class="even">
+<td>$05</td>
+<td>COLOR: WHITE</td>
+<td>F1</td>
+<td>$85</td>
+</tr>
+<tr class="odd">
+<td>$06</td>
+<td><strong>ATTRIBUTES: BOLD</strong></td>
+<td>F3</td>
+<td>$86</td>
+</tr>
+<tr class="even">
+<td>$07</td>
+<td><strong>BELL</strong></td>
+<td>F5</td>
+<td>$87</td>
+</tr>
+<tr class="odd">
+<td>$08</td>
+<td><strong>BACKSPACE</strong></td>
+<td>F7</td>
+<td>$88</td>
+</tr>
+<tr class="even">
+<td>$09</td>
+<td><strong>TAB</strong></td>
+<td>F2</td>
+<td>$89</td>
+</tr>
+<tr class="odd">
+<td>$0A</td>
+<td><strong>LF</strong></td>
+<td>F4</td>
+<td>$8A</td>
+</tr>
+<tr class="even">
+<td>$0B</td>
+<td><strong>ATTRIBUTES: ITALICS</strong></td>
+<td>F6</td>
+<td>$8B</td>
+</tr>
+<tr class="odd">
+<td>$0C</td>
+<td><strong>ATTRIBUTES: OUTLINE</strong></td>
+<td>F8</td>
+<td>$8C</td>
+</tr>
+<tr class="even">
+<td>$0D <td colspan=2 align="center"> REGULAR/SHIFTED RETURN</td>
+<td>$8D</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>$0E <td colspan=2 align="center"> CHARSET: LOWER/UPPER CASE</td>
+<td>$8E</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td>$0F <td colspan=2 align="center"> <strong>CHARSET: ISO ON/OFF</strong></td>
+<td>$8F</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>$10</td>
+<td><strong>F9</strong></td>
+<td>COLOR: BLACK</td>
+<td>$90</td>
+</tr>
+<tr class="even">
+<td>$11 <td colspan=2 align="center"> CURSOR: DOWN/UP</td>
+<td>$91</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>$12</td>
+<td>ATTRIBUTES: REVERSE</td>
+<td>ATTRIBUTES: CLEAR ALL</td>
+<td>$92</td>
+</tr>
+<tr class="even">
+<td>$13 <td colspan=2 align="center"> HOME/CLEAR</td>
+<td>$93</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>$14 <td colspan=2 align="center"> DEL/INSERT</td>
+<td>$94</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td>$15</td>
+<td><strong>F10</strong></td>
+<td>COLOR: BROWN</td>
+<td>$95</td>
+</tr>
+<tr class="odd">
+<td>$16</td>
+<td><strong>F11</strong></td>
+<td>COLOR: LIGHT RED</td>
+<td>$96</td>
+</tr>
+<tr class="even">
+<td>$17</td>
+<td><strong>F12</strong></td>
+<td>COLOR: DARK GRAY</td>
+<td>$97</td>
+</tr>
+<tr class="odd">
+<td>$18</td>
+<td><strong>SHIFT+TAB</strong></td>
+<td>COLOR: MIDDLE GRAY</td>
+<td>$98</td>
+</tr>
+<tr class="even">
+<td>$19</td>
+<td>-</td>
+<td>COLOR: LIGHT GREEN</td>
+<td>$99</td>
+</tr>
+<tr class="odd">
+<td>$1A</td>
+<td>-</td>
+<td>COLOR: LIGHT BLUE</td>
+<td>$9A</td>
+</tr>
+<tr class="even">
+<td>$1B</td>
+<td>-</td>
+<td>COLOR: LIGHT GRAY</td>
+<td>$9B</td>
+</tr>
+<tr class="odd">
+<td>$1C</td>
+<td>COLOR: RED</td>
+<td>COLOR: PURPLE</td>
+<td>$9C</td>
+</tr>
+<tr class="even">
+<td>$1D</td>
+<td>CURSOR: RIGHT</td>
+<td>CURSOR: LEFT</td>
+<td>$9D</td>
+</tr>
+<tr class="odd">
+<td>$1E</td>
+<td>COLOR: GREEN</td>
+<td>COLOR: YELLOW</td>
+<td>$9E</td>
+</tr>
+<tr class="even">
+<td>$1F</td>
+<td>COLOR: BLUE</td>
+<td>COLOR: CYAN</td>
+<td>$9F</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Notes:</strong></p>
+<ul>
+<li>$01: SWAP COLORS swaps the foreground and background colors in text mode</li>
+<li>$04/$06/$0B/$0C: the new attribute change codes only have an effect in graphics mode</li>
+<li>$07/$08/$09/$0A/$18: have been added for ASCII compatibility <em>[NYI]</em></li>
+<li>$08/$09: Charset switch enable/disable not supported</li>
+<li>F9-F12, HELP: these codes match the C65 additions</li>
+</ul>
+<h3 id="keyboard-layouts">Keyboard Layouts</h3>
+<p>Pressing the <code>F9</code> key cycles through the available keyboard layouts.</p>
+<h3 id="new-statements-and-functions">New Statements and Functions</h3>
+<p>There are several new statement and functions. Note that all BASIC keywords (such as <code>FOR</code>) get converted into tokens (such as <code>$81</code>), and the tokens for the new keywords have not been finalized yet. Therefore, loading BASIC program saved from a different revision of BASIC may mix up keywords.</p>
+<h4 id="char">CHAR</h4>
+<p><strong>TYPE: Command</strong> <strong>FORMAT: CHAR &lt;x&gt;,&lt;y&gt;,&lt;color&gt;,&lt;string&gt;</strong></p>
+<p><strong>Action:</strong> This command draws a text string on the graphics screen in a given color.</p>
+<p>The string can contain printable ASCII characters (<code>CHR$($20)</code> to <code>CHR$($7E)</code>), as well most PETSCII control codes.</p>
+<p><strong>EXAMPLE of CHAR Statement:</strong></p>
+<pre><code>10 SCREEN$80
+20 A$=&quot;The quick brown fox jumps over the lazy dog.&quot;
+24 CHAR0,6,0,A$
+30 CHAR0,6+12,0,CHR$($04)+A$   :REM UNDERLINE
+40 CHAR0,6+12*2,0,CHR$($06)+A$ :REM BOLD
+50 CHAR0,6+12*3,0,CHR$($0B)+A$ :REM ITALICS
+60 CHAR0,6+12*4,0,CHR$($0C)+A$ :REM OUTLINE
+70 CHAR0,6+12*5,0,CHR$($12)+A$ :REM REVERSE
+</code></pre>
+<h4 id="color">COLOR</h4>
+<p><strong>TYPE: Command</strong> <strong>FORMAT: COLOR &lt;fgcol&gt;[,&lt;bgcol&gt;]</strong></p>
+<p><strong>Action:</strong> This command works sets the text mode foreground color, and optionally the background color.</p>
+<p><strong>EXAMPLES of COLOR Statement:</strong></p>
+<pre><code>  COLOR 2   : SET FG COLOR TO RED, KEEP BG COLOR
+  COLOR 2,0 : SET FG COLOR TO RED, BG COLOR TO BLACK
+</code></pre>
+<h4 id="dos">DOS</h4>
+<p><strong>TYPE: Command</strong> <strong>FORMAT: DOS &lt;string&gt;</strong></p>
+<p><strong>Action:</strong> This command works with the command/status channel or the directory of a Commodore DOS device and has different functionality depending on the type of argument.</p>
+<ul>
+<li>Without an argument, <code>DOS</code> prints the status string of the current device.</li>
+<li>With a string argument of <code>"8"</code> or <code>"9"</code>, it switches the current device to the given number.</li>
+<li>With an argument starting with <code>"$"</code>, it shows the directory of the device.</li>
+<li>Any other argument will be sent as a DOS command.</li>
+</ul>
+<p><strong>EXAMPLES of DOS Statement:</strong></p>
+<pre><code>  DOS&quot;$&quot;          : REM SHOWS DIRECTORY
+  DOS&quot;S:BAD_FILE&quot; : REM DELETES &quot;BAD_FILE&quot;
+  DOS             : REM PRINTS DOS STATUS, E.G. &quot;01,FILES SCRATCHED,01,00&quot;
+</code></pre>
+<h4 id="frame">FRAME</h4>
+<p><strong>TYPE: Command</strong> <strong>FORMAT: FRAME &lt;x1&gt;,&lt;y1&gt;,&lt;x2&gt;,&lt;y2&gt;,&lt;color&gt;</strong></p>
+<p><strong>Action:</strong> This command draws a rectangle frame on the graphics screen in a given color.</p>
+<p><strong>EXAMPLE of FRAME Statement:</strong></p>
+<pre><code>10 SCREEN$80
+20 FORI=1TO20:FRAMERND(1)*320,RND(1)*200,RND(1)*320,RND(1)*200,RND(1)*128:NEXT
+30 GOTO20
+</code></pre>
+<h4 id="geos">GEOS</h4>
+<p><strong>TYPE: Command</strong> <strong>FORMAT: GEOS</strong></p>
+<p><strong>Action:</strong> Enter the GEOS UI.</p>
+<h4 id="joy">JOY</h4>
+<p><strong>TYPE: Integer Function</strong> <strong>FORMAT: JOY(n)</strong></p>
+<p><strong>Action:</strong> Return the state a joystick.</p>
+<p><code>JOY(1)</code> returns the state the first joystick, and <code>JOY(2)</code> the state of the second joystick. The result is a bit field, with pressed buttons <code>OR</code>ed together:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Value</th>
+<th>NES</th>
+<th>SNES</th>
+<th>Keyboard</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>$80</td>
+<td>A</td>
+<td>B</td>
+<td>Ctrl</td>
+</tr>
+<tr class="even">
+<td>$40</td>
+<td>B</td>
+<td>Y</td>
+<td>Alt</td>
+</tr>
+<tr class="odd">
+<td>$20</td>
+<td>SELECT</td>
+<td>SELECT</td>
+<td>Space</td>
+</tr>
+<tr class="even">
+<td>$10</td>
+<td>START</td>
+<td>START</td>
+<td>Enter</td>
+</tr>
+<tr class="odd">
+<td>$08</td>
+<td>UP</td>
+<td>UP</td>
+<td>Cursor Up</td>
+</tr>
+<tr class="even">
+<td>$04</td>
+<td>DOWN</td>
+<td>DOWN</td>
+<td>Cursor Down</td>
+</tr>
+<tr class="odd">
+<td>$02</td>
+<td>LEFT</td>
+<td>LEFT</td>
+<td>Cursor Left</td>
+</tr>
+<tr class="even">
+<td>$01</td>
+<td>RIGHT</td>
+<td>RIGHT</td>
+<td>Cursor Right</td>
+</tr>
+</tbody>
+</table>
+<p><strong>EXAMPLE of JOY Function:</strong></p>
+<pre><code>10 J=JOY(1)
+20 PRINT CHR$(147);J;&quot;: &quot;;
+30 IF J AND 8 THEN PRINT&quot;UP &quot;;
+40 IF J AND 4 THEN PRINT&quot;DOWN &quot;;
+50 IF J AND 2 THEN PRINT&quot;LEFT &quot;;
+60 IF J AND 1 THEN PRINT&quot;RIGHT &quot;;
+70 GOTO10
+</code></pre>
+<h4 id="line">LINE</h4>
+<p><strong>TYPE: Command</strong> <strong>FORMAT: LINE &lt;x1&gt;,&lt;y1&gt;,&lt;x2&gt;,&lt;y2&gt;,&lt;color&gt;</strong></p>
+<p><strong>Action:</strong> This command draws a line on the graphics screen in a given color.</p>
+<p><strong>EXAMPLE of LINE Statement:</strong></p>
+<pre><code>10 SCREEN128
+20 FORA=0TO2*\XFFSTEP2*\XFF/200
+30 LINE100,100,100+SIN(A)*100,100+COS(A)*100
+40 NEXT
+</code></pre>
+<h4 id="mon">MON</h4>
+<p><strong>TYPE: Command</strong> <strong>FORMAT: MON (Alternative: MONITOR)</strong></p>
+<p><strong>Action:</strong> This command enters the machine language monitor. See the dedicated chapter for a description.</p>
+<p><strong>EXAMPLE of MON Statement:</strong></p>
+<pre><code>  MON
+  MONITOR
+</code></pre>
+<h4 id="mouse">MOUSE</h4>
+<p><strong>TYPE: Command</strong> <strong>FORMAT: MOUSE &lt;mode&gt;</strong></p>
+<p><strong>Action:</strong> This command configures the mouse pointer.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Mode</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>Hide mouse</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>Show mouse, set default mouse pointer</td>
+</tr>
+<tr class="odd">
+<td>$FF</td>
+<td>Show mouse, don't configure mouse cursor</td>
+</tr>
+</tbody>
+</table>
+<p><code>MOUSE 1</code> turns on the mouse pointer and <code>MOUSE 0</code> turns it off. If the BASIC program has its own mouse pointer sprite configured, it can use <code>MOUSE $FF</code>, which will turn the mouse pointer on, but not set the default pointer sprite.</p>
+<p><strong>EXAMPLES of MOUSE Statement:</strong></p>
+<pre><code>MOUSE 1 : REM ENABLE MOUSE
+MOUSE 0 : REM DISABLE MOUSE
+</code></pre>
+<h4 id="mxmymb">MX/MY/MB</h4>
+<p><strong>TYPE: Integer Function</strong> <strong>FORMAT: MX</strong> <strong>FORMAT: MY</strong> <strong>FORMAT: MB</strong></p>
+<p><strong>Action:</strong> Return the horizontal (<code>MX</code>) or vertical (<code>MY</code>) position of the mouse pointer, or the mouse button state (<code>MB</code>).</p>
+<p><code>MB</code> returns the sum of the following values depending on the state of the buttons:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Value</th>
+<th>Button</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>none</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>left</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>right</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>third</td>
+</tr>
+</tbody>
+</table>
+<p><strong>EXAMPLE of MX/MY/MB Functions:</strong></p>
+<pre><code>REM SIMPLE DRAWING PROGRAM
+10 SCREEN$80
+20 MOUSE1
+25 OB=0
+30 TX=MX:TY=MY:TB=MB
+35 IFTB=0GOTO25
+40 IFOBTHENLINEOX,OY,TX,TY,16
+50 IFOB=0THENPSETTX,TY,16
+60 OX=TX:OY=TY:OB=TB
+70 GOTO30
+</code></pre>
+<h4 id="old">OLD</h4>
+<p><strong>TYPE: Command</strong> <strong>FORMAT: OLD</strong></p>
+<p><strong>Action:</strong> This command recovers the BASIC program in RAM that has been previously deleted using the <code>NEW</code> command or through a RESET.</p>
+<p><strong>EXAMPLE of OLD Statement:</strong></p>
+<pre><code>  OLD
+</code></pre>
+<h4 id="pset">PSET</h4>
+<p><strong>TYPE: Command</strong> <strong>FORMAT: PSET &lt;x&gt;,&lt;y&gt;,&lt;color&gt;</strong></p>
+<p><strong>Action:</strong> This command sets a pixel on the graphics screen to a given color.</p>
+<p><strong>EXAMPLE of PSET Statement:</strong></p>
+<pre><code>10 SCREEN$80
+20 FORI=1TO20:PSETRND(1)*320,RND(1)*200,RND(1)*256:NEXT
+30 GOTO20
+</code></pre>
+<h4 id="rect">RECT</h4>
+<p><strong>TYPE: Command</strong> <strong>FORMAT: RECT &lt;x1&gt;,&lt;y1&gt;,&lt;x2&gt;,&lt;y2&gt;,&lt;color&gt;</strong></p>
+<p><strong>Action:</strong> This command draws a solid rectangle on the graphics screen in a given color.</p>
+<p><strong>EXAMPLE of RECT Statement:</strong></p>
+<pre><code>10 SCREEN$80
+20 FORI=1TO20:RECTRND(1)*320,RND(1)*200,RND(1)*320,RND(1)*200,RND(1)*256:NEXT
+30 GOTO20
+</code></pre>
+<h4 id="reset">RESET</h4>
+<p><strong>TYPE: Command</strong> <strong>FORMAT: RESET</strong></p>
+<p><strong>Action:</strong> Performs a software reset of the system.</p>
+<p><strong>EXAMPLE of RESET Statement:</strong></p>
+<pre><code>RESET
+</code></pre>
+<h4 id="screen">SCREEN</h4>
+<p><strong>TYPE: Command</strong> <strong>FORMAT: SCREEN &lt;mode&gt;</strong></p>
+<p><strong>Action:</strong> This command switches the screen mode. Modes $80 (128) and above are graphics modes.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Mode</th>
+<th>Description</th>
+<th>Comment</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>$00</td>
+<td>40x30 text</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>$01</td>
+<td>80x30 text</td>
+<td>(currently unsupported)</td>
+</tr>
+<tr class="odd">
+<td>$02</td>
+<td>80x60 text</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>$80</td>
+<td>320x200@256c<br/>40x25 text</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>$81</td>
+<td>640x400@16c</td>
+<td>(currently unsupported)</td>
+</tr>
+</tbody>
+</table>
+<p>The value of $FF (255) toggles between modes $00 and $02.</p>
+<h4 id="vpeek">VPEEK</h4>
+<p><strong>TYPE: Integer Function</strong> <strong>FORMAT: VPEEK (&lt;bank&gt;, &lt;address&gt;)</strong></p>
+<p><strong>Action:</strong> Return a byte from the video address space. The video address space has 20 bit addresses, which is exposed as 16 banks of 65536 addresses each.</p>
+<p><strong>EXAMPLE of VPEEK Function:</strong></p>
+<pre><code>  PRINT (VPEEK($F,$2000) AND $E0) / 32 : REM PRINTS THE CURRENT MODE (0-7)
+</code></pre>
+<h4 id="vpoke">VPOKE</h4>
+<p><strong>TYPE: Command</strong> <strong>FORMAT: VPOKE &lt;bank&gt;, &lt;address&gt;, &lt;value&gt;</strong></p>
+<p><strong>Action:</strong> Set a byte in the video address space. The video address space has 20 bit addresses, which is exposed as 16 banks of 65536 addresses each.</p>
+<p><strong>EXAMPLE of VPOKE Statement:</strong></p>
+<pre><code>  VPOKE 0,1,1 * 16 + 2 : REM SETS THE COLORS OF THE CHARACTER
+                         REM AT 0/0 TO RED ON WHITE
+</code></pre>
+<h4 id="vload">VLOAD</h4>
+<p><em>TODO</em></p>
+<h3 id="other-new-features">Other New Features</h3>
+<p>The numeric constants parser supports both hex (<code>$</code>) and binary (<code>%</code>) literals, like this:</p>
+<pre><code>  PRINT $EA31 + %1010
+</code></pre>
+<p>The size of hex and binary values is only restricted by the range that can be represented by BASIC's internal floating point representation.</p>
+<p>In BASIC, both an 80x60 and a 40x30 character text mode is supported. To switch modes, use the BASIC statement <code>SCREEN</code>:</p>
+<pre><code>  SCREEN 0 : REM SWITCH TO 40 CHARACTER MODE
+  SCREEN 2 : REM SWITCH TO 80 CHARACTER MODE
+  SCREEN 255 : REM SWITCH BETWEEN 40 and 80 CHARACTER MODE
+</code></pre>
+<p>In BASIC, the contents of files can be directly loaded into VRAM with the <code>LOAD</code> statement. When a secondary address greater than one is used, the KERNAL will now load the file into the VERA's VRAM address space. The first two bytes of the file are used as lower 16 bits of the address. The upper 4 bits are <code>(SA-2) &amp; 0x0ff</code> where <code>SA</code> is the secondary address.</p>
+<p>Examples:</p>
+<pre><code>  10 REM LOAD VERA SETTINGS
+  20 LOAD&quot;VERA.BIN&quot;,1,17 : REM SET ADDRESS TO $FXXXX
+  30 REM LOAD TILES
+  40 LOAD&quot;TILES.BIN&quot;,1,3 : REM SET ADDRESS TO $1XXXX
+  50 REM LOAD MAP
+  60 LOAD&quot;MAP.BIN&quot;,1,2 : REM SET ADDRESS TO $0XXXX
+</code></pre>
+<h3 id="internal-representation">Internal Representation</h3>
+<p>Like on the C64, BASIC keywords are tokenized.</p>
+<ul>
+<li>The C64 BASIC V2 keywords occupy the range of $80 (<code>END</code>) to $CB (<code>GO</code>).</li>
+<li>BASIC V3.5 also used $CE (<code>RGR</code>) to $FD (<code>WHILE</code>).</li>
+<li>BASIC V7 introduced the $CE escape code for function tokens $CE-$02 (<code>POT</code>) to $CE-$0A (<code>POINTER</code>), and the $FE escape code for statement tokens $FE-$02 (<code>BANK</code>) to $FE-$38 (<code>SLOW</code>).</li>
+<li>The unreleased BASIC V10 extended the escaped tokens up to $CE-$0D (<code>RPALETTE</code>) and $FE-$45 (<code>EDIT</code>).</li>
+</ul>
+<p>The X16 BASIC aims to be as compatible as possible with this encoding. Keywords added to X16 BASIC that also exist in other versions of BASIC match the token, and new keywords are encoded in the ranges $CE-$80+ and $FE-$80+.</p>
+<h2 id="kernal">KERNAL</h2>
+<p>The Commander X16 contains a version of KERNAL as its operating system in ROM. It contains</p>
+<ul>
+<li>a 40/80 character screen driver</li>
+<li>a PS/2 keyboard driver</li>
+<li>a PS/2 mouse driver</li>
+<li>an NES/SNES controller driver</li>
+<li>a Commodore Serial Bus ("IEC") driver <em>[not yet working]</em></li>
+<li>an RS-232 driver <em>[not yet working]</em></li>
+<li>"Channel I/O" for abstracting devices</li>
+<li>simple memory management</li>
+<li>timekeeping</li>
+</ul>
+<h3 id="kernal-version">KERNAL Version</h3>
+<p>The KERNAL version can be read from location $FF80 in ROM. A value of $FF indicates a custom build. All other values encode the build number. Positive numbers are release versions ($02 = release version 2), two's complement negative numbers are prerelease versions ($FE = $100 - 2 = prerelease version 2).</p>
+<h3 id="compatibility-considerations">Compatibility Considerations</h3>
+<p>For applications to remain compatible between different versions of the ROM, they can rely upon:</p>
+<ul>
+<li>the KERNAL API</li>
+</ul>
+<p>The following features must not be relied upon:</p>
+<ul>
+<li>the zero page and $0200+ memory layout</li>
+<li>direct function offsets in the ROM</li>
+</ul>
+<h3 id="commodore-64-api-compatibility">Commodore 64 API Compatibility</h3>
+<p>The KERNAL fully supports the C64 KERNAL API.</p>
+<p><strong>Channel I/O:</strong> $FF90: <code>SETMSG</code> – set verbosity $FFB7: <code>READST</code> – return status byte $FFBA: <code>SETLFS</code> – set LA, FA and SA $FFBD: <code>SETNAM</code> – set filename $FFC0: <code>OPEN</code> – open a channel $FFC3: <code>CLOSE</code> – close a channel $FFC6: <code>CHKIN</code> – set channel for character input $FFC9: <code>CHKOUT</code> – set channel for character output $FFCC: <code>CLRCHN</code> – restore character I/O to screen/keyboard $FFCF: <code>BASIN</code> – get character $FFD2: <code>BSOUT</code> – write character $FFD5: <code>LOAD</code> – load a file into memory $FFD8: <code>SAVE</code> – save a file from memory $FFE7: <code>CLALL</code> – close all channels</p>
+<p><strong>Commodore Peripheral Bus:</strong> $FFB4: <code>TALK</code> – send TALK command $FFB1: <code>LISTEN</code> – send LISTEN command $FFAE: <code>UNLSN</code> – send UNLISTEN command $FFAB: <code>UNTLK</code> – send UNTALK command $FFA8: <code>IECOUT</code> – send byte to serial bus $FFA5: <code>IECIN</code> – read byte from serial bus $FFA2: <code>SETTMO</code> – set timeout $FF96: <code>TKSA</code> – send TALK secondary address $FF93: <code>SECOND</code> – send LISTEN secondary address</p>
+<p><strong>Memory:</strong> $FF9C: <code>MEMBOT</code> – read/write address of start of usable RAM $FF99: <code>MEMTOP</code> – read/write address of end of usable RAM</p>
+<p><strong>Time:</strong> $FFDE: <code>RDTIM</code> – read system clock $FFDB: <code>SETTIM</code> – write system clock $FFEA: <code>UDTIM</code> – advance clock</p>
+<p><strong>Other:</strong> $FFE1: <code>STOP</code> – test for STOP key $FFE4: <code>GETIN</code> – get character from keyboard $FFED: <code>SCREEN</code> – get the screen resolution $FFF0: <code>PLOT</code> – read/write cursor position $FFF3: <code>IOBASE</code> – return start of I/O area</p>
+<p>Some notes:</p>
+<ul>
+<li>For device #8, the Commodore Peripheral Bus calls first talk to the "Computer DOS" built into the ROM to detect an SD card, before falling back to the Commodore Serial Bus.</li>
+<li>The <code>IOBASE</code> call returns $9F60, the location of the first VIA controller.</li>
+<li>The <code>SETTMO</code> call has been a no-op since the Commodore VIC-20, and has no function on the X16 either.</li>
+<li>The <code>RAMTAS</code> call additionally returns the number of available RAM banks in the .A register.</li>
+<li>The layout of the zero page ($0000-$00FF) and the KERNAL/BASIC variable space ($0200+) are generally <strong>not</strong> compatible with the C64.</li>
+<li>The vectors ($0300-$0333) are fully compatible with the C64.</li>
+</ul>
+<h3 id="commodore-128-api-compatibility">Commodore 128 API Compatibility</h3>
+<p>In addition, the X16 supports a subset of the C128 API additions:</p>
+<p>$FF4A: <code>CLOSE_ALL</code> – close all files on a device $FF8D: <code>LKUPLA</code> – search tables for given LA $FF8A: <code>LKUPSA</code> – search tables for given SA $FF62: <code>DLCHR</code> - activate a text mode font in the video hardware <em>[not yet implemented]</em> $FF65: <code>PFKEY</code> – program a function key <em>[not yet implemented]</em> $FF74: <code>FETCH</code> – LDA (fetvec),Y from any bank $FF77: <code>STASH</code> – STA (stavec),Y to any bank $FF7A: <code>CMPARE</code> – CMP (cmpvec),Y to any bank $FF7D: <code>PRIMM</code> – print string following the caller’s code</p>
+<p>Some notes:</p>
+<ul>
+<li><code>FETCH</code>, <code>STASH</code> and <code>CMPARE</code> require the caller to set the zero page location containing the address in memory beforehand. These are different than on the C128:</li>
+</ul>
+<table>
+<thead>
+<tr class="header">
+<th>Call</th>
+<th>Label</th>
+<th>Address</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>FETCH</code></td>
+<td><code>FETVEC</code></td>
+<td>$03AF</td>
+</tr>
+<tr class="even">
+<td><code>STASH</code></td>
+<td><code>STAVEC</code></td>
+<td>$XXXX</td>
+</tr>
+<tr class="odd">
+<td><code>CMPARE</code></td>
+<td><code>CMPVEC</code></td>
+<td>$XXXX</td>
+</tr>
+</tbody>
+</table>
+<p><em>[Note: <code>STASH</code> and <code>CMPARE</code> are currently non-functional.]</em></p>
+<h3 id="new-api-for-the-commander-x16">New API for the Commander X16</h3>
+<p>There are lots of new APIs. Please note that their addresses and their behavior is still prelimiary and can change between revisions.</p>
+<p>Some new APIs use the "16 bit" ABI, which uses virtual 16 bit registers r0 through r15, which are located in zero page locations $02 through $21: r0 = r0L = $02, r0H = $03, r1 = r1L = $04 etc. (The registers start at $02 instead of $00 to allow compatiblility with 65xx systems that have a processor port at $00/$01.)</p>
+<p>The 16 bit ABI generally follows the following conventions:</p>
+<ul>
+<li>arguments
+<ul>
+<li>word-sized arguments: passed in r0-r5</li>
+<li>byte-sized arguments: if three or less, passed in .A, .X, .Y; otherwise in 16 bit registers</li>
+<li>boolean arguments: .C, .N</li>
+</ul></li>
+<li>return values
+<ul>
+<li>basic rules as above</li>
+<li>function takes no arguments: r0-r5, else indirect through passed-in pointer</li>
+<li>arguments in r0-r5 can be "inout", i.e. they can be updated</li>
+</ul></li>
+<li>saved/scratch registers
+<ul>
+<li>r0-r5: arguments (saved)</li>
+<li>r6-r10: saved</li>
+<li>r11-r15: scratch</li>
+<li>.A, .X, .Y, .C, .N: scratch (unless used otherwise)</li>
+</ul></li>
+</ul>
+<h4 id="clock">Clock</h4>
+<p>$FF4D: <code>clock_set_date_time</code> - set date and time $FF50: <code>clock_get_date_time</code> - get date and time</p>
+<h5 id="function-name-clock_set_date_time">Function Name: clock_set_date_time</h5>
+<p>Purpose: Set the date and time Call address: $FF4D Communication registers: r0, r1, r2, r3L Preparatory routines: None Error returns: None Stack requirements: 0 Registers affected: .A, .X, .Y</p>
+<p><strong>Description:</strong> The routine <code>clock_set_date_time</code> sets the system's real-time-clock.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Register</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>r0L</td>
+<td>year (1900-based)</td>
+</tr>
+<tr class="even">
+<td>r0H</td>
+<td>month (1-12)</td>
+</tr>
+<tr class="odd">
+<td>r1L</td>
+<td>day (1-31)</td>
+</tr>
+<tr class="even">
+<td>r1H</td>
+<td>hours (0-23)</td>
+</tr>
+<tr class="odd">
+<td>r2L</td>
+<td>minutes (0-59)</td>
+</tr>
+<tr class="even">
+<td>r2H</td>
+<td>seconds (0-59)</td>
+</tr>
+<tr class="odd">
+<td>r3L</td>
+<td>jiffies (0-59)</td>
+</tr>
+</tbody>
+</table>
+<p>Jiffies are 1/60th seconds.</p>
+<h5 id="function-name-clock_get_date_time">Function Name: clock_get_date_time</h5>
+<p>Purpose: Get the date and time Call address: $FF50 Communication registers: r0, r1, r2, r3L Preparatory routines: None Error returns: None Stack requirements: 0 Registers affected: .A, .X, .Y</p>
+<p><strong>Description:</strong> The routine <code>clock_get_date_time</code> returns the state of the system's real-time-clock. The register assignment is identical to <code>clock_set_date_time</code>.</p>
+<h4 id="mouse-1">Mouse</h4>
+<p>$FF68: <code>mouse_config</code> - configure mouse pointer $FF6B: <code>mouse_get</code> - get state of mouse</p>
+<h5 id="function-name-mouse_config">Function Name: mouse_config</h5>
+<p>Purpose: Configure the mouse pointer Call address: $FF68 Communication registers: .A, .X Preparatory routines: None Error returns: None Stack requirements: 0 Registers affected: .A, .X, .Y</p>
+<p><strong>Description:</strong> The routine <code>mouse_config</code> configures the mouse pointer.</p>
+<p>The argument in .A specifies whether the mouse pointer should be visible or not, and what shape it should have. For a list of possible values, see the basic statement <code>MOUSE</code>.</p>
+<p>The argument in .X specifies the scale. Use a scale of 1 for a 640x480 screen, and a scale of 2 for a 320x240 screen. A value of 0 does not change the scale.</p>
+<p><strong>EXAMPLE:</strong></p>
+<pre><code>LDA #1
+JSR mouse_config ; show the default mouse pointer
+</code></pre>
+<h5 id="function-name-mouse_get">Function Name: mouse_get</h5>
+<p>Purpose: Get the mouse state Call address: $FF6B Communication registers: .X Preparatory routines: <code>mouse_config</code> Error returns: None Stack requirements: 0 Registers affected: .A</p>
+<p><strong>Description:</strong> The routine <code>mouse_get</code> returns the state of the mouse. The caller passes the offset of a zero-page location in .X, which the routine will populate with the mouse position in 4 consecutive bytes:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Offset</th>
+<th>Size</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>2</td>
+<td>X Position</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>2</td>
+<td>Y Position</td>
+</tr>
+</tbody>
+</table>
+<p>The state of the mouse buttons is returned in the .A register:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Bit</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>Left Button</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>Right Button</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>Middle Button</td>
+</tr>
+</tbody>
+</table>
+<p>If a button is pressed, the corresponding bit is set.</p>
+<p><strong>EXAMPLE:</strong></p>
+<pre><code>LDX #$70
+JSR mouse_get ; get mouse position in $70/$71 (X) and $72/$73 (Y)
+AND #1
+BNE BUTTON_PRESSED
+</code></pre>
+<h4 id="joystick">Joystick</h4>
+<p>$FF53: <code>joystick_scan</code> - query joysticks $FF56: <code>joystick_get</code> - get state of one joystick</p>
+<h5 id="function-name-joystick_scan">Function Name: joystick_scan</h5>
+<p>Purpose: Query the joysticks and save their state Call address: $FF53 Communication registers: None Preparatory routines: None Error returns: None Stack requirements: 0 Registers affected: .A, .X, .Y</p>
+<p><strong>Description:</strong> The routine <code>joystick_scan</code> retrieves all state from the two joysticks and saves it. It can then be retrieved using <code>joystick_get</code>. The default interrupt handler already takes care of this, so this routine should only be called if the interrupt handler has been completely replaced.</p>
+<h5 id="function-name-joystick_get">Function Name: joystick_get</h5>
+<p>Purpose: Get the state of one of the joysticks Call address: $FF56 Communication registers: .A Preparatory routines: <code>joystick_scan</code> Error returns: None Stack requirements: 0 Registers affected: .A, .X, .Y</p>
+<p><strong>Description:</strong> The routine <code>joystick_get</code> retrieves all state from one of the joysticks. The number of the joystick is passed in .A (0 or 1), and the state is returned in .A, .X and .Y.</p>
+<pre><code>  .A, byte 0:      | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+              NES  | A | B |SEL|STA|UP |DN |LT |RT |
+              SNES | B | Y |SEL|STA|UP |DN |LT |RT |
+
+  .X, byte 1:      | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+              NES  | 0 | 0 | 0 | 0 | 0 | 0 | 0 | X |
+              SNES | A | X | L | R | 1 | 1 | 1 | 1 |
+  .Y, byte 2:
+              $00 = joystick present
+              $FF = joystick not present
+</code></pre>
+<p>If joystick 1 is not present, it will fall back to returning the state of the keyboard, if present:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Keyboard Key</th>
+<th>NES Equivalent</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Ctrl</td>
+<td>A</td>
+</tr>
+<tr class="even">
+<td>Alt</td>
+<td>B</td>
+</tr>
+<tr class="odd">
+<td>Space</td>
+<td>SELECT</td>
+</tr>
+<tr class="even">
+<td>Enter</td>
+<td>START</td>
+</tr>
+<tr class="odd">
+<td>Cursor Up</td>
+<td>UP</td>
+</tr>
+<tr class="even">
+<td>Cursor Down</td>
+<td>DOWN</td>
+</tr>
+<tr class="odd">
+<td>Cursor Left</td>
+<td>LEFT</td>
+</tr>
+<tr class="even">
+<td>Cursor Right</td>
+<td>RIGHT</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Presence of a joystick can be detected by checking byte 2.</li>
+<li>The type of controller is encoded in bits 0-3 in byte 1:</li>
+</ul>
+<table>
+<thead>
+<tr class="header">
+<th>Value</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0000</td>
+<td>NES</td>
+</tr>
+<tr class="even">
+<td>0001</td>
+<td>keyboard (NES-like)</td>
+</tr>
+<tr class="odd">
+<td>1111</td>
+<td>SNES</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>If a button is pressed, the corresponding bit is zero.</li>
+<li>Note that bits 6 and 7 in byte 0 map to different buttons on NES and SNES.</li>
+</ul>
+<p><strong>How to Use:</strong></p>
+<p>If the default interrupt handler is used:</p>
+<ol>
+<li>Call this routine.</li>
+</ol>
+<p>If the default interrupt handler is disabled or replaced:</p>
+<ol>
+<li>Call <code>joystick_scan</code> to have the system query the joysticks.</li>
+<li>Call this routine.</li>
+</ol>
+<p><strong>EXAMPLE:</strong></p>
+<pre><code>  JSR joystick_scan
+  LDA #0
+  JSR joystick_get
+  AND #128
+  BEQ NES_A_PRESSED
+</code></pre>
+<h4 id="sprites">Sprites</h4>
+<p>$FEF0: <code>sprite_set_image</code> - set the image of a sprite $FEF3: <code>sprite_set_position</code> - set the position of a sprite</p>
+<h5 id="function-name-sprite_set_image">Function Name: sprite_set_image</h5>
+<p>Purpose: Set the image of a sprite Call address: $FEF0 Signature: bool sprite_set_image(byte number: .a, width: .x, height: .y, apply_mask: .c, word pixels: r0, word mask: r1, byte bpp: r2L); Error returns: .C = 1 in case of error</p>
+<p><strong>Description:</strong> This function sets the image of a sprite. The number of the sprite is given in .A, The bits per pixel (bpp) in r2L, and the width and height in .X and .Y. The pixel data at r0 is interpreted accordingly and converted into the graphics hardware's native format. If the .C flag is set, the transparency mask pointed to by r1 is applied during the conversion. The function returns .C = 0 if converting the data was successful, and .C = 1 otherwise. Note that this does not change the visibility of the sprite.</p>
+<p><strong>Note</strong>: There are certain limitations on the possible values of width, height, bpp and apply_mask:</p>
+<ul>
+<li>width and height may not exceed the hardware's capabilities.</li>
+<li>Legal values for bpp are 1, 4 and 8. If the hardware only supports lower depths, the image data is converted down.</li>
+<li>apply_mask is only valid for 1 bpp data.</li>
+</ul>
+<h5 id="function-name-sprite_set_position">Function Name: sprite_set_position</h5>
+<p>Purpose: Set the the position of a sprite or hide it. Call address: $FEF3 Signature: void sprite_set_position(byte number: .a, word x: r0, word y: r1); Error returns: None</p>
+<p><strong>Description:</strong> This function shows a given sprite (.A) at a certain position or hides it. The position is passed in r0 and r1. If the x position is negative (&gt;$8000), the sprite will be hidden.</p>
+<h4 id="framebuffer">Framebuffer</h4>
+<p>The framebuffer API is a low-level graphics API that completely abstracts the framebuffer by exposing a minimal set of high-performance functions. It is useful as an abstraction and as a convenience library for applications that need high performance framebuffer access.</p>
+<p>$FEF6: <code>FB_init</code> - enable graphics mode $FEF9: <code>FB_get_info</code> - get screen size and color depth $FEFC: <code>FB_set_palette</code> - set (parts of) the palette $FEFF: <code>FB_cursor_position</code> - position the direct-access cursor $FF02: <code>FB_cursor_next_line</code> - move direct-access cursor to next line $FF05: <code>FB_get_pixel</code> - read one pixel, update cursor $FF08: <code>FB_get_pixels</code> - copy pixels into RAM, update cursor $FF0B: <code>FB_set_pixel</code> - set one pixel, update cursor $FF0E: <code>FB_set_pixels</code> - copy pixels from RAM, update cursor $FF11: <code>FB_set_8_pixels</code> - set 8 pixels from bit mask (transparent), update cursor $FF14: <code>FB_set_8_pixels_opaque</code> - set 8 pixels from bit mask (opaque), update cursor $FF17: <code>FB_fill_pixels</code> - fill pixels with constant color, update cursor $FF1A: <code>FB_filter_pixels</code> - apply transform to pixels, update cursor $FF1D: <code>FB_move_pixels</code> - copy horizontally consecutive pixels to a different position</p>
+<p>All calls are vectored, which allows installing a replacement framebuffer driver.</p>
+<p>$02E4: I_FB_init $02E6: I_FB_get_info $02E8: I_FB_set_palette $02EA: I_FB_cursor_position $02EC: I_FB_cursor_next_line $02EE: I_FB_get_pixel $02F0: I_FB_get_pixels $02F2: I_FB_set_pixel $02F4: I_FB_set_pixels $02F6: I_FB_set_8_pixels $02F8: I_FB_set_8_pixels_opaque $02FA: I_FB_fill_pixels $02FC: I_FB_filter_pixels $02FE: I_FB_move_pixels</p>
+<p>The model of this API is based on the direct-access cursor. In order to read and write pixels, the cursor has to be set to a specific x/y-location, and all subsequent calls will access consecutive pixels at the cursor position and update the cursor.</p>
+<p>The default driver supports the VERA framebuffer at a resolution of 320x200 pixels and 256 colors. Using <code>screen_set_mode</code> to set mode $80 will enable this driver.</p>
+<h5 id="function-name-fb_init">Function Name: FB_init</h5>
+<p>Signature: void FB_init(); Purpose: Enter graphics mode.</p>
+<h5 id="function-name-fb_get_info">Function Name: FB_get_info</h5>
+<p>Signature: void FB_get_info(out word width: r0, out word height: r1, out byte color_depth: .a); Purpose: Return the resolution and color depth</p>
+<h5 id="function-name-fb_set_palette">Function Name: FB_set_palette</h5>
+<p>Signature: void FB_set_palette(word pointer: r0, index: .a, byte count: .x); Purpose: Set (parts of) the palette</p>
+<p>[Note: This is not yet implemented.]</p>
+<h5 id="function-name-fb_cursor_position">Function Name: FB_cursor_position</h5>
+<p>Signature: void FB_cursor_position(word x: r0, word y: r1); Purpose: Position the direct-access cursor</p>
+<p><strong>Description:</strong> <code>FB_cursor_position</code> sets the direct-access cursor to the given screen coordinate. Future operations will access pixels at the cursor location and update the cursor.</p>
+<h5 id="function-name-fb_cursor_next_line">Function Name: FB_cursor_next_line</h5>
+<p>Signature: void FB_cursor_next_line(word x: r0); Purpose: Move the direct-access cursor to next line</p>
+<p><strong>Description:</strong> <code>FB_cursor_next_line</code> increments the y position of the direct-access cursor, and sets the x position to the same one that was passed to the previous <code>FB_cursor_position</code> call. This is useful for drawing rectangular shapes, and faster than explicitly positioning the cursor.</p>
+<h5 id="function-name-fb_get_pixel">Function Name: FB_get_pixel</h5>
+<p>Signature: byte FB_get_pixel(); Purpose: Read one pixel, update cursor</p>
+<h5 id="function-name-fb_get_pixels">Function Name: FB_get_pixels</h5>
+<p>Signature: void FB_get_pixels(word ptr: r0, word count: r1); Purpose: Copy pixels into RAM, update cursor</p>
+<p><strong>Description:</strong> This function copies pixels into an array in RAM. The array consists of one byte per pixel.</p>
+<h5 id="function-name-fb_set_pixel">Function Name: FB_set_pixel</h5>
+<p>Signature: void FB_set_pixel(byte color: .a); Purpose: Set one pixel, update cursor</p>
+<h5 id="function-name-fb_set_pixels">Function Name: FB_set_pixels</h5>
+<p>Signature: void FB_set_pixels(word ptr: r0, word count: r1); Purpose: Copy pixels from RAM, update cursor</p>
+<p><strong>Description:</strong> This function sets pixels from an array of pixels in RAM. The array consists of one byte per pixel.</p>
+<h5 id="function-name-fb_set_8_pixels">Function Name: FB_set_8_pixels</h5>
+<p>Signature: void FB_set_8_pixels(byte pattern: .a, byte color: .x); Purpose: Set 8 pixels from bit mask (transparent), update cursor</p>
+<p><strong>Description:</strong> This function sets all 1-bits of the pattern to a given color and skips a pixel for every 0 bit. The order is MSB to LSB. The cursor will be moved by 8 pixels.</p>
+<h5 id="function-name-fb_set_8_pixels_opaque">Function Name: FB_set_8_pixels_opaque</h5>
+<p>Signature: void FB_set_8_pixels_opaque(byte pattern: .a, byte mask: r0L, byte color1: .x, byte color2: .y); Purpose: Set 8 pixels from bit mask (opaque), update cursor</p>
+<p><strong>Description:</strong> For every 1-bit in the mask, this function sets the pixel to color1 if the corresponding bit in the pattern is 1, and to color2 otherwise. For every 0-bit in the mask, it skips a pixel. The order is MSB to LSB. The cursor will be moved by 8 pixels.</p>
+<h5 id="function-name-fb_fill_pixels">Function Name: FB_fill_pixels</h5>
+<p>Signature: void FB_fill_pixels(word count: r0, word step: r1, byte color: .a); Purpose: Fill pixels with constant color, update cursor</p>
+<p><strong>Description:</strong> <code>FB_fill_pixels</code> sets pixels with a constant color. The argument <code>step</code> specifies the increment between pixels. A value of 0 or 1 will cause consecutive pixels to be set. Passing a <code>step</code> value of the screen width will set vertically adjacent pixels going top down. Smaller values allow drawing dotted horizontal lines, and multiples of the screen width allow drawig dotted vertical lines.</p>
+<p><em>[Note: Only the values 0/1 and screen width are currently supported.]</em></p>
+<h5 id="function-name-fb_filter_pixels">Function Name: FB_filter_pixels</h5>
+<p>Signature: void FB_filter_pixels(word ptr: r0, word count: r1); Purpose: Apply transform to pixels, update cursor</p>
+<p><strong>Description:</strong> This function allows modifying consecutive pixels. The function pointer will be called for every pixel, with the color in .a, and it needs to return the new color in .a.</p>
+<h5 id="function-name-fb_move_pixels">Function Name: FB_move_pixels</h5>
+<p>Signature: void FB_move_pixels(word sx: r0, word sy: r1, word tx: r2, word ty: r3, word count: r4); Purpose: Copy horizontally consecutive pixels to a different position</p>
+<p><em>[Note: Overlapping regions are not yet supported.]</em></p>
+<h4 id="graphics">Graphics</h4>
+<p>The high-level graphics API exposes a set of standard functions. It allows applications to easily perform some common high-level actions like drawing lines, rectangles and images, as well as moving parts of the screen. All commands are completely implemented on top of the framebuffer API, that is, they will continue working after replacing the framebuffer driver with one that supports a different resolution, color depth or even graphics device.</p>
+<p>$FF20: <code>GRAPH_init</code> - initialize graphics $FF23: <code>GRAPH_clear</code> - clear screen $FF26: <code>GRAPH_set_window</code> - set clipping region $FF29: <code>GRAPH_set_colors</code> - set stroke, fill and background colors $FF2C: <code>GRAPH_draw_line</code> - draw a line $FF2F: <code>GRAPH_draw_rect</code> - draw a rectangle (optionally filled) $FF32: <code>GRAPH_move_rect</code> - move pixels $FF35: <code>GRAPH_draw_oval</code> - draw an oval or circle $FF38: <code>GRAPH_draw_image</code> - draw a rectangular image $FF3B: <code>GRAPH_set_font</code> - set the current font $FF3E: <code>GRAPH_get_char_size</code> - get size and baseline of a character $FF41: <code>GRAPH_put_char</code> - print a character</p>
+<h5 id="function-name-graph_init">Function Name: GRAPH_init</h5>
+<p>Signature: void GRAPH_init(word vectors: r0); Purpose: Activate framebuffer driver, enter and initialize graphics mode</p>
+<p><strong>Description</strong>: This call activates the framebuffer driver whose vector table is passed in r0. If r0 is 0, the default driver is activated. It then switches the video hardware into graphics mode, sets the window to full screen, initializes the colors and activates the system font.</p>
+<h5 id="function-name-graph_clear">Function Name: GRAPH_clear</h5>
+<p>Signature: void GRAPH_clear(); Purpose: Clear the current window with the current background color.</p>
+<h5 id="function-name-graph_set_window">Function Name: GRAPH_set_window</h5>
+<p>Signature: void GRAPH_set_window(word x: r0, word y: r1, word width: r2, word height: r3); Purpose: Set the clipping region</p>
+<p><strong>Description:</strong> All graphics commands are clipped to the window. This function configures the origin and size of the window.</p>
+<p><em>[Note: Only text output is currently clipped.]</em></p>
+<h5 id="function-name-graph_set_colors">Function Name: GRAPH_set_colors</h5>
+<p>Signature: void GRAPH_set_colors(byte stroke: .a, byte fill: .x, byte background: .y); Purpose: Set the three colors</p>
+<p><strong>Description:</strong> This function sets the three colors: The stroke color, the fill color and the background color.</p>
+<h5 id="function-name-graph_draw_line">Function Name: GRAPH_draw_line</h5>
+<p>Signature: void GRAPH_draw_line(word x1: r0, word y1: r1, word x2: r2, word y2: r3); Purpose: Draw a line using the stroke color</p>
+<h5 id="function-name-graph_draw_rect">Function Name: GRAPH_draw_rect</h5>
+<p>Signature: void GRAPH_draw_rect(word x: r0, word y: r1, word width: r2, word height: r3, word corner_radius: r4, bool fill: .c); Purpose: Draw a rectangle.</p>
+<p><strong>Description:</strong> This function will draw the frame of a rectangle using the stroke color. If <code>fill</code> is <code>true</code>, it will also fill the area using the fill color. To only fill a rectangle, set the stroke color to the same value as the fill color.</p>
+<p><em>[Note: The border radius is currently unimplemented.]</em></p>
+<h5 id="function-name-graph_move_rect">Function Name: GRAPH_move_rect</h5>
+<p>Signature: void GRAPH_move_rect(word sx: r0, word sy: r1, word tx: r2, word ty: r3, word width: r4, word height: r5); Purpose: Copy a rectangular screen area to a different location</p>
+<p><strong>Description:</strong> <code>GRAPH_move_rect</code> coll copy a rectangular area of the screen to a different location. The two areas may overlap.</p>
+<p><em>[Note: Support for overlapping is not currently implemented.]</em></p>
+<h5 id="function-name-graph_draw_oval">Function Name: GRAPH_draw_oval</h5>
+<p>Signature: void GRAPH_draw_oval(word x: r0, word y: r1, word width: r2, word height: r3, bool fill: .c); Purpose: Draw an oval or a circle</p>
+<p><strong>Description:</strong> This function draws an oval filling the given bounding box. If width equals height, the resulting shape is a circle. The oval will be outlined by the stroke color. If <code>fill</code> is <code>true</code>, it will be filled using the fill color. To only fill an oval, set the stroke color to the same value as the fill color.</p>
+<h5 id="function-name-graph_draw_image">Function Name: GRAPH_draw_image</h5>
+<p>Signature: void GRAPH_draw_image(word x: r0, word y: r1, word ptr: r2, word width: r3, word height: r4); Purpose: Draw a rectangular image from data in memory</p>
+<p><strong>Description:</strong> This function copies pixel data from memory onto the screen. The representation of the data in memory has to have one byte per pixel, with the pixels organized line by line top to bottom, and within the line left to right.</p>
+<h5 id="function-name-graph_set_font">Function Name: GRAPH_set_font</h5>
+<p>Signature: void GRAPH_set_font(void ptr: r0); Purpose: Set the current font</p>
+<p><strong>Description:</strong> This function sets the current font to be used for the remaining font-related functions. The argument is a pointer to the font data structure in memory, which must be in the format of a single point size GEOS font (i.e. one GEOS font file VLIR chunk). An argument of 0 will activate the built-in system font.</p>
+<h5 id="function-name-graph_get_char_size">Function Name: GRAPH_get_char_size</h5>
+<p>Signature: (byte baseline: .a, byte width: .x, byte height_or_style: .y, bool is_coltrol: .c) GRAPH_get_char_size(byte c: .a, byte format: .x); Purpose: Get the size and baseline of a character, or interpret a control code</p>
+<p><strong>Description:</strong> This functionality of <code>GRAPH_get_char_size</code> depends on the type of code that is passed in: For a printable character, this function returns the metrics of the character in a given format. For a control code, it returns the resulting format. In either case, the current format is passed in .x, and the character in .a.</p>
+<ul>
+<li>The format is an opaque byte value whose value should not be relied upon, except for <code>0</code>, which is plain text.</li>
+<li>The resulting values are measured in pixels.</li>
+<li>The basline is measured from the top.</li>
+</ul>
+<h5 id="function-name-graph_put_char">Function Name: GRAPH_put_char</h5>
+<p>Signature: void GRAPH_put_char(inout word x: r0, inout word y: r1, byte c: .a); Purpose: Print a character onto the graphics screen</p>
+<p><strong>Description:</strong> This function prints a single character at a given location on the graphics screen. The location is then updated. The following control codes are supported:</p>
+<ul>
+<li>$01: SWAP COLORS</li>
+<li>$04: ATTRIBUTES: UNDERLINE</li>
+<li>$06: ATTRIBUTES: BOLD</li>
+<li>$07: BELL</li>
+<li>$08: BACKSPACE</li>
+<li>$09: TAB</li>
+<li>$0A: LF</li>
+<li>$0B: ATTRIBUTES: ITALICS</li>
+<li>$0C: ATTRIBUTES: OUTLINE</li>
+<li>$0D/$8D: REGULAR/SHIFTED RETURN</li>
+<li>$11/$91: CURSOR: DOWN/UP</li>
+<li>$12: ATTRIBUTES: REVERSE</li>
+<li>$13/$93: HOME/CLEAR</li>
+<li>$14 DEL</li>
+<li>$92: ATTRIBUTES: CLEAR ALL</li>
+<li>all color codes</li>
+</ul>
+<p>Notes:</p>
+<ul>
+<li>CR ($0D) SHIFT+CR ($8D) and LF ($0A) all set the cursor to the beginning of the next line. The only difference is that CR and SHIFT+CR reset the attributes, and LF does not.</li>
+<li>BACKSPACE ($08) and DEL ($14) move the cursor to the beginning of the previous character but does not actually clear it. Multiple consecutive BACKSPACE/DEL characters are not supported.</li>
+<li>There is no way to individually disable attributes (underlined, bold, reversed, italics, outline). The only way to disable them is to reset the attributes using code $92, which switches to plain text.</li>
+<li>All 16 PETSCII color codes are supported. Code $01 to swap the colors will swap the stroke and fill colors.</li>
+<li>The stroke color is used to draw the characters, and the underline is drawn using the fill color. In reverse text mode, the text background is filled with the fill color.</li>
+<li><em>[BELL ($07), TAB ($09) and SHIFT+TAB ($18) are not yet implemented.]</em></li>
+</ul>
+<h4 id="console">Console</h4>
+<p>$FEDB: <code>console_init</code> - initialize console mode $FEDE: <code>console_put_char</code> - print character to console $FEE1: <code>console_get_char</code> - get character from console</p>
+<p>The console is a screen mode that allows text output and input in proportional fonts that support the usual styles. It is useful for rich text-based interfaces.</p>
+<h5 id="function-name-console_init">Function Name: console_init</h5>
+<p>Signature: void console_init(); Purpose: Initialize console mode. Call address: $FEDB</p>
+<p><strong>Description:</strong> This function initializes console mode by switching to graphics mode, clearing the screen and positioning the cursor at the top left.</p>
+<h5 id="function-name-console_put_char">Function Name: console_put_char</h5>
+<p>Signature: void console_put_char(byte char: .a, bool wrapping: .c); Purpose: Print a character to the console. Call address: $FEDE</p>
+<p><strong>Description:</strong> This function prints a character to the console. The .C flag specifies whether text should be wrapped at character (.C=0) or word (.C=1) boundaries. In the latter case, characters will be buffered until a SPACE, CR or LF character is sent, so make sure the text that is printed always ends in one of these characters.</p>
+<p>If the bottom of the screen is reached, this function will scroll its contents up to make extra room.</p>
+<h5 id="function-name-console_get_char">Function Name: console_get_char</h5>
+<p>Signature: (byte char: .a) console_get_char(); Purpose: Get a character from the console. Call address: $FEE1</p>
+<p><strong>Description:</strong> This function gets a character to the console. It does this by collecting a whole line of character, i.e. until the user presses RETURN. Then, the line will be sent character by character.</p>
+<p>This function allows editing the line using BACKSPACE/DEL, but does not allow moving the cursor within the line, write more than one line, or using control codes.</p>
+<h4 id="other">Other</h4>
+<p>$FEE4: <code>memory_fill</code> - fill memory region with a byte value $FEE7: <code>memory_copy</code> - copy memory region $FEEA: <code>memory_crc</code> - calculate CRC16 of memory region $FEED: <code>memory_decompress</code> - decompress LZSA2 block $FF44: <code>monitor</code> - enter machine language monitor $FF47: <code>restore_basic</code> - enter BASIC $FF5F: <code>screen_set_mode</code> - set screen mode $FF62: <code>screen_set_charset</code> - activate 8x8 text mode charset</p>
+<h5 id="function-name-memory_fill">Function Name: memory_fill</h5>
+<p>Signature: void memory_fill(word address: r0, word num_bytes: r1, byte value: .a); Purpose: Fill a memory region with a byte value. Call address: $FEE4</p>
+<p><strong>Description:</strong> This function fills the memory region specified by an address (r0) and a size in bytes (r1) with the constant byte value passed in .A.</p>
+<h5 id="function-name-memory_copy">Function Name: memory_copy</h5>
+<p>Signature: void memory_copy(word source: r0, word target: r1, word num_bytes: r2); Purpose: Copy a memory region to a different region. Call address: $FEE7</p>
+<p><strong>Description:</strong> This function copies one memory region specified by an address (r0) and a size in bytes (r2) to a different region specified by its start address (r1). The two regions may overlap.</p>
+<h5 id="function-name-memory_crc">Function Name: memory_crc</h5>
+<p>Signature: (word result: r2) memory_crc(word address: r0, word num_bytes: r1); Purpose: Calculate the CRC16 of a memory region. Call address: $FEEA</p>
+<p><strong>Description:</strong> This function calculates the CRC16 checksum of the memory region specified by an address (r0) and a size in bytes (r1). The result is returned in r2.</p>
+<h5 id="function-name-memory_decompress">Function Name: memory_decompress</h5>
+<p>Signature: void memory_decompress(word input: r0, inout word output: r1); Purpose: Decompress an LZSA2 block Call address: $FEED</p>
+<p><strong>Description:</strong> This function decompresses an LZSA2-compressed data block from the location passed in r0 and outputs the decompressed data at the location passed in r1. After the call, r1 will be updated with the location of the last output byte plus one.</p>
+<p><strong>Notes</strong>:</p>
+<ul>
+<li>To create compressed data, use the <code>lzsa</code> tool<a href="[https://github.com/emmanuel-marty/lzsa](https://github.com/emmanuel-marty/lzsa)">^4</a> like this: <code>lzsa -r -f2 &lt;original_file&gt; &lt;compressed_file&gt;</code></li>
+<li>This function cannot be used to decompress data in-place, as the output data would overwrite the input data before it is consumed. Therefore, make sure to load the input data to a different location.</li>
+<li>It is possible to have the input data stored in banked RAM, with the obvious 8 KB size restriction.</li>
+</ul>
+<h5 id="function-name-monitor">Function Name: monitor</h5>
+<p>Purpose: Enter the machine language monitor Call address: $FF44 Communication registers: None Preparatory routines: None Error returns: Does not return Stack requirements: Does not return Registers affected: Does not return</p>
+<p><strong>Description:</strong> This routine switches from BASIC to machine language monitor mode. It does not return to the caller. When the user quits the monitor, it will restart BASIC.</p>
+<p><strong>How to Use:</strong></p>
+<ol>
+<li>Call this routine.</li>
+</ol>
+<p><strong>EXAMPLE:</strong></p>
+<pre><code>  JMP monitor
+</code></pre>
+<h5 id="function-name-screen_set_mode">Function Name: screen_set_mode</h5>
+<p>Purpose: Set the screen mode Call address: $FF5F Communication registers: .A Preparatory routines: None Error returns: .C = 1 in case of error Stack requirements: [?] Registers affected: .A, .X, .Y</p>
+<p><strong>Description:</strong> A call to this routine sets the current screen mode to the value in .A. For a list of possible values, see the basic statement <code>SCREEN</code>.</p>
+<p><strong>EXAMPLE:</strong></p>
+<pre><code>LDA #$80
+JSR screen_set_mode ; SET 320x200@256C MODE
+BCS FAILURE
+</code></pre>
+<h5 id="function-name-screen_set_charset">Function Name: screen_set_charset</h5>
+<p>Purpose: Activate a 8x8 text mode charset Call address: $FF62</p>
+<p>Communication registers: .A, .X, .Y Preparatory routines: None Stack requirements: [?] Registers affected: .A, .X, .Y</p>
+<p><strong>Description:</strong> A call to this routine uploads a character set to the video hardware and activates it. The value of .A decides what charset to upload:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>use pointer in .X/.Y</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>ISO</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>PET upper/graph</td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td>PET upper/lower</td>
+</tr>
+</tbody>
+</table>
+<p>If .A is zero, .X (lo) and .Y (hi) contain a pointer to a 2 KB RAM area that gets uploaded as the new 8x8 character set. The data has to consist of 256 characters of 8 bytes each, top to bottom, with the MSB on the left and set bits representing the foreground color.</p>
+<p><strong>EXAMPLE:</strong></p>
+<pre><code>LDA #0
+LDX #&lt;MY_CHARSET
+LDY #&gt;MY_CHARSET
+JSR screen_set_charset ; UPLOAD CUSTOM CHARSET &quot;MY_CHARSET&quot;
+</code></pre>
+<h5 id="function-name-jsrfar">Function Name: JSRFAR</h5>
+<p>Purpose: Execute a routine on another RAM or ROM bank Call address: $FF6E Communication registers: None Preparatory routines: None Error returns: None Stack requirements: 4 Registers affected: None</p>
+<p><strong>Description:</strong> The routine <code>JSRFAR</code> enables code to execute some other code located on a specific RAM or ROM bank. This works independently of which RAM or ROM bank the currently executing code is residing in. The 16 bit address and the 8 bit bank number have to follow the instruction stream. The <code>JSRFAR</code> routine will switch both the ROM and the RAM bank to the specified bank and restore it after the routine's <code>RTS</code>. Execution resumes after the 3 byte arguments. <strong>Note</strong>: The C128 also has a <code>JSRFAR</code> function at $FF6E, but it is incompatible with the X16 version.</p>
+<p><strong>How to Use:</strong></p>
+<ol>
+<li>Call this routine.</li>
+</ol>
+<p><strong>EXAMPLE:</strong></p>
+<pre><code>  JSR JSRFAR
+  .WORD $C000 ; ADDRESS
+  .BYTE 1     ; BANK
+</code></pre>
+<h2 id="machine-language-monitor">Machine Language Monitor</h2>
+<p>The built-in machine language monitor can be started with the <code>MON</code> BASIC command. It is based on the monitor of the Final Cartridge III and supports all its features. See the <a href="https://rr.pokefinder.org/rrwiki/images/7/70/Final_Cartridge_III_english_Manual.pdf">Final Cartridge III Manual</a> more more information.</p>
+<p>If you invoke the monitor by mistake, you can exit with by typing <code>X</code>, followed by the <code>RETURN</code> key.</p>
+<p>Some features specific to this monitor are:</p>
+<ul>
+<li>The <code>I</code> command prints a CBM-ASCII-encoded memory dump.</li>
+<li>The <code>EC</code> command prints a binary memory dump. This is also useful for character sets.</li>
+<li>Scrolling the screen with the cursors or F3/F5 will continue memory dumps and disassemblies, and even disassemble backwards.</li>
+</ul>
+<p>The following additions have been made:</p>
+<ul>
+<li><p>The instruction set extensions of the 65C02 are supported.</p></li>
+<li><p>The <code>O</code> command takes an 8 bit hex value as an argument and sets it as the ROM and RAM bank for reading and writing memory contents. The following example disassembles the beginning of the CBDOS ROM on bank 5:</p>
+<pre><code>O05
+DC000 C015
+</code></pre></li>
+<li><p>The <code>OV</code> command takes a 4 bit hex value as an argument and sets it as the bank in the video address space for reading and writing memory contents. The following example shows the character ROM in the video controller's address space:</p>
+<pre><code>OV1
+ECF000 F00F
+</code></pre></li>
+</ul>
+<p><em>[TODO: Full documentation]</em></p>
+<h2 id="memory-map">Memory Map</h2>
+<p>The Commander X16 has 64 KB of ROM and 2,088 KB (2 MB[^1] + 40 KB) of RAM. Some of the ROM and RAM is always visible at certain address ranges, while the remaining ROM and RAM is banked into one of two address windows.</p>
+<p>This is an overview of the X16 memory map:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Addresses</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>$0000-$9EFF</td>
+<td>Fixed RAM (40 KB minus 256 bytes)</td>
+</tr>
+<tr class="even">
+<td>$9F00-$9FFF</td>
+<td>I/O Area (256 bytes)</td>
+</tr>
+<tr class="odd">
+<td>$A000-$BFFF</td>
+<td>Banked RAM (8 KB window into one of 256 banks for a total of 2 MB)</td>
+</tr>
+<tr class="even">
+<td>$C000-$FFFF</td>
+<td>Banked ROM (16 KB window into one of 8 banks for a total of 128 KB)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="banked-memory">Banked Memory</h3>
+<p>The RAM bank (0-255) defaults to 0, and the ROM bank (0-7) defaults to 0 on RESET. The RAM bank can be configured through VIA#1 PA0-7 ($9F61), and the ROM bank through VIA#1 PB0-2 ($9F60). See section "I/O Programming" for more information.</p>
+<h3 id="rom-allocations">ROM Allocations</h3>
+<p>This is the allocation of the banks of banked ROM:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Bank</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>KERNAL</td>
+<td>character sets (uploaded into VRAM), MONITOR, KERNAL</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>KEYBD</td>
+<td>Keyboard layout tables</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>CBDOS</td>
+<td>The computer-based CBM-DOS for FAT32 SD cards</td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td>GEOS</td>
+<td>GEOS KERNAL</td>
+</tr>
+<tr class="odd">
+<td>4</td>
+<td>BASIC</td>
+<td>BASIC interpreter</td>
+</tr>
+<tr class="even">
+<td>5</td>
+<td>MONITOR</td>
+<td>Machine Language Monitor</td>
+</tr>
+<tr class="odd">
+<td>6-7</td>
+<td>–</td>
+<td><em>[Currently unused]</em></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Important</strong>: The layout of the banks is still constantly changing.</p>
+<h3 id="ram-contents">RAM Contents</h3>
+<p>This is the allocation of fixed RAM in the KERNAL/BASIC environment.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Addresses</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>$0000-$007F</td>
+<td>User zero page</td>
+</tr>
+<tr class="even">
+<td>$0080-$00FF</td>
+<td>KERNAL and BASIC zero page variables</td>
+</tr>
+<tr class="odd">
+<td>$0100-$01FF</td>
+<td>CPU stack</td>
+</tr>
+<tr class="even">
+<td>$0200-$03FF</td>
+<td>KERNAL and BASIC variables, vectors</td>
+</tr>
+<tr class="odd">
+<td>$0400-$07FF</td>
+<td>Available for machine code programs or custom data storage</td>
+</tr>
+<tr class="even">
+<td>$0800-$9EFF</td>
+<td>BASIC program/variables; available to the user</td>
+</tr>
+</tbody>
+</table>
+<p>The following zero page locations are completely unused by KERNAL/BASIC/FPLIB and are available to the user:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Addresses</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>$0000-$007F</td>
+</tr>
+</tbody>
+</table>
+<p>In a machine language application that only uses KERNAL (no BASIC or floating point), the following zero page locations are also available:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Addresses</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>$00A9-$00FF</td>
+</tr>
+</tbody>
+</table>
+<p>This is the allocation of banked RAM in the KERNAL/BASIC environment.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Bank</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>Used for KERNAL/CBDOS variables and buffers</td>
+</tr>
+<tr class="even">
+<td>1-255</td>
+<td>Available to the user</td>
+</tr>
+</tbody>
+</table>
+<p>(On systems with only 512 KB RAM, banks 64-255 are unavailable.)</p>
+<p>During startup, the KERNAL activates RAM bank 1 as the default for the user.</p>
+<h3 id="io-area">I/O Area</h3>
+<p>This is the memory map of the I/O Area:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Addresses</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>$9F00-$9F1F</td>
+<td>Reserved for audio controller</td>
+</tr>
+<tr class="even">
+<td>$9F20-$9F3F</td>
+<td>VERA video controller</td>
+</tr>
+<tr class="odd">
+<td>$9F40-$9F5F</td>
+<td>Reserved</td>
+</tr>
+<tr class="even">
+<td>$9F60-$9F6F</td>
+<td>VIA I/O controller #1</td>
+</tr>
+<tr class="odd">
+<td>$9F70-$9F7F</td>
+<td>VIA I/O controller #2</td>
+</tr>
+<tr class="even">
+<td>$9F80-$9F9F</td>
+<td>Real time clock</td>
+</tr>
+<tr class="odd">
+<td>$9FA0-$9FBF</td>
+<td>Future Expansion</td>
+</tr>
+<tr class="even">
+<td>$9FC0-$9FDF</td>
+<td>Future Expansion</td>
+</tr>
+<tr class="odd">
+<td>$9FE0-$9FFF</td>
+<td>Future Expansion</td>
+</tr>
+</tbody>
+</table>
+<h2 id="video-programming">Video Programming</h2>
+<p>The VERA video chip supports resolutions up to 640x480 with up to 256 colors from a palette of 4096, two layers of either a bitmap or tiles, 128 sprites of up to 64x64 pixels in size. It can output VGA as well as a 525 line interlaced signal, either as NTSC or as RGB (Amiga-style).</p>
+<p>See the <a href="VERA%20Programmer&#39;s%20Reference.html">VERA Programmer's Reference</a> for the complete reference.</p>
+<p><strong>IMPORTANT</strong>: The VERA register layout has changed between 0.7 and 0.8. Here is the old documentation: <a href="https://github.com/commanderx16/x16-docs/blob/master/old/vera-module%20v0.7.pdf">vera-module v0.7.pdf</a></p>
+<p>The KERNAL uploads the current character sets (PETSCII graphics, PETSCII upper/lower or ISO-8859-15) to $0F800, i.e. the top of video RAM bank 0.</p>
+<p>Application software is free to reuse this part of video RAM if it does not need the character set. If it needs them again later, it can use the KERNAL call <code>CINT</code> ($FF81), which initializes the VERA chip and uploads the PETSCII graphics character set, or call <code>screen_set_charset</code> ($FF62) to upload a particular charset.</p>
+<h2 id="sound-programming">Sound Programming</h2>
+<p><em>[TODO]</em></p>
+<h2 id="io-programming">I/O Programming</h2>
+<p>There are two 65C22 "Versatile Interface Adapter" (VIA) I/O controllers in the system, VIA#1 at address $9F60 and VIA#2 at address $9F70. The IRQ out lines of both VIAs are connected to the IRQ in line of the CPU.</p>
+<p>The following tables describe the connections of the GPIO ports:</p>
+<p><strong>VIA#1</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th>Pin</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>PA0-7</td>
+<td>RAM bank</td>
+</tr>
+<tr class="even">
+<td>PB0-2</td>
+<td>ROM bank</td>
+</tr>
+<tr class="odd">
+<td>PB3-7</td>
+<td><em>[TBD]</em></td>
+</tr>
+</tbody>
+</table>
+<p><strong>VIA#2</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th>Pin</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>PA0</td>
+<td>KBD PS/2 DAT</td>
+</tr>
+<tr class="even">
+<td>PA1</td>
+<td>KBD PS/2 CLK</td>
+</tr>
+<tr class="odd">
+<td>PA2</td>
+<td>TBD</td>
+</tr>
+<tr class="even">
+<td>PA3</td>
+<td>JOY1/2 LATCH[^3]</td>
+</tr>
+<tr class="odd">
+<td>PA4</td>
+<td>JOY1 DATA</td>
+</tr>
+<tr class="even">
+<td>PA5</td>
+<td>JOY1/2 CLK</td>
+</tr>
+<tr class="odd">
+<td>PA6</td>
+<td>JOY2 DATA</td>
+</tr>
+<tr class="even">
+<td>PA7</td>
+<td><em>[TBD]</em></td>
+</tr>
+<tr class="odd">
+<td>PB0</td>
+<td>MOUSE PS/2 DAT</td>
+</tr>
+<tr class="even">
+<td>PB1</td>
+<td>MOUSE PS/2 CLK</td>
+</tr>
+<tr class="odd">
+<td>PB2-7</td>
+<td><em>[TBD]</em></td>
+</tr>
+</tbody>
+</table>
+<p>The GPIO connections for the Commodore Serial Bus and the mouse PS/2 connection have not been finalized.</p>
+<!------->
+
+<p>[^1]: Current development systems have 2 MB of bankable RAM. Actual hardware is currently planned to have an option of either 512 KB or 2 MB of RAM.</p>
+<p>[^3]: The pin assignment of the NES/SNES controller is likely to change.</p>
+</body>
+</html>

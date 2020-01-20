@@ -1,0 +1,228 @@
+
+; input ( -- )
+;===============================================================================
+; wait for the user to type a line of text. the text is stored on the system's
+; input line-buffer ($0200)
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    5, "input"
+input:
+        ;-----------------------------------------------------------------------
+        phx                     ; backup parameter stack index
+
+-       jsr .kernal_chrin       ; read a character from the keyboard
+        cmp # $d                ; is the key RETURN?
+        beq +                   ; if yes, quit reading
+
+        sta pl_buffer_line, x   ; add the key-code to the buffer
+        inx                     ; move to the next character
+        cpx # 81                ; have we hit the end of the line?
+        bne -
+
++       jsr .kernal_chrout      ; actually print the RETURN (go to next line)
+        stz pl_buffer_line, x   ; append a null-terminator to the line
+
+        ; set the read cursor to the line-buffer
+        lda #< pl_buffer_line
+        sta pl_buffer_addr_lo
+        lda #> pl_buffer_line
+        sta pl_buffer_addr_hi
+        ; reset the buffer index to the start
+        stz pl_buffer_index_lo
+        stz pl_buffer_index_hi
+
+        plx                     ; restore parameter stack index
+        jsr interpret
+
+        ; clean up & exit
+        ;-----------------------------------------------------------------------
+        rts
+
+; interpret ( -- )
+;===============================================================================
+        +prevTerm
+        !pet    9, "interpret"
+interpret:
+        ;-----------------------------------------------------------------------
+        ; read a term from the input buffer:
+        ;
+        lda # $20               ; space is term delimiter
+        inx
+        sta pl_stack, x
+
+        ; read a term from the input buffer
+        jsr term
+        ; TODO: handle null
+
+        ; convert the term name string into an execution token
+        jsr find
+        
+        rts
+
+; here ( -- addr.w )
+;-------------------------------------------------------------------------------
+; places the address of the next free byte of RAM on the stack.
+; used when compiling new words
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    4, "here"
+here:
+        ;-----------------------------------------------------------------------
+        ; read the address of free memory from the pointer in zero-page
+        dex
+        lda pl_here_hi          ; contains hi-byte of next free address
+        sta pl_stack, x
+        dex
+        lda pl_here_lo          ; contains lo-byte of next free address
+        sta pl_stack, x
+        
+        rts
+
+; new-term ( -- )
+;===============================================================================
+; create a new term; the name of the term is read from the input buffer
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    8, "new-term"
+new_term:
+        ;-----------------------------------------------------------------------
+        ; read the name of the next term:
+        ;
+        lda # $20               ; space = delimiter
+        dex
+        sta pl_stack, x
+        jsr term
+
+        ; this is now the last defined term:
+        lda pl_here_lo
+        sta pl_last_lo
+        lda pl_here_hi
+        sta pl_last_hi
+
+        ; the new term begins with the address
+        ; of the previous one: (back-link)
+        ;
+        lda pl_last_lo          ; load address lo-byte of last term
+        sta (pl_here)           ; save at the new term's address
+        inc pl_here_lo          ; move to the next byte of memory
+        bcc +                   ; page crossed?
+        inc pl_here_hi          ; (move to next page)
++       lda pl_last_hi          ; load address hi-byte of last term
+        sta (pl_here)           ; save at the new term's address
+        inc pl_here_lo          ; move to the next byte of memory
+        bcc +                   ; page crossed?
+        inc pl_here_hi          ; (move to next page)
+
+        ; write the name of the term to its terminology entry;
+        ; this includes the first byte which is the length of the term name
+        ;
+        ldy # 0
+-       lda pl_buffer_term, y   ; read a character
+        sta (pl_here)           ; write a character
+        inc pl_here_lo          ; move to the next writing address
+        bcc +                   ; page crossed?
+        inc pl_here_hi          ; (move to next page)
++       iny
+        cpy pl_buffer_term
+        bne -
+
+        rts
+
+; term ( delimiter -- strptr.w | null )
+;===============================================================================
+; read a term from the input buffer
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    4, "term"
+term:
+        ;-----------------------------------------------------------------------
+        ; the first byte of the term name buffer is the length of the term name 
+        lda # 1
+        sta pl_buffer_term
+        
+        ; skip initial delimiters:
+        ;
+-       lda (pl_buffer_addr)    ; read character from the buffer
+        beq @eol                ; end-of-line, null-terminator?
+        cmp pl_stack, x         ; is it a delimiter?
+        beq +                   ; yes, move on to reading characters
+
+        ; move to next character in the buffer
+        inc pl_buffer_addr_lo
+        bcc -
+        inc pl_buffer_addr_hi
+        bne -
+
+        ; start reading characters
++       lda (pl_buffer_addr)    ; read a character
+        beq @done               ; null terminator?
+        cmp pl_stack, x         ; is it a delimiter?
+        beq @done               ; if so, end term
+        
+        ; move to next character in the buffer
+        inc pl_buffer_addr_lo
+        bcc +
+        inc pl_buffer_addr_hi
++       
+        ; add the character to the current term
+        ;
+        ldy pl_buffer_term      ; get index of term buffer
+        sta pl_buffer_term, y   ; write character to the term buffer
+        inc pl_buffer_term      ; increment its index/length
+        
+        bra -                   ; get another character...
+
+        ;-----------------------------------------------------------------------
+        ; the term name has been read:
+        ;
+        ; place the string pointer of the term buffer on the stack:
+        ; (the top of the stack is currently the delimiter, so overwrite that)
+        ;
+@done:  lda #> pl_buffer_term
+        sta pl_stack, x
+        dex
+        lda #< pl_buffer_term
+        sta pl_stack, x
+
+        rts
+
+        ; end-of-line:
+        ;-----------------------------------------------------------------------
+@eol:   ; put $0000 on the stack to indicate no term found:
+        ; (the top of the stack is currently the delimiter, so overwrite that) 
+        ;
+        stz pl_stack, x
+        dex
+        stz pl_stack, x
+        ; length of string = 0
+        stz pl_buffer_term
+
+        rts
+
+; find ( str_addr.w -- str_addr.w 0 | xt.w 1 | xt.w -1 )
+;===============================================================================
+; given an address that points to a string, searches
+; the terminology for a term with a matching name
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    4, "find"
+find:
+        plx                     ; backup parameter-stack position
+
+        ; copy the string address,
+        ; but leave it on the stack
+        lda pl_stack, x
+        sta pl_buffer_addr_lo
+        lda pl_stack+1, x
+        sta pl_buffer_addr_hi
+        ; length of search string?
+        ldy # 0
+
+
+        plx                     ; restore parameter-stack position 
+        rts
