@@ -7,18 +7,23 @@
 ; from disk or tape. it's a simple 1-line BASIC program that automatically
 ; jumps to the machine language code immediately after the BASIC code
 ;
-* = .basic_start
+.SLOT   0
+.ORGA   basic_start-2
+.WORD   basic_start
+.ORGA   basic_start
 ;===============================================================================
+cbmbasic:
+
         .WORD @end              ; pointer to next BASIC line
 
         .WORD 64                ; line-number
         .BYTE $9e               ; `SYS`
 
         ; address of machine-code address in decimal:
-        .BYTE '0' + @asm % 10000 / 1000
-        .BYTE '0' + @asm %  1000 /  100
-        .BYTE '0' + @asm %   100 /   10
-        .BYTE '0' + @asm %    10
+        .BYTE '0' + @asm # 10000 / 1000
+        .BYTE '0' + @asm #  1000 /  100
+        .BYTE '0' + @asm #   100 /   10
+        .BYTE '0' + @asm #    10
         
         .BYTE 0                 ; end-of-line
 

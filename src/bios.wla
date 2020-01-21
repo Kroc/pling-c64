@@ -2,7 +2,7 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; "bios.acme" : Pling's "BIOS" for machine-independent control
+; bios.wla : Pling's "BIOS" for machine-independent control
 ;===============================================================================
 
 ; screen.cols ( -- b )
@@ -11,13 +11,13 @@
 ; note that some systems can change screen size!
 ;
 ;-------------------------------------------------------------------------------
-        +prevTerm
-        !pet    11, "screen.cols"
+        _prevTerm
+        .BYTE   11, "screen.cols"
 term_screen_width:
 
-        !ifdef  .SYSTEM_C64 {
-                +push_byte 39
-        }
+        .IFDEF  SYSTEM_C64
+                _push_byte 39
+        .ENDIF
         rts
 
 ; screen.rows ( -- b )
@@ -26,13 +26,11 @@ term_screen_width:
 ; note that some systems can change screen size!
 ;
 ;-------------------------------------------------------------------------------
-        +prevTerm
-        !pet    11, "screen.rows"
+        _prevTerm
+        .BYTE   11, "screen.rows"
 term_screen_height:
 
-        !ifdef  .SYSTEM_C64 {
-                +push_byte 24
-        }
+        .IFDEF  SYSTEM_C64
+                _push_byte 24
+        .ENDIF
         rts
-
-; 

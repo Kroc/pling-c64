@@ -17,20 +17,20 @@
 
 ; data-types:
 ;===============================================================================
-.DEFINE TYPE_BYTE       %00000000
-.DEFINE TYPE_WORD_LO    %10000000
-.DEFINE TYPE_WORD_HI    %11000000
-.DEFINE TYPE_FLOAT      %01000000
-.DEFINE TYPE_FLOAT1     %01000100
-.DEFINE TYPE_FLOAT2     %01000011
-.DEFINE TYPE_FLOAT3     %01000010
-.DEFINE TYPE_FLOAT4     %01000001
-.DEFINE TYPE_FLOAT5     %01000000
+.DEF    TYPE_BYTE       %00000000
+.DEF    TYPE_WORD_LO    %10000000
+.DEF    TYPE_WORD_HI    %11000000
+.DEF    TYPE_FLOAT      %01000000
+.DEF    TYPE_FLOAT1     %01000100
+.DEF    TYPE_FLOAT2     %01000011
+.DEF    TYPE_FLOAT3     %01000010
+.DEF    TYPE_FLOAT4     %01000001
+.DEF    TYPE_FLOAT5     %01000000
 
 ; set the value of the byte atop of the stack,
 ; but do *not* advance the stack pointer
 ;-------------------------------------------------------------------------------
-.MACRO  .set
+.MACRO  _set
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         lda # \1
         sta pl_stack, x
@@ -40,7 +40,7 @@
 ; set the data-type for the item atop the stack,
 ; but do *not* advance the stack pointer
 ;-------------------------------------------------------------------------------
-.MACRO  .set_type
+.MACRO  _set_type
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         lda # \1
         sta pl_type, x
@@ -51,28 +51,28 @@
 ; or advance the stack pointer. WARNING: problems will arise if
 ; the data-type stack goes out of alignment!
 ;-------------------------------------------------------------------------------
-.MACRO  .push
+.MACRO  _push
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         inx
-        .set \1
+        _set \1
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM
 
 ;-------------------------------------------------------------------------------
-.MACRO  .push_byte
+.MACRO  _push_byte
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        .push \1                ; push the value on to the stack
-        .set_byte               ; set the data-type for the value
+        _push \1                ; push the value on to the stack
+        _set_byte               ; set the data-type for the value
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM
 
 ; set the data-type for the item atop the stack to "byte",
 ; but do *not* advance the stack pointer
 ;-------------------------------------------------------------------------------
-.MACRO  .set_byte
+.MACRO  _set_byte
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         .IFDEF  CPU_6502
-                .set_type TYPE_BYTE
+                _set_type TYPE_BYTE
         .ENDIF
         .IFDEF  CPU_65C02
                 ; this optimisation breaks if `TYPE_BYTE` is not 0!
@@ -86,31 +86,31 @@
 .ENDM
 
 ;-------------------------------------------------------------------------------
-.MACRO  .set_word_lo
+.MACRO  _set_word_lo
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        .set_type TYPE_WORD_LO
+        _set_type TYPE_WORD_LO
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM
 
 ;-------------------------------------------------------------------------------
-.MACRO  .set_word_hi
+.MACRO  _set_word_hi
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        .set_type TYPE_WORD_HI
+        _set_type TYPE_WORD_HI
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM
 
 ;===============================================================================
-.DEFINE IS_IMMEDIATE            %10000000
-.DEFINE IS_HIDDEN               %01000000
-.DEFINE IS_NO_TAIL_CALL         %00100000
-.DEFINE TERMLEN_MASK            %00011111       ; term name up to 31 chars
+.DEF    IS_IMMEDIATE            %10000000
+.DEF    IS_HIDDEN               %01000000
+.DEF    IS_NO_TAIL_CALL         %00100000
+.DEF    TERMLEN_MASK            %00011111       ; term name up to 31 chars
 
-.DEFINE prev_term       0
+.DEF    prev_term       0
 
 ;-------------------------------------------------------------------------------
-.MACRO  .prevTerm
+.MACRO  _prevTerm
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         .WORD   prev_term
-        prev_term = * - 2
+        .REDEF  prev_term       CADDR - 2
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM

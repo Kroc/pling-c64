@@ -1,0 +1,11 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; petscii.wla
+;===============================================================================
+
+.ASCIITABLE
+    MAP "a" TO "z"  = 65
+    MAP "A" TO "Z"  = 97
+.ENDA

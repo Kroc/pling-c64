@@ -7,7 +7,7 @@
 ; set the system to a C64, the include below will do
 ; the rest of the importing of machine-specific definitions
 ;
-.DEFINE         SYSTEM_C64     1
+.DEF            SYSTEM_C64     1
 .INCLUDE        "system/pling.wla"
 
 ;===============================================================================
@@ -15,4 +15,7 @@
 
 init:
         ;-----------------------------------------------------------------------
-        jmp *
+-       inc VIC_BORDER
+        jmp -
+
+;;.INCLUDE        "bios.wla"

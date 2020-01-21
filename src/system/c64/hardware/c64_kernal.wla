@@ -5,9 +5,9 @@
 ;===============================================================================
 
 ; BASIC programs starting address
-.DEFINE basic_start     $0801
+.DEF    basic_start     $0801
 ; BASIC/KERNAL input buffer
-.DEFINE input_buffer    $0200
+.DEF    input_buffer    $0200
 
 ; these vectors are called by hardware events, independent of the KERNAL.
 ; when the KERNAL ROM is enabled the ROM provides the values, which are KERNAL
@@ -15,9 +15,9 @@
 ; switched off, then the vectors will be defined by the RAM underneath
 ; -- if the vectors in RAM are not set the system will crash!
 ;
-.DEFINE HW_VECTOR_NMI   $fffa   ; Non-Maskable-Interrupt vector
-.DEFINE HW_VECTOR_RESET $fffc   ; cold-reset vector
-.DEFINE HW_VECTOR_IRQ   $fffe   ; interrupt vector
+.DEF    HW_VECTOR_NMI   $fffa   ; Non-Maskable-Interrupt vector
+.DEF    HW_VECTOR_RESET $fffc   ; cold-reset vector
+.DEF    HW_VECTOR_IRQ   $fffe   ; interrupt vector
 
 }
 
@@ -44,7 +44,7 @@
 .ENUMID DEV_DRV15       ; 15 : drives above 15 are extremely rare
 
 ; zero-page addresss used by the KERNAL
-.DEFINE ZP_KERNAL_DEV   $ba     ; last-used device, e.g. drive 8
+.DEF    ZP_KERNAL_DEV   $ba     ; last-used device, e.g. drive 8
 
 ; KERNAL vectors:
 ;-------------------------------------------------------------------------------
@@ -126,26 +126,26 @@ KERNAL_VECTOR_SAVE      WORD    ;=$0332
 ; initialize VIC; restore default input/output to keyboard/screen;
 ; clear screen; set PAL/NTSC switch and interrupt timer
 ;
-.DEFINE KERNAL_SCINIT           $ff81
-.DEFINE KERNAL_SCINIT_ADDR      $ff5b
+.DEF    KERNAL_SCINIT           $ff81
+.DEF    KERNAL_SCINIT_ADDR      $ff5b
 
 ; initialize CIA's, SID volume; setup memory configuration;
 ; set and start interrupt timer
 ;
-.DEFINE KERNAL_IOINIT           $ff84
-.DEFINE KERNAL_IOINIT_ADDR      $fda3
+.DEF    KERNAL_IOINIT           $ff84
+.DEF    KERNAL_IOINIT_ADDR      $fda3
 
 ; clear memory addresses $0002-$0101 and $0200-$03FF; run memory test
 ; and set start and end address of BASIC work area accordingly;
 ; set screen memory to $0400 and datasette buffer to $033C
 ;
-.DEFINE KERNAL_RAMTAS           $ff87
-.DEFINE KERNAL_RAMTAS_ADDR      $fd50
+.DEF    KERNAL_RAMTAS           $ff87
+.DEF    KERNAL_RAMTAS_ADDR      $fd50
 
 ; fill vector table at memory addresses $0314-$0333 with default values
 ;
-.DEFINE KERNAL_RESTOR           $ff8a
-.DEFINE KERNAL_RESTOR_ADDR      $fd15
+.DEF    KERNAL_RESTOR           $ff8a
+.DEF    KERNAL_RESTOR_ADDR      $fd15
 
 ; copy vector table at memory addresses $0314-$0333 from or into user table.
 ; input:
@@ -153,31 +153,31 @@ KERNAL_VECTOR_SAVE      WORD    ;=$0332
 ;               1 = copy vector table into user table
 ;         X/Y : pointer to user table
 ;
-.DEFINE KERNAL_VECTOR           $ff8d
-.DEFINE KERNAL_VECTOR_ADDR      $fd1a
+.DEF    KERNAL_VECTOR           $ff8d
+.DEF    KERNAL_VECTOR_ADDR      $fd1a
 
 ; set system error display switch at memory address $009D
 ; input:
 ;       A : switch value
 ;
-.DEFINE KERNAL_SETMSG           $ff90
-.DEFINE KERNAL_SETMSG_ADDR      $fe18
+.DEF    KERNAL_SETMSG           $ff90
+.DEF    KERNAL_SETMSG_ADDR      $fe18
 
 ; send `LISTEN` secondary address to serial bus.
 ; (must call `LISTEN` beforehand)
 ; input:
 ;       A : secondary address.
 ;
-.DEFINE KERNAL_LSTNSA           $ff93
-.DEFINE KERNAL_LSTNSA_ADDR      $edb9
+.DEF    KERNAL_LSTNSA           $ff93
+.DEF    KERNAL_LSTNSA_ADDR      $edb9
 
 ; send `TALK` secondary address to serial bus.
 ; (must call `TALK` beforehand)
 ; input:
 ;       A : secondary address
 ;
-.DEFINE KERNAL_TALKSA           $ff96
-.DEFINE KERANL_TALKSA_ADDR      $ecd7
+.DEF    KERNAL_TALKSA           $ff96
+.DEF    KERANL_TALKSA_ADDR      $ecd7
 
 ; save or restore start address of BASIC work area
 ; input:
@@ -187,8 +187,8 @@ KERNAL_VECTOR_SAVE      WORD    ;=$0332
 ; output:
 ;         X/Y : address (if carry = 1)
 ;
-.DEFINE KERNAL_MEMBOT           $ff99
-.DEFINE KERNAL_MEMBOT_ADDR      $fe25
+.DEF    KERNAL_MEMBOT           $ff99
+.DEF    KERNAL_MEMBOT_ADDR      $fe25
 
 ; save or restore end address of BASIC work area
 ; input:
@@ -198,67 +198,67 @@ KERNAL_VECTOR_SAVE      WORD    ;=$0332
 ; output:
 ;         X/Y : address (if carry = 1)
 ;
-.DEFINE KERNAL_MEMTOP           $ff9c
-.DEFINE KERNAL_MEMTOP_ADDR      $fe34
+.DEF    KERNAL_MEMTOP           $ff9c
+.DEF    KERNAL_MEMTOP_ADDR      $fe34
 
 ; query keyboard; put current matrix code into memory address $00CB,
 ; current status of shift keys into memory address $028D and PETSCII
 ; code into keyboard buffer
-.DEFINE KERNAL_SCNKEY           $ff9f
-.DEFINE KERNAL_SCNKEY_ADDR      $ea87
+.DEF    KERNAL_SCNKEY           $ff9f
+.DEF    KERNAL_SCNKEY_ADDR      $ea87
 
 ; unknown. (set serial bus timeout)
 ; input:
 ;       A : timeout value
 ;
-.DEFINE KERNAL_SETTMO           $ffa2
-.DEFINE KERNAL_SETTMO_ADDR      $fe21
+.DEF    KERNAL_SETTMO           $ffa2
+.DEF    KERNAL_SETTMO_ADDR      $fe21
 
 ; read byte from serial bus.
 ; (must call `TALK` and `TALKSA` beforehand)
 ; output:
 ;       A : byte read
 ;
-.DEFINE KERNAL_IECIN            $ffa5
-.DEFINE KERNAL_IECIN_ADDR       $ee13
+.DEF    KERNAL_IECIN            $ffa5
+.DEF    KERNAL_IECIN_ADDR       $ee13
 
 ; write byte to serial bus.
 ; (must call `LISTEN` and `LSTNSA` beforehand)
 ; input:
 ;       A : byte to write
 ;
-.DEFINE KERNAL_IECOUT           $ffa8
-.DEFINE KERNAL_IECOUT_ADDR      $eddd
+.DEF    KERNAL_IECOUT           $ffa8
+.DEF    KERNAL_IECOUT_ADDR      $eddd
 
 ; send `UNTALK` command to serial bus
-.DEFINE KERNAL_UNTALK           $ffab
-.DEFINE KERNAL_UNTALK_ADDR      $edef
+.DEF    KERNAL_UNTALK           $ffab
+.DEF    KERNAL_UNTALK_ADDR      $edef
 
 ; send `UNLISTEN` command to serial bus
-.DEFINE KERNAL_UNLSTN           $ffae
-.DEFINE KERNAL_UNLSTN_ADDR      $edfe
+.DEF    KERNAL_UNLSTN           $ffae
+.DEF    KERNAL_UNLSTN_ADDR      $edfe
 
 ; send `LISTEN` command to serial bus
 ; input:
 ;       A : device number
 ;
-.DEFINE KERNAL_LISTEN           $ffb1
-.DEFINE KERNAL_LISTEN_ADDR      $ed0c
+.DEF    KERNAL_LISTEN           $ffb1
+.DEF    KERNAL_LISTEN_ADDR      $ed0c
 
 ; send `TALK` command to serial bus
 ; input:
 ;       A : device number
 ;
-.DEFINE KERNAL_TALK             $ffb4
-.DEFINE KERNAL_TALK_ADDR        $ed09
+.DEF    KERNAL_TALK             $ffb4
+.DEF    KERNAL_TALK_ADDR        $ed09
 
 ; fetch status of current input/output device, value of `ST` variable
 ; (for RS232, status is cleared)
 ; output:
 ;       A : device status
 ;
-.DEFINE KERNAL_READST           $ffb7
-.DEFINE KERNAL_READST_ADDR      $fe07
+.DEF    KERNAL_READST           $ffb7
+.DEF    KERNAL_READST_ADDR      $fe07
 
 ; set file parameters
 ; input:
@@ -266,64 +266,64 @@ KERNAL_VECTOR_SAVE      WORD    ;=$0332
 ;       X : device number
 ;       Y : secondary address
 ;
-.DEFINE KERNAL_SETLFS           $ffba
-.DEFINE KERNAL_SETLFS_ADDR      $fe00
+.DEF    KERNAL_SETLFS           $ffba
+.DEF    KERNAL_SETLFS_ADDR      $fe00
 
 ; set file name parameters
 ; input:
 ;         A : file name length
 ;       X/Y : pointer to file name
 ;
-.DEFINE KERNAL_SETNAM           $ffbd
-.DEFINE KERNAL_SETNAM_ADDR      $fdf9
+.DEF    KERNAL_SETNAM           $ffbd
+.DEF    KERNAL_SETNAM_ADDR      $fdf9
 
 ; open file (must call `SETLFS` and `SETNAM` beforehand)
-.DEFINE KERNAL_OPEN             $ffc0
-.DEFINE KERNAL_OPEN_ADDR        $f34a
+.DEF    KERNAL_OPEN             $ffc0
+.DEF    KERNAL_OPEN_ADDR        $f34a
 
 ; close file
 ; input:
 ;       A : logical number
 ;
-.DEFINE KERNAL_CLOSE            $ffc3
-.DEFINE KERNAL_CLOSE_ADDR       $f291
+.DEF    KERNAL_CLOSE            $ffc3
+.DEF    KERNAL_CLOSE_ADDR       $f291
 
 ; define file as default input
 ; (must call `OPEN` beforehand)
 ; input:
 ;       X : logical number
 ;
-.DEFINE KERNAL_CHKIN            $ffc6
-.DEFINE KERNAL_CHKIN_ADDR       $f20e
+.DEF    KERNAL_CHKIN            $ffc6
+.DEF    KERNAL_CHKIN_ADDR       $f20e
 
 ; define file as default output
 ; (must call `OPEN` beforehand)
 ; input:
 ;       X : logical number
 ;
-.DEFINE KERNAL_CHKOUT           $ffc9
-.DEFINE KERNAL_CHKOUT_ADDR      $f250
+.DEF    KERNAL_CHKOUT           $ffc9
+.DEF    KERNAL_CHKOUT_ADDR      $f250
 
 ; close default input/output files (for serial bus, send `UNTALK` and/or
 ; `UNLISTEN`); restore default input/output to keyboard/screen
-.DEFINE KERNAL_CLRCHN           $ffcc
-.DEFINE KERNAL_CLRCHN_ADDR      $f333
+.DEF    KERNAL_CLRCHN           $ffcc
+.DEF    KERNAL_CLRCHN_ADDR      $f333
 
 ; read byte from default input (for keyboard, read a line from the screen).
 ; (if not keyboard, must call `OPEN` and `CHKIN` beforehand)
 ; output:
 ;       A : byte read
 ;
-.DEFINE KERNAL_CHRIN            $ffcf
-.DEFINE KERNAL_CHRIN_ADDR       $f157
+.DEF    KERNAL_CHRIN            $ffcf
+.DEF    KERNAL_CHRIN_ADDR       $f157
 
 ; write byte to default output
 ; (if not screen, must call `OPEN` and `CHKOUT` beforehand)
 ; input:
 ;       A : byte to write
 ;
-.DEFINE KERNAL_CHROUT           $ffd2
-.DEFINE KERNAL_CHROUT_ADDR      $f1ca
+.DEF    KERNAL_CHROUT           $ffd2
+.DEF    KERNAL_CHROUT_ADDR      $f1ca
 
 ; load or verify file. (must call `SETLFS` and `SETNAM` beforehand)
 ; input:
@@ -334,8 +334,8 @@ KERNAL_VECTOR_SAVE      WORD    ;=$0332
 ;           A : KERNAL error code (if carry = 1)
 ;         X/Y : address of last byte loaded/verified (if carry = 0)
 ;
-.DEFINE KERNAL_LOAD             $ffd5
-.DEFINE KERNAL_LOAD_ADDR        $f49e
+.DEF    KERNAL_LOAD             $ffd5
+.DEF    KERNAL_LOAD_ADDR        $f49e
 
 ; save file. (must call `SETLFS` and `SETNAM` beforehand)
 ; input:
@@ -346,22 +346,22 @@ KERNAL_VECTOR_SAVE      WORD    ;=$0332
 ;       carry : 0 = No errors, 1 = Error
 ;           A : KERNAL error code (if carry = 1)
 ;
-.DEFINE KERNAL_SAVE             $ffd8
-.DEFINE KERNAL_SAVE_ADDR        $f5dd
+.DEF    KERNAL_SAVE             $ffd8
+.DEF    KERNAL_SAVE_ADDR        $f5dd
 
 ; set Time of Day, at memory address $00A0-$00A2
 ; input:
 ;       A/X/Y : new TOD value
 ;
-.DEFINE KERNAL_SETTIM           $ffdb
-.DEFINE KERNAL_SETTIM_ADDR      $f6e4
+.DEF    KERNAL_SETTIM           $ffdb
+.DEF    KERNAL_SETTIM_ADDR      $f6e4
 
 ; read Time of Day, at memory address $00A0-$00A2
 ; output:
 ;       A/X/Y : current TOD value
 ;
-.DEFINE KERNAL_RDTIM            $ffde
-.DEFINE KERNAL_RDTIM_ADDR       $f6dd
+.DEF    KERNAL_RDTIM            $ffde
+.DEF    KERNAL_RDTIM_ADDR       $f6dd
 
 ; query Stop key indicator, at memory address $0091;
 ; if pressed, call CLRCHN and clear keyboard buffer
@@ -369,33 +369,33 @@ KERNAL_VECTOR_SAVE      WORD    ;=$0332
 ;        zero : 0 = not pressed, 1 = pressed
 ;       carry : 1 = pressed
 ;
-.DEFINE KERNAL_STOP             $ffe1
-.DEFINE KERNAL_STOP_ADDR        $f6ed
+.DEF    KERNAL_STOP             $ffe1
+.DEF    KERNAL_STOP_ADDR        $f6ed
 
 ; read byte from default input
 ; (if not keyboard, must call `OPEN` and `CHKIN` beforehand)
 ; output:
 ;       A : byte read
 ;
-.DEFINE KERNAL_GETIN            $ffe4
-.DEFINE KERNAL_GETIN_ADDR       $f13e
+.DEF    KERNAL_GETIN            $ffe4
+.DEF    KERNAL_GETIN_ADDR       $f13e
 
 ; clear file table; call `CLRCHN`
-.DEFINE KERNAL_CLALL            $ffe7
-.DEFINE KERNAL_CLALL_ADDR       $f32f
+.DEF    KERNAL_CLALL            $ffe7
+.DEF    KERNAL_CLALL_ADDR       $f32f
 
 ; update Time of Day, at memory address $00A0-$00A2,
 ; and stop-key indicator, at memory address $0091
-.DEFINE KERNAL_UDTIM            $ffea
-.DEFINE KERNAL_UDTIM_ADDR       $f69b
+.DEF    KERNAL_UDTIM            $ffea
+.DEF    KERNAL_UDTIM_ADDR       $f69b
 
 ; fetch number of screen rows and columns
 ; output:
 ;       X : number of columns (40)
 ;       Y : number of rows (25)
 ;
-.DEFINE KERNAL_SCREEN           $ffed
-.DEFINE KERNAL_SCREEN_ADDR      $e505
+.DEF    KERNAL_SCREEN           $ffed
+.DEF    KERNAL_SCREEN_ADDR      $e505
 
 ; save or restore cursor position
 ; input:
@@ -406,12 +406,12 @@ KERNAL_VECTOR_SAVE      WORD    ;=$0332
 ;           X : cursor column (if carry = 1)
 ;           Y : cursor row (if carry = 1)
 ;
-.DEFINE KERNAL_PLOT             $fff0
-.DEFINE KERNAL_PLOT_ADDR        $e50a
+.DEF    KERNAL_PLOT             $fff0
+.DEF    KERNAL_PLOT_ADDR        $e50a
 
 ; fetch CIA1 base address
 ; output:
 ;       X/Y : CIA1 base address ($DC00)
 ;
-.DEFINE KERNAL_IOBASE           $fff3
-.DEFINE KERNAL_IOBASE_ADDR      $e500
+.DEF    KERNAL_IOBASE           $fff3
+.DEF    KERNAL_IOBASE_ADDR      $e500

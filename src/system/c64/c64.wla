@@ -5,6 +5,7 @@
 ; c64.wla : shared C64 definitions
 ;===============================================================================
 .INCLUDE    "system/c64/hardware/c64.wla"
+.INCLUDE    "system/c64/c64_petscii.wla"
 
 ; memory map:
 ;
@@ -18,7 +19,7 @@
 
 .INCLUDE    "system/c64/c64_zp.wla"
 
-.DEFINE pl_code         $0800
-.DEFINE pl_heap         $8000
-.DEFINE pl_runtime      $c000
-.DEFINE pl_disk         $e000
+.DEF    pl_code         $0800
+.DEF    pl_heap         $8000
+.DEF    pl_runtime      $c000
+.DEF    pl_disk         $e000

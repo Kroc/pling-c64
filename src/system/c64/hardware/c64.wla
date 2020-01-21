@@ -3,9 +3,23 @@
 ; how you please as long as you retain the copyright notice
 ;
 ;===============================================================================
-.DEFINE CPU_65XX        1
-.DEFINE CPU_6502        1
-.DEFINE CPU_6510        1
+.DEF    CPU_65XX        1
+.DEF    CPU_6502        1
+.DEF    CPU_6510        1
+
+; C64 memory map:
+;
+.MEMORYMAP
+        DEFAULTSLOT     0
+        SLOTSIZE        $FFFF
+        SLOT 0          $0000
+.ENDME
+
+.ROMBANKMAP
+        BANKSTOTAL      1
+        BANKSIZE        $FFFF
+        BANKS           1
+.ENDRO
 
 .INCLUDE        "system/c64/hardware/c64_cia.wla"
 .INCLUDE        "system/c64/hardware/c64_vic.wla"
@@ -40,5 +54,5 @@
 ; can be written to, allowing you to mask out writes to certain bits -- e.g.
 ; ignore writes to the Datasette when changing memory layout
 
-.DEFINE CPU_MASK        $00     ; data direction register
-.DEFINE CPU_CONTROL     $01     ; processor port (memory layout and Datasette)
+.DEF    CPU_MASK        $00     ; data direction register
+.DEF    CPU_CONTROL     $01     ; processor port (memory layout and Datasette)
