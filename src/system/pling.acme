@@ -1,0 +1,34 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; constants and macro helpers for the assembler
+!source "system/acme.acme"
+
+; import machine-specific headers
+;-------------------------------------------------------------------------------
+!ifdef  .SYSTEM_C64     !source "system/c64/c64.acme"
+!ifdef  .SYSTEM_X16     !source "system/x16/x16.acme"
+
+; data-types:
+;===============================================================================
+.TYPE_BYTE      = %00000000
+.TYPE_WORD      = %10000000
+.TYPE_WORD_LO   = %10000000
+.TYPE_WORD_HI   = %11000000
+
+;===============================================================================
+.IS_IMMEDIATE           = %10000000
+.IS_HIDDEN              = %01000000
+.IS_NO_TAIL_CALL        = %00100000
+.TERMLEN_MASK           = %00011111     ; length of term name is up to 31 chars
+
+!set    .prev_term = 0
+
+;-------------------------------------------------------------------------------
+!macro  prevTerm {
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        !word	.prev_term
+        !set    .prev_term = * - 2
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+}

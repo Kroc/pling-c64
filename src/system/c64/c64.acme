@@ -4,9 +4,21 @@
 ;
 ; "c64.acme" : shared C64 definitions
 ;===============================================================================
-; define a symbol to allow us to detect if we're assembling for the C64
-.SYSTEM_C64     = 1
-
 !source "system/c64/hardware/c64.acme"
 
+; memory map:
+;
+;  $0 $0800          $4000           $8000            $C000    $E000    $FFFF
+;  +--+------------------------------+----------------+--------+--------+
+;  |  | USER CODE                    | USER HEAP      | PLING! | DSKBUF |
+;  +--+------------------------------+----------------+--------+--------+
+;       ^ compiled pling code          ^ program heap   ^ pling  ^ disk
+;                                        (moveable)     runtime  buffer
+;
+
 !source "system/c64/zp.acme"
+
+!addr   pl_code         = $0800
+!addr   pl_heap         = $8000
+!addr   pl_runtime      = $c000
+!addr   pl_disk         = $e000

@@ -4,5 +4,11 @@
 ;
 ; prg_pling_c64.acme : main program file for the Commodore 64
 ;===============================================================================
-!source "system/acme.acme"
-!source "system/c64/c64.acme"
+; set the system to a C64, the include below will do
+; the rest of the importing of machine-specific definitions
+;
+!set    .SYSTEM_C64     = 1
+!source "system/pling.acme"
+
+;===============================================================================
+!source "system/cbmbasic.acme"

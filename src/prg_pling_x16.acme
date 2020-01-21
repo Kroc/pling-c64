@@ -4,11 +4,14 @@
 ;
 ; prg_pling_x16.acme : main program file for the Commander X16
 ;===============================================================================
-!source "system/acme.acme"
-!source "system/x16/x16.acme"
+; set the system to an X16, the include below will do the rest
+; of the importing of machine-specific definitions
+;
+!set    .SYSTEM_X16     = 1
+!source "system/pling.acme"
 
 ;===============================================================================
-!source "system/boot_basic.acme"
+!source "system/cbmbasic.acme"
 
 ;===============================================================================
 ; take control of the machine...

@@ -5,10 +5,11 @@
 ; "zp.acme" : Pling zero-page layout for C64
 ;===============================================================================
 
-; Pling's stack currently works downwards from $FF to $80
+; Pling's data stack works downwards from $FF to $C0 (64 bytes)
 ; TODO: may have to move due to KERNAL zp-usage?
 ;
 !addr   pl_stack        = $ff
+!addr   pl_type         = $bf
 
 ; $00/$01 are not available on the C64 as these are the CPU port
 ; (see "c64/system/c64.acme")
