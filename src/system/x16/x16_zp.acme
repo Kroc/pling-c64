@@ -6,9 +6,10 @@
 !addr   {
 
 ; for speed, the parameter stack uses the zero-page
-; and works downwards from $80 to $00
+; and works downwards from $7F to $40
 ;
-pl_stack                = $80
+pl_stack                = $7f
+pl_type                 = $3f
 
 ; without X16 BASIC, we have $A9..$FF available
 ; and we use this for any other zero-page related

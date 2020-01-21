@@ -3,7 +3,8 @@
 ; how you please as long as you retain the copyright notice
 ;
 
-!cpu    65c02
+!set    .CPU_65C02 = 1
+!cpu    w65c02
 
 !addr {
 

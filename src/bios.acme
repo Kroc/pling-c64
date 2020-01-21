@@ -1,0 +1,38 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; "bios.acme" : Pling's "BIOS" for machine-independent control
+;===============================================================================
+
+; screen.cols ( -- b )
+;===============================================================================
+; pushes the current number of screen columns, minus 1 (i.e. zero-based).
+; note that some systems can change screen size!
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    11, "screen.cols"
+term_screen_width:
+
+        !ifdef  .SYSTEM_C64 {
+                +push_byte 39
+        }
+        rts
+
+; screen.rows ( -- b )
+;===============================================================================
+; pushes the current number of screen rows, minus 1 (i.e. zero-based).
+; note that some systems can change screen size!
+;
+;-------------------------------------------------------------------------------
+        +prevTerm
+        !pet    11, "screen.rows"
+term_screen_height:
+
+        !ifdef  .SYSTEM_C64 {
+                +push_byte 24
+        }
+        rts
+
+; 

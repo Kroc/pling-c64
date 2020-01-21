@@ -3,7 +3,8 @@
 ; how you please as long as you retain the copyright notice
 ;
 ;===============================================================================
-
+!set    .CPU_6502 = 1
+!set    .CPU_6510 = 1
 !cpu    6510
 
 !source "system/c64/hardware/c64_cia.acme"
