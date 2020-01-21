@@ -3,35 +3,34 @@
 ; how you please as long as you retain the copyright notice
 ;
 ;===============================================================================
-!set    .CPU_65XX = 1
-!set    .CPU_6502 = 1
-!set    .CPU_6510 = 1
-!cpu    6510
+.DEFINE CPU_65XX        1
+.DEFINE CPU_6502        1
+.DEFINE CPU_6510        1
 
-!source "system/c64/hardware/c64_cia.acme"
-!source "system/c64/hardware/c64_vic.acme"
-!source "system/c64/hardware/c64_kernal.acme"
+.INCLUDE        "system/c64/hardware/c64_cia.wla"
+.INCLUDE        "system/c64/hardware/c64_vic.wla"
+.INCLUDE        "system/c64/hardware/c64_kernal.wla"
 
 ;-------------------------------------------------------------------------------
-!macro  bit_skip1 {
+.MACRO  .bit_skip1
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        !byte $24
+        .BYTE   $24
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-}
+.ENDM
 ;-------------------------------------------------------------------------------
-!macro  bit_skip2 {
+.MACRO  .bit_skip2
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        !byte $2c
+        .BYTE   $2c
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-}
+.ENDM
 ;-------------------------------------------------------------------------------
 ; "halt & catch fire"
 ;
-!macro  hcf {
+.MACRO  .hcf
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        !byte $f2
+        .BYTE   $f2
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-}
+.ENDM
 
 ; CPU port: memory layout & Datasette
 ;===============================================================================
@@ -41,5 +40,5 @@
 ; can be written to, allowing you to mask out writes to certain bits -- e.g.
 ; ignore writes to the Datasette when changing memory layout
 
-.CPU_MASK               = $00   ; data direction register
-.CPU_CONTROL            = $01   ; processor port (memory layout and Datasette)
+.DEFINE CPU_MASK        $00     ; data direction register
+.DEFINE CPU_CONTROL     $01     ; processor port (memory layout and Datasette)

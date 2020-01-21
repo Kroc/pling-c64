@@ -2,16 +2,16 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; prg_pling_c64.acme : main program file for the Commodore 64
+; pling_c64.wla : main program file for the Commodore 64
 ;===============================================================================
 ; set the system to a C64, the include below will do
 ; the rest of the importing of machine-specific definitions
 ;
-!set    .SYSTEM_C64     = 1
-!source "system/pling.acme"
+.DEFINE         SYSTEM_C64     1
+.INCLUDE        "system/pling.wla"
 
 ;===============================================================================
-!source "system/cbmbasic.acme"
+.INCLUDE        "system/cbmbasic.wla"
 
 init:
         ;-----------------------------------------------------------------------

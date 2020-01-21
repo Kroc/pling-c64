@@ -8,26 +8,26 @@
 ;===============================================================================
 ; CIA1 - keyboard, joysticks, lightpen & paddles I/O
 ;-------------------------------------------------------------------------------
-.CIA1_PORTA                     = $dc00
-.CIA1_PORTB                     = $dc01
+.DEFINE CIA1_PORTA      $dc00
+.DEFINE CIA1_PORTB      $dc01
 
-.CIA1_PORTA_DDR                 = $dc02
-.CIA1_PORTB_DDR                 = $dc03
+.DEFINE CIA1_PORTA_DDR  $dc02
+.DEFINE CIA1_PORTB_DDR  $dc03
 
-.CIA1_INTERRUPT                 = $dc0d
-.CIA2_INTERRUPT                 = $dd0d
+.DEFINE CIA1_INTERRUPT  $dc0d
+.DEFINE CIA2_INTERRUPT  $dd0d
 
 ; CIA2 - VIC memory bank, IEC serial & userport RS232 I/O
 ;-------------------------------------------------------------------------------
-.CIA2_PORTA                     = $dd00
-.CIA2_PORTB                     = $dd01
+.DEFINE CIA2_PORTA      $dd00
+.DEFINE CIA2_PORTB      $dd01
 
-.CIA2_PORTA_DDR                 = $dd02
-.CIA2_PORTB_DDR                 = $dd03
+.DEFINE CIA2_PORTA_DDR  $dd02
+.DEFINE CIA2_PORTB_DDR  $dd03
 
-.CIA2_TIMERA                    = $dd04
-.CIA2_TIMERA_LO                 = $dd04
-.CIA2_TIMERA_HI                 = $dd05
-.CIA2_TIMERB                    = $dd06
-.CIA2_TIMERB_LO                 = $dd06
-.CIA2_TIMERB_HI                 = $dd07
+.DEFINE CIA2_TIMERA     $dd04
+.DEFINE CIA2_TIMERA_LO  $dd04
+.DEFINE CIA2_TIMERA_HI  $dd05
+.DEFINE CIA2_TIMERB     $dd06
+.DEFINE CIA2_TIMERB_LO  $dd06
+.DEFINE CIA2_TIMERB_HI  $dd07

@@ -2,109 +2,115 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; constants and macro helpers for the assembler
-!source "system/acme.acme"
-
-; import machine-specific headers
+;===============================================================================
+; import machine-specific headers:
 ;-------------------------------------------------------------------------------
-!ifdef  .SYSTEM_C64     !source "system/c64/c64.acme"
-!ifdef  .SYSTEM_X16     !source "system/x16/x16.acme"
-
-!ifdef  .CPU_65XX       !source "system/65xx.acme"
+.IFDEF  SYSTEM_C64
+        .INCLUDE        "system/c64/c64.wla"
+.ENDIF
+.IFDEF  SYSTEM_X16
+        .INCLUDE        "system/x16/x16.wla"
+.ENDIF
+.IFDEF  CPU_65XX
+        .INCLUDE        "system/65xx.wla"
+.ENDIF
 
 ; data-types:
 ;===============================================================================
-.TYPE_BYTE      = %00000000
-.TYPE_WORD_LO   = %10000000
-.TYPE_WORD_HI   = %11000000
-.TYPE_FLOAT     = %01000000
-.TYPE_FLOAT1    = %01000100
-.TYPE_FLOAT2    = %01000011
-.TYPE_FLOAT3    = %01000010
-.TYPE_FLOAT4    = %01000001
-.TYPE_FLOAT5    = %01000000
+.DEFINE TYPE_BYTE       %00000000
+.DEFINE TYPE_WORD_LO    %10000000
+.DEFINE TYPE_WORD_HI    %11000000
+.DEFINE TYPE_FLOAT      %01000000
+.DEFINE TYPE_FLOAT1     %01000100
+.DEFINE TYPE_FLOAT2     %01000011
+.DEFINE TYPE_FLOAT3     %01000010
+.DEFINE TYPE_FLOAT4     %01000001
+.DEFINE TYPE_FLOAT5     %01000000
 
 ; set the value of the byte atop of the stack,
 ; but do *not* advance the stack pointer
 ;-------------------------------------------------------------------------------
-!macro  set .value {
+.MACRO  .set
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        lda # .value
+        lda # \1
         sta pl_stack, x
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-}
+.ENDM
 
 ; set the data-type for the item atop the stack,
 ; but do *not* advance the stack pointer
 ;-------------------------------------------------------------------------------
-!macro  set_type .type {
+.MACRO  .set_type
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        lda # .type
+        lda # \1
         sta pl_type, x
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-}
+.ENDM
 
 ; push a value on top of the stack, but do not set its data-type,
 ; or advance the stack pointer. WARNING: problems will arise if
 ; the data-type stack goes out of alignment!
 ;-------------------------------------------------------------------------------
-!macro  push .value {
+.MACRO  .push
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         inx
-        +set .value
+        .set \1
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-}
+.ENDM
 
 ;-------------------------------------------------------------------------------
-!macro  push_byte .byte {
+.MACRO  .push_byte
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        +push .byte             ; push the value on to the stack
-        +set_byte               ; set the data-type for the value
+        .push \1                ; push the value on to the stack
+        .set_byte               ; set the data-type for the value
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-}
+.ENDM
 
 ; set the data-type for the item atop the stack to "byte",
 ; but do *not* advance the stack pointer
 ;-------------------------------------------------------------------------------
-!macro  set_byte {
+.MACRO  .set_byte
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        !ifdef .CPU_6502 {
-                +set_type .TYPE_BYTE
-        }
-        !ifdef .CPU_65C02 {
-                ; this optimisation breaks if `.TYPE_BYTE` is not 0!
-                !if .TYPE_BYTE != 0 !serious ".TYPE_BYTE != 0"
+        .IFDEF  CPU_6502
+                .set_type TYPE_BYTE
+        .ENDIF
+        .IFDEF  CPU_65C02
+                ; this optimisation breaks if `TYPE_BYTE` is not 0!
+                .IF TYPE_BYTE != 0
+                        .PRINT "TYPE_BYTE != 0"
+                        .FAIL
+                .ENDIF
                 stz pl_type, x
-        }
+        .ENDIF
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-}
+.ENDM
 
 ;-------------------------------------------------------------------------------
-!macro  set_word_lo {
+.MACRO  .set_word_lo
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        +set_type .TYPE_WORD_LO
+        .set_type TYPE_WORD_LO
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-}
+.ENDM
 
 ;-------------------------------------------------------------------------------
-!macro  set_word_hi {
+.MACRO  .set_word_hi
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        +set_type .TYPE_WORD_HI
+        .set_type TYPE_WORD_HI
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-}
+.ENDM
 
 ;===============================================================================
-.IS_IMMEDIATE           = %10000000
-.IS_HIDDEN              = %01000000
-.IS_NO_TAIL_CALL        = %00100000
-.TERMLEN_MASK           = %00011111     ; length of term name is up to 31 chars
+.DEFINE IS_IMMEDIATE            %10000000
+.DEFINE IS_HIDDEN               %01000000
+.DEFINE IS_NO_TAIL_CALL         %00100000
+.DEFINE TERMLEN_MASK            %00011111       ; term name up to 31 chars
 
-!set    .prev_term = 0
+.DEFINE prev_term       0
 
 ;-------------------------------------------------------------------------------
-!macro  prevTerm {
+.MACRO  .prevTerm
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        !word   .prev_term
-        !set    .prev_term = * - 2
+        .WORD   prev_term
+        prev_term = * - 2
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-}
+.ENDM

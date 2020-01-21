@@ -1,0 +1,113 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+;===============================================================================
+
+;                               hex     ¦ nybble
+.DEFINE VIC_BLACK               $00     ; %0000
+.DEFINE VIC_WHITE               $01     ; %0001
+.DEFINE VIC_RED                 $02     ; %0010
+.DEFINE VIC_CYAN                $03     ; %0011
+.DEFINE VIC_PURPLE              $04     ; %0100
+.DEFINE VIC_GREEN               $05     ; %0101
+.DEFINE VIC_BLUE                $06     ; %0110
+.DEFINE VIC_YELLOW              $07     ; %0111
+.DEFINE VIC_ORANGE              $08     ; %1000
+.DEFINE VIC_BROWN               $09     ; %1001
+.DEFINE VIC_LTRED               $0a     ; %1010
+.DEFINE VIC_DKGREY              $0b     ; %1011
+.DEFINE VIC_GREY                $0c     ; %1100
+.DEFINE VIC_LTGREEN             $0d     ; %1101
+.DEFINE VIC_LTBLUE              $0e     ; %1110
+.DEFINE VIC_LTGREY              $0f     ; %1111
+
+; the sprite pointers are stored in the unused space directly after the screen
+; RAM (default $0400) since the screen is 1'000 chars long and there are 24
+; bytes available there. these constants are offsets you should add to your
+; screen location. sprites in memory must be aligned to 64 bytes, so the value
+; used in the sprite pointers is the offset of the sprite from the beginning
+; of the selected VIC bank, divided by 64
+;
+; for example, if the VIC bank is set to 1 ($4000..$8000) and sprites are
+; stored at $6800 then the first sprite index is $A0 (+$2800 / 64)
+
+.DEFINE VIC_SPRITE0_PTR         $03f8
+.DEFINE VIC_SPRITE1_PTR         $03f9
+.DEFINE VIC_SPRITE2_PTR         $03fa
+.DEFINE VIC_SPRITE3_PTR         $03fb
+.DEFINE VIC_SPRITE4_PTR         $03fc
+.DEFINE VIC_SPRITE5_PTR         $03fd
+.DEFINE VIC_SPRITE6_PTR         $03fe
+.DEFINE VIC_SPRITE7_PTR         $03ff
+
+.DEFINE VIC_SPRITE0_X           $d000
+.DEFINE VIC_SPRITE0_Y           $d001
+.DEFINE VIC_SPRITE1_X           $d002
+.DEFINE VIC_SPRITE1_Y           $d003
+.DEFINE VIC_SPRITE2_X           $d004
+.DEFINE VIC_SPRITE2_Y           $d005
+.DEFINE VIC_SPRITE3_X           $d006
+.DEFINE VIC_SPRITE3_Y           $d007
+.DEFINE VIC_SPRITE4_X           $d008
+.DEFINE VIC_SPRITE4_Y           $d009
+.DEFINE VIC_SPRITE5_X           $d00a
+.DEFINE VIC_SPRITE5_Y           $d00b
+.DEFINE VIC_SPRITE6_X           $d00c
+.DEFINE VIC_SPRITE6_Y           $d00d
+.DEFINE VIC_SPRITE7_X           $d00e
+.DEFINE VIC_SPRITE7_Y           $d00f
+
+.DEFINE VIC_SPRITES_X           $d010
+
+.DEFINE VIC_SCREEN_CTL1         $d011   ; screen-control register
+.DEFINE VIC_SCREEN_CTL2         $d016
+
+.DEFINE VIC_SCREEN_VERT         $d011   ; vertical scroll offset (bits 0-2)
+.DEFINE VIC_SCREEN_HORZ         $d016   ; horizontal scroll offset (bits 0-2)
+
+.DEFINE VIC_SCANLINE            $d012
+
+.DEFINE VIC_LIGHT_X             $d013
+.DEFINE VIC_LIGHT_Y             $d014
+
+.DEFINE VIC_SPRITE_ENABLE       $d015
+
+.DEFINE VIC_SPRITE_DBLHEIGHT    $d017
+.DEFINE VIC_SPRITE_DBLWIDTH     $d01d
+
+.DEFINE VIC_LAYOUT              $d018
+
+.DEFINE VIC_INTERRUPT_STATUS    $d019
+.DEFINE VIC_INTERRUPT_CONTROL   $d01a
+
+.DEFINE INTERRUPT_RASTER        %0001
+.DEFINE INTERRUPT_BGCOLLISION   %0010
+.DEFINE INTERRUPT_SPCOLLISION   %0100
+.DEFINE INTERRUPT_LIGHTPEN      %1000
+
+.DEFINE VIC_SPRITE_PRIORITY     $d01b
+
+.DEFINE VIC_SPRITE_MULTICOLOR   $d01c
+
+.DEFINE VIC_SPRITE_SPCOLLISION  $d01e
+.DEFINE VIC_SPRITE_BGCOLLISION  $d01f
+
+.DEFINE VIC_BORDER              $d020
+.DEFINE VIC_BACKGROUND          $d021
+
+.DEFINE VIC_BKGND_EXTRA1        $d022   ; extended background colour 1
+.DEFINE VIC_BKGND_EXTRA2        $d023   ; extended background colour 2
+.DEFINE VIC_BKGND_EXTRA3        $d024   ; extended background colour 3
+
+.DEFINE VIC_SPRITE_EXTRA1       $d025 ; sprite extra colour 1
+.DEFINE VIC_SPRITE_EXTRA2       $d026 ; sprite extra colour 2
+
+.DEFINE VIC_SPRITE0_COLOR       $d027
+.DEFINE VIC_SPRITE1_COLOR       $d028
+.DEFINE VIC_SPRITE2_COLOR       $d029
+.DEFINE VIC_SPRITE3_COLOR       $d02a
+.DEFINE VIC_SPRITE4_COLOR       $d02b
+.DEFINE VIC_SPRITE5_COLOR       $d02c
+.DEFINE VIC_SPRITE6_COLOR       $d02d
+.DEFINE VIC_SPRITE7_COLOR       $d02e

@@ -2,24 +2,24 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; "zp.acme" : Pling zero-page layout for C64
+; c64_zp.acme : Pling zero-page layout for C64
 ;===============================================================================
 
 ; Pling's data stack works downwards from $FF to $C0 (64 bytes)
 ; TODO: may have to move due to KERNAL zp-usage?
 ;
-!addr   pl_stack        = $ff
-!addr   pl_type         = $bf
+.DEFINE pl_stack        $ff
+.DEFINE pl_type         $bf
 
 ; $00/$01 are not available on the C64 as these are the CPU port
 ; (see "c64/system/c64.acme")
 ;
 ; base address of Pling's private zp-space:
-+alloc  $02
-+addr   ~pl_zp
+; TODO: use section / enum assignment here
+.DEFINE pl_zp           $02
 
 ; address of the last defined term
 ; (updated when new terms are added)
-+word   ~pl_last
+.DEFINE pl_last         $02
 ; the address of the next free byte of memory
-+word   ~pl_here
+.DEFINE pl_here         $04

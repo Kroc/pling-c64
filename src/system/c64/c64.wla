@@ -2,9 +2,9 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; "c64.acme" : shared C64 definitions
+; c64.wla : shared C64 definitions
 ;===============================================================================
-!source "system/c64/hardware/c64.acme"
+.INCLUDE    "system/c64/hardware/c64.wla"
 
 ; memory map:
 ;
@@ -16,9 +16,9 @@
 ;                                        (moveable)     runtime  buffer
 ;
 
-!source "system/c64/c64_zp.acme"
+.INCLUDE    "system/c64/c64_zp.wla"
 
-!addr   pl_code         = $0800
-!addr   pl_heap         = $8000
-!addr   pl_runtime      = $c000
-!addr   pl_disk         = $e000
+.DEFINE pl_code         $0800
+.DEFINE pl_heap         $8000
+.DEFINE pl_runtime      $c000
+.DEFINE pl_disk         $e000
