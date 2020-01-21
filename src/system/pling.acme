@@ -10,6 +10,8 @@
 !ifdef  .SYSTEM_C64     !source "system/c64/c64.acme"
 !ifdef  .SYSTEM_X16     !source "system/x16/x16.acme"
 
+!ifdef  .CPU_65XX       !source "system/65xx.acme"
+
 ; data-types:
 ;===============================================================================
 .TYPE_BYTE      = %00000000
@@ -22,36 +24,52 @@
 .TYPE_FLOAT4    = %01000001
 .TYPE_FLOAT5    = %01000000
 
-; place a value on top of the stack, but do *not* move the stack pointer
+; set the value of the byte atop of the stack,
+; but do *not* advance the stack pointer
 ;-------------------------------------------------------------------------------
-!macro  put .byte {
+!macro  set .value {
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        lda # .byte
+        lda # .value
+        sta pl_stack, x
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+}
+
+; set the data-type for the item atop the stack,
+; but do *not* advance the stack pointer
+;-------------------------------------------------------------------------------
+!macro  set_type .type {
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        lda # .type
         sta pl_type, x
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }
 
+; push a value on top of the stack, but do not set its data-type,
+; or advance the stack pointer. WARNING: problems will arise if
+; the data-type stack goes out of alignment!
 ;-------------------------------------------------------------------------------
-!macro  push .byte {
+!macro  push .value {
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         inx
-        +put .byte
+        +set .value
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }
 
 ;-------------------------------------------------------------------------------
 !macro  push_byte .byte {
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        +push .byte
-        +type_byte
+        +push .byte             ; push the value on to the stack
+        +set_byte               ; set the data-type for the value
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }
 
+; set the data-type for the item atop the stack to "byte",
+; but do *not* advance the stack pointer
 ;-------------------------------------------------------------------------------
-!macro  type_byte {
+!macro  set_byte {
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         !ifdef .CPU_6502 {
-                +put .TYPE_BYTE
+                +set_type .TYPE_BYTE
         }
         !ifdef .CPU_65C02 {
                 ; this optimisation breaks if `.TYPE_BYTE` is not 0!
@@ -62,16 +80,16 @@
 }
 
 ;-------------------------------------------------------------------------------
-!macro  type_word_lo {
+!macro  set_word_lo {
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        +put .TYPE_WORD_LO
+        +set_type .TYPE_WORD_LO
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }
 
 ;-------------------------------------------------------------------------------
-!macro  type_word_hi {
+!macro  set_word_hi {
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        +put .TYPE_WORD_HI
+        +set_type .TYPE_WORD_HI
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }
 
@@ -86,7 +104,7 @@
 ;-------------------------------------------------------------------------------
 !macro  prevTerm {
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        !word	.prev_term
+        !word   .prev_term
         !set    .prev_term = * - 2
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }

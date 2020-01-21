@@ -150,19 +150,23 @@ term_execute:
         ; we must reduce the stack by 2 bytes before we jump!
         inx
         inx
+!ifdef  CPU_65C02 {
         ; 65C02: do a jump directly from the parameter stack,
         ; with +2 to compensate for already having popped the stack
         jmp (pl_stack+2, x)
+} else {
+        ; 6502:
+        ; TODO: can we optimise this better? jmp(abs)?
+        ; TODO: will not work from ROM
+        lda pl_stack, x
+        sta @addr+1
+        inx
+        lda pl_stack, x
+        sta @addr+2
+        inx
 
-;;; 6502:
-;;        lda pl_stack, x
-;;        sta @addr+1
-;;        inx
-;;        lda pl_stack, x
-;;        sta @addr+2
-;;        inx
-;;
-;;@addr:  jmp $8888
+@addr:  jmp $8888
+}
 
 ;;; hold ( b -- )
 ;;;===============================================================================

@@ -2,7 +2,7 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-
+!set    .CPU_65XX  = 1
 !set    .CPU_65C02 = 1
 !cpu    w65c02
 

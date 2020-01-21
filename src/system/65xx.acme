@@ -2,44 +2,41 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
+; "65xx.acme" : macros for 6502/6510/65C02
 ;===============================================================================
-!set    .CPU_65XX = 1
-!set    .CPU_6502 = 1
-!set    .CPU_6510 = 1
-!cpu    6510
-
-!source "system/c64/hardware/c64_cia.acme"
-!source "system/c64/hardware/c64_vic.acme"
-!source "system/c64/hardware/c64_kernal.acme"
 
 ;-------------------------------------------------------------------------------
-!macro  bit_skip1 {
+!macro  stz ~.addr {
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        !byte $24
-        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-}
-;-------------------------------------------------------------------------------
-!macro  bit_skip2 {
-        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        !byte $2c
-        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-}
-;-------------------------------------------------------------------------------
-; "halt & catch fire"
-;
-!macro  hcf {
-        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        !byte $f2
+        !ifdef  .CPU_65C02 {
+                stz .addr
+        } else {
+                lda # 0
+                sta .addr
+        }
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 }
 
-; CPU port: memory layout & Datasette
-;===============================================================================
-; memory address $00/$01 is hard-wired to the C64's 6510 CPU; the "processor
-; port", $01, controls the memory layout of the C64 as well as the Datasette.
-; the "data direction" register, $00, controls which bits of the processor port
-; can be written to, allowing you to mask out writes to certain bits -- e.g.
-; ignore writes to the Datasette when changing memory layout
+;-------------------------------------------------------------------------------
+!macro  stz_x ~.addr {
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        !ifdef  .CPU_65C02 {
+                stz .addr, x
+        } else {
+                lda # 0
+                sta .addr, x
+        }
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+}
 
-.CPU_MASK               = $00   ; data direction register
-.CPU_CONTROL            = $01   ; processor port (memory layout and Datasette)
+;-------------------------------------------------------------------------------
+!macro  stz_y ~.addr {
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        !ifdef  .CPU_65C02 {
+                stz .addr, y
+        } else {
+                lda # 0
+                sta .addr, y
+        }
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+}

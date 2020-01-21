@@ -13,8 +13,13 @@
         !pet    5, "input"
 input:
         ;-----------------------------------------------------------------------
-        phx                     ; backup parameter stack index
-
+        ; backup parameter stack index
+!ifdef  .CPU_65C02 {
+        phx
+} else {
+        txa
+        pha
+}
 -       jsr .kernal_chrin       ; read a character from the keyboard
         cmp # $d                ; is the key RETURN?
         beq +                   ; if yes, quit reading
@@ -25,16 +30,15 @@ input:
         bne -
 
 +       jsr .kernal_chrout      ; actually print the RETURN (go to next line)
-        stz .input_buffer, x    ; append a null-terminator to the line
-
+        +stz_x .input_buffer    ; append a null-terminator to the line
         ; set the read cursor to the line-buffer
         lda #< .input_buffer
         sta pl_buffer_addr_lo
         lda #> .input_buffer
         sta pl_buffer_addr_hi
         ; reset the buffer index to the start
-        stz pl_buffer_index_lo
-        stz pl_buffer_index_hi
+        +stz pl_buffer_index_lo
+        +stz pl_buffer_index_hi
 
         plx                     ; restore parameter stack index
         jsr interpret
