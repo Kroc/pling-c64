@@ -2,21 +2,22 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
+; terms_nucleus.wla
 ;===============================================================================
 ; these are the absolute bear minimum of words that *have* to be implemented
 ; in native assembly language in order to port the rest of Pling
 
-; set ( b addr.w -- )
+; set ( b w -- )
 ;===============================================================================
 ; stores the byte (3rd on stack) at the address (1st & 2nd bytes).
 ; all bytes are consumed
 ;
 ;-------------------------------------------------------------------------------
-        +prevTerm
-        !pet    3, "set"
+        _prevTerm
+        .BYTE   3, "set"
 term_set:
-        lda pl_stack+2, x       ; get value to store (3rd byte)
-        sta (pl_stack, x)       ; store via the address on the stack
+        lda zp_stack+2, x       ; get value to store (3rd byte)
+        sta (zp_stack, x)       ; store via the address on the stack
 
         inx                     ; consume...
         inx                     ; three...
@@ -30,12 +31,12 @@ term_set:
 ; and pushes the value to the stack
 ;
 ;-------------------------------------------------------------------------------
-        +prevTerm
-        !pet    3, "get"
+        _prevTerm
+        .BYTE   3, "get"
 term_get:
-        lda (pl_stack, x)
+        lda (zp_stack, x)
         inx
-        sta pl_stack, x
+        sta zp_stack, x
 
         rts
 
@@ -44,151 +45,140 @@ term_get:
 ; duplicate the byte on top of the stack
 ;
 ;-------------------------------------------------------------------------------
-        +prevTerm
-        !pet    3, "dup"
+        _prevTerm
+        .BYTE   3, "dup"
 term_dup:
         dex
-        lda pl_stack+1, x
-        sta pl_stack, x
+        lda zp_stack+1, x
+        sta zp_stack, x
         rts
 
-; drop ( b -- )
+; drop ( x -- )
 ;===============================================================================
-; forget the top-most byte on the stack,
-; moving the stack down to the next byte
+; forget the top-most item on the stack, moving the stack down
+; to the next item
 ;
 ;-------------------------------------------------------------------------------
-        +prevTerm
-        !pet    4, "drop"
+        _prevTerm
+        .BYTE   4, "drop"
 term_drop:
         inx
         rts
 
-; not (b -- b)
+; swap ( x x -- x x )
+;===============================================================================
+; swap the top two bytes
+;
+;-------------------------------------------------------------------------------
+        _prevTerm
+        .BYTE   4, "swap"
+term_swap:
+        lda zp_stack, x
+        ldy zp_stack+1, x
+        sta zp_stack+1, x
+        sty zp_stack, x
+        rts
+
+; not ( x -- x )
 ;===============================================================================
 ; bitwise NOT the byte on top of the stack (invert all bits)
 ;
 ;-------------------------------------------------------------------------------
-        +prevTerm
-        !pet    3, "not"
+        _prevTerm
+        .BYTE   3, "not"
 term_not:
-        lda pl_stack+0, x
+        lda zp_stack+0, x
         eor %11111111
-        sta pl_stack+0, x
+        sta zp_stack+0, x
         
         rts
 
-; and ( b1 b2 -- b )
+; and ( x x -- x )
 ;===============================================================================
 ; bitwise AND the two bytes on top of the stack
 ;
 ;-------------------------------------------------------------------------------
-        +prevTerm
-        !pet    3, "and"
+        _prevTerm
+        .BYTE   3, "and"
 term_and:
-        lda pl_stack+1, x
-        and pl_stack+0, x
+        lda zp_stack+1, x
+        and zp_stack+0, x
         inx
-        sta pl_stack+0, x
+        sta zp_stack+0, x
         
         rts
 
-; or (b1 b2 -- b)
+; or ( x x -- x )
 ;===============================================================================
 ; bitwise OR the two bytes on top of the stack
 ;
 ;-------------------------------------------------------------------------------
-        +prevTerm
-        !pet    2, "or"
+        _prevTerm
+        .BYTE   2, "or"
 term_or:
-        lda pl_stack+1, x
-        ora pl_stack+0, x
+        lda zp_stack+1, x
+        ora zp_stack+0, x
         inx
-        sta pl_stack+0, x
+        sta zp_stack+0, x
         
         rts
 
-; xor (b1 b2 -- b)
+; xor ( x x -- x )
 ;===============================================================================
 ; bitwise XOR the two bytes on top of the stack
 ;
 ;-------------------------------------------------------------------------------
-        +prevTerm
-        !pet    3, "xor"
+        _prevTerm
+        .BYTE   3, "xor"
 term_xor:
-        lda pl_stack+1, x
-        eor pl_stack+0, x
+        lda zp_stack+1, x
+        eor zp_stack+0, x
         inx
-        sta pl_stack+0, x
+        sta zp_stack+0, x
         
         rts
 
-; + ( b1 b2 -- b )
+; + ( x x -- x )
 ;===============================================================================
 ; add the two bytes on top of the stack
 ;
 ;-------------------------------------------------------------------------------
-        +prevTerm
-        !pet    1, "+"
+        _prevTerm
+        .BYTE   1, "+"
 term_add:
         clc
-        lda pl_stack, x
-        adc pl_stack+1, x
-        sta pl_stack+1, x
+        lda zp_stack, x
+        adc zp_stack+1, x
+        sta zp_stack+1, x
         inx
 
         rts
 
-; execute ( addr.w -- )
+; execute ( w -- )
 ;===============================================================================
 ; execute the address on top of the stack
 ;
 ;-------------------------------------------------------------------------------
-        +prevTerm
-        !pet    7, "execute"
+        _prevTerm
+        .BYTE   7, "execute"
 term_execute:
+.IFDEF  CPU_65C02
         ; we must reduce the stack by 2 bytes before we jump!
         inx
         inx
-!ifdef  CPU_65C02 {
         ; 65C02: do a jump directly from the parameter stack,
         ; with +2 to compensate for already having popped the stack
-        jmp (pl_stack+2, x)
-} else {
+        jmp (zp_stack+2, x)
+.ELSE
         ; 6502:
         ; TODO: can we optimise this better? jmp(abs)?
-        ; TODO: will not work from ROM
-        lda pl_stack, x
-        sta @addr+1
+        ; TODO: will not work from ROM, use zp-vector?
+        lda zp_stack, x
+        sta @addr.w +1
         inx
-        lda pl_stack, x
-        sta @addr+2
+        lda zp_stack, x
+        sta @addr.w +2
         inx
 
 @addr:  jmp $8888
-}
-
-;;; hold ( b -- )
-;;;===============================================================================
-;;; takes the byte on top of the [data] stack and places it on the return stack.
-;;; all bytes that are held *MUST* be released, otherwise the return address will
-;;; be corrupted and the system will crash
-;;;
-;;; known as ">R" in Forth
-;;;
-;;;-------------------------------------------------------------------------------
-;;        +prevTerm
-;;        !pet    4, "hold"
-;;hold:
-;;        pla
-;;        sta @addr+1
-;;        pla
-;;        sta @addr+1
-;;
-;;        lda pl_stack, x
-;;        inx
-;;        pha
-;;
-;;@addr:  jmp $8888
-        
-        
+.ENDIF

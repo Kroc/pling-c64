@@ -19,8 +19,6 @@
 .DEF    HW_VECTOR_RESET $fffc   ; cold-reset vector
 .DEF    HW_VECTOR_IRQ   $fffe   ; interrupt vector
 
-}
-
 ; device numbers:
 ;-------------------------------------------------------------------------------
 ; some KERNAL routines ask for device numbers

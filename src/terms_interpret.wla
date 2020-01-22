@@ -9,38 +9,33 @@
 ; input line-buffer ($0200)
 ;
 ;-------------------------------------------------------------------------------
-        +prevTerm
-        !pet    5, "input"
+        _prevTerm
+        .BYTE   5, "input"
 input:
         ;-----------------------------------------------------------------------
         ; backup parameter stack index
-!ifdef  .CPU_65C02 {
-        phx
-} else {
-        txa
-        pha
-}
--       jsr .kernal_chrin       ; read a character from the keyboard
+        _phx
+-       jsr kernal_chrin        ; read a character from the keyboard
         cmp # $d                ; is the key RETURN?
         beq +                   ; if yes, quit reading
 
-        sta .input_buffer, x    ; add the key-code to the buffer
+        sta input_buffer, x     ; add the key-code to the buffer
         inx                     ; move to the next character
         cpx # 81                ; have we hit the end of the line?
         bne -
 
-+       jsr .kernal_chrout      ; actually print the RETURN (go to next line)
-        +stz_x .input_buffer    ; append a null-terminator to the line
++       jsr kernal_chrout       ; actually print the RETURN (go to next line)
+        _stz_x input_buffer     ; append a null-terminator to the line
         ; set the read cursor to the line-buffer
-        lda #< .input_buffer
+        lda #< input_buffer
         sta pl_buffer_addr_lo
-        lda #> .input_buffer
+        lda #> input_buffer
         sta pl_buffer_addr_hi
         ; reset the buffer index to the start
-        +stz pl_buffer_index_lo
-        +stz pl_buffer_index_hi
+        _stz pl_buffer_index_lo
+        _stz pl_buffer_index_hi
 
-        plx                     ; restore parameter stack index
+        _plx                    ; restore parameter stack index
         jsr interpret
 
         ; clean up & exit
@@ -49,15 +44,15 @@ input:
 
 ; interpret ( -- )
 ;===============================================================================
-        +prevTerm
-        !pet    9, "interpret"
+        _prevTerm
+        .BYTE   9, "interpret"
 interpret:
         ;-----------------------------------------------------------------------
         ; read a term from the input buffer:
         ;
         lda # $20               ; space is term delimiter
         inx
-        sta pl_stack, x
+        sta zp_stack, x
 
         ; read a term from the input buffer
         jsr term
@@ -74,17 +69,17 @@ interpret:
 ; used when compiling new words
 ;
 ;-------------------------------------------------------------------------------
-        +prevTerm
-        !pet    4, "here"
+        _prevTerm
+        .BYTE   4, "here"
 here:
         ;-----------------------------------------------------------------------
         ; read the address of free memory from the pointer in zero-page
         dex
         lda pl_here_hi          ; contains hi-byte of next free address
-        sta pl_stack, x
+        sta zp_stack, x
         dex
         lda pl_here_lo          ; contains lo-byte of next free address
-        sta pl_stack, x
+        sta zp_stack, x
         
         rts
 
@@ -93,15 +88,15 @@ here:
 ; create a new term; the name of the term is read from the input buffer
 ;
 ;-------------------------------------------------------------------------------
-        +prevTerm
-        !pet    8, "new-term"
+        _prevTerm
+        .BYTE   8, "new-term"
 new_term:
         ;-----------------------------------------------------------------------
         ; read the name of the next term:
         ;
         lda # $20               ; space = delimiter
         dex
-        sta pl_stack, x
+        sta zp_stack, x
         jsr term
 
         ; this is now the last defined term:
@@ -113,13 +108,24 @@ new_term:
         ; the new term begins with the address
         ; of the previous one: (back-link)
         ;
+.IFNDEF CPU_65C02
+        ldy # 0
+.ENDIF
         lda pl_last_lo          ; load address lo-byte of last term
+.IFDEF  CPU_65C02
         sta (pl_here)           ; save at the new term's address
+.ELSE
+        sta (pl_here), y
+.ENDIF
         inc pl_here_lo          ; move to the next byte of memory
         bcc +                   ; page crossed?
         inc pl_here_hi          ; (move to next page)
 +       lda pl_last_hi          ; load address hi-byte of last term
+.IFDEF  CPU_65C02
         sta (pl_here)           ; save at the new term's address
+.ELSE
+        sta (pl_here), y
+.ENDIF
         inc pl_here_lo          ; move to the next byte of memory
         bcc +                   ; page crossed?
         inc pl_here_hi          ; (move to next page)
@@ -144,8 +150,8 @@ new_term:
 ; read a term from the input buffer
 ;
 ;-------------------------------------------------------------------------------
-        +prevTerm
-        !pet    4, "term"
+        _prevTerm
+        .BYTE   4, "term"
 term:
         ;-----------------------------------------------------------------------
         ; the first byte of the term name buffer is the length of the term name 
@@ -156,7 +162,7 @@ term:
         ;
 -       lda (pl_buffer_addr)    ; read character from the buffer
         beq @eol                ; end-of-line, null-terminator?
-        cmp pl_stack, x         ; is it a delimiter?
+        cmp zp_stack, x         ; is it a delimiter?
         beq +                   ; yes, move on to reading characters
 
         ; move to next character in the buffer
@@ -168,7 +174,7 @@ term:
         ; start reading characters
 +       lda (pl_buffer_addr)    ; read a character
         beq @done               ; null terminator?
-        cmp pl_stack, x         ; is it a delimiter?
+        cmp zp_stack, x         ; is it a delimiter?
         beq @done               ; if so, end term
         
         ; move to next character in the buffer
@@ -191,10 +197,10 @@ term:
         ; (the top of the stack is currently the delimiter, so overwrite that)
         ;
 @done:  lda #> pl_buffer_term
-        sta pl_stack, x
+        sta zp_stack, x
         dex
         lda #< pl_buffer_term
-        sta pl_stack, x
+        sta zp_stack, x
 
         rts
 
@@ -203,9 +209,9 @@ term:
 @eol:   ; put $0000 on the stack to indicate no term found:
         ; (the top of the stack is currently the delimiter, so overwrite that) 
         ;
-        stz pl_stack, x
+        stz zp_stack, x
         dex
-        stz pl_stack, x
+        stz zp_stack, x
         ; length of string = 0
         stz pl_buffer_term
 
@@ -217,20 +223,19 @@ term:
 ; the terminology for a term with a matching name
 ;
 ;-------------------------------------------------------------------------------
-        +prevTerm
-        !pet    4, "find"
+        _prevTerm
+        .BYTE   4, "find"
 find:
-        plx                     ; backup parameter-stack position
+        phx                     ; backup parameter-stack position
 
         ; copy the string address,
         ; but leave it on the stack
-        lda pl_stack, x
+        lda zp_stack, x
         sta pl_buffer_addr_lo
-        lda pl_stack+1, x
+        lda zp_stack+1, x
         sta pl_buffer_addr_hi
         ; length of search string?
         ldy # 0
-
 
         plx                     ; restore parameter-stack position 
         rts

@@ -5,32 +5,114 @@
 ; bios.wla : Pling's "BIOS" for machine-independent control
 ;===============================================================================
 
-; screen.cols ( -- b )
+; ?con.cols ( -- b )
 ;===============================================================================
-; pushes the current number of screen columns, minus 1 (i.e. zero-based).
+; gets the number of console columns, minus 1 (i.e. zero-based);
 ; note that some systems can change screen size!
 ;
 ;-------------------------------------------------------------------------------
         _prevTerm
-        .BYTE   11, "screen.cols"
-term_screen_width:
+        .BYTE   9, "?con.cols"
+term_peek_con_cols:
 
         .IFDEF  SYSTEM_C64
                 _push_byte 39
+        .ELSE
+                .FAIL
         .ENDIF
         rts
 
-; screen.rows ( -- b )
+; ?con.rows ( -- b )
 ;===============================================================================
-; pushes the current number of screen rows, minus 1 (i.e. zero-based).
+; gets the current number of console rows, minus 1 (i.e. zero-based);
 ; note that some systems can change screen size!
 ;
 ;-------------------------------------------------------------------------------
         _prevTerm
-        .BYTE   11, "screen.rows"
-term_screen_height:
+        .BYTE   9, "?con.rows"
+term_peek_con_rows:
 
         .IFDEF  SYSTEM_C64
                 _push_byte 24
+        .ELSE
+                .FAIL
         .ENDIF
+        rts
+
+; ?con.back ( -- b )
+;===============================================================================
+; gets the console background colour. the return value is machine-dependent;
+; Pling makes no effort to normalise colour across systems
+;
+;-------------------------------------------------------------------------------
+        _prevTerm
+        .BYTE   9, "?con.back"
+term_peek_con_back:
+
+        .IFDEF  SYSTEM_C64
+                lda VIC_BACKGROUND
+                inx
+                sta zp_stack, x
+                lda # TYPE_BYTE
+                sta zp_type, x
+        .ELSE
+                .FAIL
+        .ENDIF
+        rts
+
+; !con.back ( b -- )
+;===============================================================================
+; sets the console background colour. the value used is machine-dependent;
+; Pling makes no effort to normalise colour across systems
+;
+;-------------------------------------------------------------------------------
+        _prevTerm
+        .BYTE   9, "!con.back"
+term_poke_con_back:
+
+        .IFDEF  SYSTEM_C64
+                lda zp_stack, x
+                sta VIC_BACKGROUND
+                dex
+        .ENDIF
+        rts
+
+; con.clear ( -- )
+;===============================================================================
+; clears the console
+;
+;-------------------------------------------------------------------------------
+        _prevTerm
+        .BYTE   9, "con.clear"
+term_con_clear:
+
+        ; swtich on I/O
+        lda CPU_CONTROL
+        pha
+        lda # %00110111
+        sta CPU_CONTROL
+
+        ; clear with space char
+        lda # $20
+
+        ; write four 256-byte strips simultaneously
+        ; so we don't have to deal with nested loops
+        ldy # $00
+-       sta $d800 + $000, y
+        sta $d800 + $100, y
+        sta $d800 + $200, y
+        sta $d800 + $300, y
+        dey
+        bne -
+        
+-       sta pl_screen + $000, y
+        sta pl_screen + $100, y
+        sta pl_screen + $200, y
+        sta pl_screen + $300, y
+        dey
+        bne -
+
+        pla
+        sta CPU_CONTROL
+
         rts

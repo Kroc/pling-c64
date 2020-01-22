@@ -8,8 +8,8 @@
 ; Pling's data stack works downwards from $FF to $C0 (64 bytes)
 ; TODO: may have to move due to KERNAL zp-usage?
 ;
-.DEF    pl_stack        $ff
-.DEF    pl_type         $bf
+.DEF    zp_stack        $ff
+.DEF    zp_type         $bf
 
 ; $00/$01 are not available on the C64 as these are the CPU port
 ; (see "c64/system/c64.acme")
@@ -18,8 +18,14 @@
 ; TODO: use section / enum assignment here
 .DEF    pl_zp           $02
 
-; address of the last defined term
-; (updated when new terms are added)
-.DEF    pl_last         $02
-; the address of the next free byte of memory
-.DEF    pl_here         $04
+.ENUM   pl_zp
+        ; address of the last defined term
+        ; (updated when new terms are added)
+        zp_last         WORD
+        ; the address of the next free byte of memory
+        zp_here         WORD
+
+        ; console cursor position
+        zp_crsr_col     BYTE
+        zp_crsr_row     BYTE
+.ENDE

@@ -2,7 +2,6 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-!source "bios.acme"
-!source "terms_nucleus.acme"
-!source "terms_core.acme"
-!source "terms_interpret.acme"
+.INCLUDE    "bios.wla"
+.INCLUDE    "terms_core.wla"
+;;.INCLUDE    "terms_interpret.wla"
