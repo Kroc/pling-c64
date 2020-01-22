@@ -1,4 +1,4 @@
-wla-dx v9.10a documentation
+wla-dx v9.11a documentation
 
 * 1. Introduction
 
@@ -79,213 +79,215 @@ wla-dx v9.10a documentation
 
   * 2.37. ".INCDIR "/usr/programming/gb/include/""
 
-  * 2.38. ".INCLUDE "cgb_hardware.i""
+  * 2.38. ".INC "cgb_hardware.i""
 
-  * 2.39. ".INCBIN "sorority.bin""
+  * 2.39. ".INCLUDE "cgb_hardware.i""
 
-  * 2.40. ".INPUT NAME"
+  * 2.40. ".INCBIN "sorority.bin""
 
-  * 2.41. ".BACKGROUND "parallax.gb""
+  * 2.41. ".INPUT NAME"
 
-  * 2.42. ".UNBACKGROUND $1000 $1FFF"
+  * 2.42. ".BACKGROUND "parallax.gb""
 
-  * 2.43. ".FAIL"
+  * 2.43. ".UNBACKGROUND $1000 $1FFF"
 
-  * 2.44. ".FCLOSE FP_DATABIN"
+  * 2.44. ".FAIL"
 
-  * 2.45. ".FOPEN "data.bin" FP_DATABIN"
+  * 2.45. ".FCLOSE FP_DATABIN"
 
-  * 2.46. ".FREAD FP_DATABIN DATA"
+  * 2.46. ".FOPEN "data.bin" FP_DATABIN"
 
-  * 2.47. ".FSIZE FP_DATABIN SIZE"
+  * 2.47. ".FREAD FP_DATABIN DATA"
 
-  * 2.48. ".MACRO TEST"
+  * 2.48. ".FSIZE FP_DATABIN SIZE"
 
-  * 2.49. ".ENDM"
+  * 2.49. ".MACRO TEST"
 
-  * 2.50. ".SHIFT"
+  * 2.50. ".ENDM"
 
-  * 2.51. ".FASTROM"
+  * 2.51. ".SHIFT"
 
-  * 2.52. ".SLOWROM"
+  * 2.52. ".FASTROM"
 
-  * 2.53. ".SMC"
+  * 2.53. ".SLOWROM"
 
-  * 2.54. ".HIROM"
+  * 2.54. ".SMC"
 
-  * 2.55. ".EXHIROM"
+  * 2.55. ".HIROM"
 
-  * 2.56. ".LOROM"
+  * 2.56. ".EXHIROM"
 
-  * 2.57. ".BASE $80"
+  * 2.57. ".LOROM"
 
-  * 2.58. ".BLOCK "Block1""
+  * 2.58. ".BASE $80"
 
-  * 2.59. ".ENDB"
+  * 2.59. ".BLOCK "Block1""
 
-  * 2.60. ".BANK 0 SLOT 1"
+  * 2.60. ".ENDB"
 
-  * 2.61. ".SLOT 1"
+  * 2.61. ".BANK 0 SLOT 1"
 
-  * 2.62. ".ROMBANKSIZE $4000"
+  * 2.62. ".SLOT 1"
 
-  * 2.63. ".ORG $150"
+  * 2.63. ".ROMBANKSIZE $4000"
 
-  * 2.64. ".ORGA $150"
+  * 2.64. ".ORG $150"
 
-  * 2.65. ".DS 256, $10"
+  * 2.65. ".ORGA $150"
 
-  * 2.66. ".DSB 256, $10"
+  * 2.66. ".DS 256, $10"
 
-  * 2.67. ".DSTRUCT waterdrop INSTANCEOF water VALUES"
+  * 2.67. ".DSB 256, $10"
 
-  * 2.68. ".DSW 128, 20"
+  * 2.68. ".DSTRUCT waterdrop INSTANCEOF water VALUES"
 
-  * 2.69. ".DSL 16, $102030"
+  * 2.69. ".DSW 128, 20"
 
-  * 2.70. ".DB 100, $30, %1000, "HELLO WORLD!""
+  * 2.70. ".DSL 16, $102030"
 
-  * 2.71. ".BYT 100, $30, %1000, "HELLO WORLD!""
+  * 2.71. ".DB 100, $30, %1000, "HELLO WORLD!""
 
-  * 2.72. ".DBM filtermacro 1, 2, "encrypt me""
+  * 2.72. ".BYT 100, $30, %1000, "HELLO WORLD!""
 
-  * 2.73. ".SYM SAUSAGE"
+  * 2.73. ".DBM filtermacro 1, 2, "encrypt me""
 
-  * 2.74. ".SYMBOL SAUSAGE"
+  * 2.74. ".SYM SAUSAGE"
 
-  * 2.75. ".BR"
+  * 2.75. ".SYMBOL SAUSAGE"
 
-  * 2.76. ".BREAKPOINT"
+  * 2.76. ".BR"
 
-  * 2.77. ".ASCIITABLE"
+  * 2.77. ".BREAKPOINT"
 
-  * 2.78. ".ENDA"
+  * 2.78. ".ASCIITABLE"
 
-  * 2.79. ".ASCTABLE"
+  * 2.79. ".ENDA"
 
-  * 2.80. ".ASC "HELLO WORLD!""
+  * 2.80. ".ASCTABLE"
 
-  * 2.81. ".DW 16000, 10, 255"
+  * 2.81. ".ASC "HELLO WORLD!""
 
-  * 2.82. ".WORD 16000, 10, 255"
+  * 2.82. ".DW 16000, 10, 255"
 
-  * 2.83. ".ADDR 16000, main, 255"
+  * 2.83. ".WORD 16000, 10, 255"
 
-  * 2.84. ".DL $102030, $405060"
+  * 2.84. ".ADDR 16000, main, 255"
 
-  * 2.85. ".LONG $102030, $405060"
+  * 2.85. ".DL $102030, $405060"
 
-  * 2.86. ".FARADDR main, irq_1"
+  * 2.86. ".LONG $102030, $405060"
 
-  * 2.87. ".DWM filtermacro 1, 2, 3"
+  * 2.87. ".FARADDR main, irq_1"
 
-  * 2.88. ".DEFINE IF $FF0F"
+  * 2.88. ".DWM filtermacro 1, 2, 3"
 
-  * 2.89. ".DEF IF $FF0F"
+  * 2.89. ".DEFINE IF $FF0F"
 
-  * 2.90. ".EQU IF $FF0F"
+  * 2.90. ".DEF IF $FF0F"
 
-  * 2.91. ".REDEFINE IF $0F"
+  * 2.91. ".EQU IF $FF0F"
 
-  * 2.92. ".REDEF IF $0F"
+  * 2.92. ".REDEFINE IF $0F"
 
-  * 2.93. ".IF DEBUG == 2"
+  * 2.93. ".REDEF IF $0F"
 
-  * 2.94. ".IFDEF IF"
+  * 2.94. ".IF DEBUG == 2"
 
-  * 2.95. ".IFEXISTS "main.s""
+  * 2.95. ".IFDEF IF"
 
-  * 2.96. ".UNDEFINE DEBUG"
+  * 2.96. ".IFEXISTS "main.s""
 
-  * 2.97. ".UNDEF DEBUG"
+  * 2.97. ".UNDEFINE DEBUG"
 
-  * 2.98. ".IFNDEF IF"
+  * 2.98. ".UNDEF DEBUG"
 
-  * 2.99. ".IFDEFM \2"
+  * 2.99. ".IFNDEF IF"
 
-  * 2.100. ".IFNDEFM \2"
+  * 2.100. ".IFDEFM \2"
 
-  * 2.101. ".IFEQ DEBUG 2"
+  * 2.101. ".IFNDEFM \2"
 
-  * 2.102. ".IFNEQ DEBUG 2"
+  * 2.102. ".IFEQ DEBUG 2"
 
-  * 2.103. ".IFLE DEBUG 2"
+  * 2.103. ".IFNEQ DEBUG 2"
 
-  * 2.104. ".IFLEEQ DEBUG 2"
+  * 2.104. ".IFLE DEBUG 2"
 
-  * 2.105. ".IFGR DEBUG 2"
+  * 2.105. ".IFLEEQ DEBUG 2"
 
-  * 2.106. ".IFGREQ DEBUG 2"
+  * 2.106. ".IFGR DEBUG 2"
 
-  * 2.107. ".ELSE"
+  * 2.107. ".IFGREQ DEBUG 2"
 
-  * 2.108. ".ENDIF"
+  * 2.108. ".ELSE"
 
-  * 2.109. ".REPEAT 6"
+  * 2.109. ".ENDIF"
 
-  * 2.110. ".REPT 6"
+  * 2.110. ".REPEAT 6"
 
-  * 2.111. ".ENDR"
+  * 2.111. ".REPT 6"
 
-  * 2.112. ".ENUM $C000"
+  * 2.112. ".ENDR"
 
-  * 2.113. ".ENDE"
+  * 2.113. ".ENUM $C000"
 
-  * 2.114. ".STRUCT enemy_object"
+  * 2.114. ".ENDE"
 
-  * 2.115. ".ENDST"
+  * 2.115. ".STRUCT enemy_object"
 
-  * 2.116. ".MEMORYMAP"
+  * 2.116. ".ENDST"
 
-  * 2.117. ".ENDME"
+  * 2.117. ".MEMORYMAP"
 
-  * 2.118. ".ROMBANKMAP"
+  * 2.118. ".ENDME"
 
-  * 2.119. ".ENDRO"
+  * 2.119. ".ROMBANKMAP"
 
-  * 2.120. ".SEED 123"
+  * 2.120. ".ENDRO"
 
-  * 2.121. ".SECTION "Init" FORCE"
+  * 2.121. ".SEED 123"
 
-  * 2.122. ".RAMSECTION "Vars" BANK 0 SLOT 1 ALIGN 4"
+  * 2.122. ".SECTION "Init" FORCE"
 
-  * 2.123. ".ENDS"
+  * 2.123. ".RAMSECTION "Vars" BANK 0 SLOT 1 ALIGN 4"
 
-  * 2.124. ".ROMGBC"
+  * 2.124. ".ENDS"
 
-  * 2.125. ".ROMGBCONLY"
+  * 2.125. ".ROMGBC"
 
-  * 2.126. ".ROMDMG"
+  * 2.126. ".ROMGBCONLY"
 
-  * 2.127. ".ROMSGB"
+  * 2.127. ".ROMDMG"
 
-  * 2.128. ".EXPORT work_x"
+  * 2.128. ".ROMSGB"
 
-  * 2.129. ".PRINT "Numbers 1 and 10: ", DEC 1, " $", HEX 10, "\n""
+  * 2.129. ".EXPORT work_x"
 
-  * 2.130. ".PRINTT "Here we are...\n""
+  * 2.130. ".PRINT "Numbers 1 and 10: ", DEC 1, " $", HEX 10, "\n""
 
-  * 2.131. ".PRINTV DEC DEBUG+1"
+  * 2.131. ".PRINTT "Here we are...\n""
 
-  * 2.132. ".OUTNAME "other.o""
+  * 2.132. ".PRINTV DEC DEBUG+1"
 
-  * 2.133. ".SNESHEADER"
+  * 2.133. ".OUTNAME "other.o""
 
-  * 2.134. ".ENDSNES"
+  * 2.134. ".SNESHEADER"
 
-  * 2.135. ".SNESNATIVEVECTOR"
+  * 2.135. ".ENDSNES"
 
-  * 2.136. ".ENDNATIVEVECTOR"
+  * 2.136. ".SNESNATIVEVECTOR"
 
-  * 2.137. ".SNESEMUVECTOR"
+  * 2.137. ".ENDNATIVEVECTOR"
 
-  * 2.138. ".ENDEMUVECTOR"
+  * 2.138. ".SNESEMUVECTOR"
 
-  * 2.139. ".UNION name"
+  * 2.139. ".ENDEMUVECTOR"
 
-  * 2.140. ".NEXTU name"
+  * 2.140. ".UNION name"
 
-  * 2.141. ".ENDU"
+  * 2.141. ".NEXTU name"
+
+  * 2.142. ".ENDU"
 
 * 3. Assembler Syntax
 
@@ -710,6 +712,8 @@ Group 3:
 | ALL | ".INCBIN "sorority.bin""                                         |
 +-----+------------------------------------------------------------------+
 | ALL | ".INCDIR "/usr/programming/gb/include/""                         |
++-----+------------------------------------------------------------------+
+| ALL | ".INC "cgb_hardware.i""                                          |
 +-----+------------------------------------------------------------------+
 | ALL | ".INCLUDE "cgb_hardware.i""                                      |
 +-----+------------------------------------------------------------------+
@@ -1439,6 +1443,14 @@ to this), use
 If the "INCDIR" is specified in the command line, that directory will
 be searched before the ".INCDIR" in the file. If the file is not
 found, WLA will then silently search the specified ".INCDIR".
+
+This is not a compulsory directive.
+
+
+".INC "cgb_hardware.i""
+=======================
+
+"INC" is an alias for "INCLUDE".
 
 This is not a compulsory directive.
 
@@ -3407,8 +3419,8 @@ This begins the SNES header definition, and automatically defines
      | "$13"    | ROM    |        | Super FX   |
      +----------+--------+--------+------------+
 
-* "ROMSIZE $09" - Places the given 8-bit value in "$7FD7" ("$FFD7"
-  in HiROM, "$40FFD7" and "$FFD7" in ExHiROM). Possible values include
+* "ROMSIZE $09" - Places the given 8-bit value in "$7FD7" ("$FFD7" in
+  HiROM, "$40FFD7" and "$FFD7" in ExHiROM). Possible values include
   (but may not be limited to):
 
      +----------+---------------+
@@ -3423,9 +3435,9 @@ This begins the SNES header definition, and automatically defines
      | "$0C"    | 32 Megabits   |
      +----------+---------------+
 
-* "SRAMSIZE $01" - Places the given 2-bit value into "$7FD8"
-  ("$FFD8" in HiROM, "$40FFD8" and "$FFD8" in ExHiROM). I believe
-  these are the only possible values:
+* "SRAMSIZE $01" - Places the given 2-bit value into "$7FD8" ("$FFD8"
+  in HiROM, "$40FFD8" and "$FFD8" in ExHiROM). I believe these are the
+  only possible values:
 
      +----------+---------------+
      | "$00"    | 0 kilobits    |
@@ -4116,8 +4128,8 @@ image linking.
 Link file is a text file that contains information about the files you
 want to link together. Here’s the format:
 
-1. You must define the group for the files. Put the name of the
-   group inside brackets. Valid group definitions are
+1. You must define the group for the files. Put the name of the group
+   inside brackets. Valid group definitions are
 
       [objects]
       [libraries]
@@ -4191,6 +4203,11 @@ If flag "d" is used, WLALINK discards all unreferenced "FREE",
 you can link big libraries to your project and WLALINK will choose
 only the used sections, so you won’t be linking any dead code/data.
 
+If flag "t" is used with "c64PRG", WLALINK will add a two byte header
+to the program file (use with flag "b"). The header contains the load
+address for the PRG. Use the flag "a" to specify the load address. It
+can be a value or the name of a label.
+
 If flag "i" is given, WLALINK will write list files. Note that you
 must compile the object and library files with "-i" flag as well.
 Otherwise WLALINK has no extra information it needs to build list
@@ -4252,6 +4269,7 @@ Examples:
    [seravy@localhost tbp]# wlalink -r linkfile testa.sfc
    [seravy@localhost tbp]# wlalink -d -i -b linkfile testb.sfc
    [seravy@localhost tbp]# wlalink -v -S -L ../../lib linkfile testc.sfc
+   [seravy@localhost tbp]# wlalink -v -b -s -t c64PRG -a LOAD_ADDRESS linkfile linked.prg
 
 
 Arithmetics
@@ -4695,8 +4713,8 @@ every section.
 Good things to know about WLA
 *****************************
 
-* Is 255 bytes too little for a string (file names, labels,
-  definition labels, etc)? Check out "MAX_NAME_LENGTH" in "shared.h".
+* Is 255 bytes too little for a string (file names, labels, definition
+  labels, etc)? Check out "MAX_NAME_LENGTH" in "shared.h".
 
 * WLA preprocessor doesn’t expand macros and repetitions. Those are
   actually traversed in the assembling phase.
@@ -4732,10 +4750,10 @@ WLA has four separate phases, called a little bit incorrectly passes:
 
    * Macros are processed along with directives
 
-   * All textual data, code, etc. are transformed into WLA’s
-     internal byte code that gets written into a tmp (TMP) file, and
-     after this phase the assembler or the linker has no idea of
-     target CPU’s opcodes - all is just pure WLA byte code.
+   * All textual data, code, etc. are transformed into WLA’s internal
+     byte code that gets written into a tmp (TMP) file, and after this
+     phase the assembler or the linker has no idea of target CPU’s
+     opcodes - all is just pure WLA byte code.
 
    * The first and the only pass that handles the assembly source
      files supplied by the user.
@@ -4752,9 +4770,9 @@ WLA has four separate phases, called a little bit incorrectly passes:
 
 3. "pass_3.c": "pass_3()":
 
-   * Here we read in TMP and do some sanity checks for the data,
-     give labels addresses (if possible), generate internal structures
-     for labels and sections.
+   * Here we read in TMP and do some sanity checks for the data, give
+     labels addresses (if possible), generate internal structures for
+     labels and sections.
 
 4. "pass_4.c": "pass_4()":
 
@@ -4764,9 +4782,9 @@ WLA has four separate phases, called a little bit incorrectly passes:
      that calculation has been succesfully calculated, then we can
      replace the reference with the result.
 
-   * This phase writes out object and library files, i.e.,
-     transforms TMP to final output files (this write out could
-     actually be "pass_5")…
+   * This phase writes out object and library files, i.e., transforms
+     TMP to final output files (this write out could actually be
+     "pass_5")…
 
 
 WLALINK
@@ -4821,8 +4839,8 @@ gracefully support future additions to the symbol files.
   section headers, and represent a new section. Note that no section
   data will start with "[".
 
-* Lines following the section header are the data for that section.
-  If you’re acknowledging the section, utilize that section’s specific
+* Lines following the section header are the data for that section. If
+  you’re acknowledging the section, utilize that section’s specific
   formatting. Read lines that match until a new section header is
   encountered.
 
@@ -5012,8 +5030,8 @@ program file.
 LINK_FILE is a text file that contains information about the files you
 want to link together. Here’s the format:
 
-1. You must define the group for the files. Put the name of the
-   group inside brackets. Valid group definitions are
+1. You must define the group for the files. Put the name of the group
+   inside brackets. Valid group definitions are
 
       [objects]
       [libraries]

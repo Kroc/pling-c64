@@ -3,13 +3,13 @@
 ; how you please as long as you retain the copyright notice
 ;
 
-;===============================================================================
-; push a byte onto the data stack,
-; setting the data type too
-;
-;   A = value
-;
 push_byte:
+    ;===========================================================================
+    ; push a byte onto the data stack,
+    ; setting the data type too
+    ;
+    ;   A = value
+    ;
     ;---------------------------------------------------------------------------
     dex
     sta zp_stack, x
@@ -17,14 +17,14 @@ push_byte:
     sta zp_type, x
     rts
 
-;===============================================================================
-; push a word onto the data stack,
-; setting the data type too
-;
-;   Y = value, lo-byte
-;   A = value, hi-byte
-;
 push_word:
+    ;===========================================================================
+    ; push a word onto the data stack,
+    ; setting the data type too
+    ;
+    ;   Y = value, lo-byte
+    ;   A = value, hi-byte
+    ;
     ;---------------------------------------------------------------------------
     dex
     sta zp_stack, x
@@ -37,6 +37,14 @@ push_word:
     lda # TYPE_WORD_LO
     sta zp_type, x
     rts
+
+pop:
+    ;===========================================================================
+    ; pop a value off of the top of the stack
+    ;
+    ;---------------------------------------------------------------------------
+
+
 
 .INCLUDE    "bios.wla"
 .INCLUDE    "terms_core.wla"

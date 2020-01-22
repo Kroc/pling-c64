@@ -8,9 +8,8 @@
 ; jumps to the machine language code immediately after the BASIC code
 ;
 .SLOT   0
-.ORGA   basic_start-2
-.WORD   basic_start
 .ORGA   basic_start
+
 ;===============================================================================
 cbmbasic:
 
