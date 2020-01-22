@@ -32,4 +32,7 @@
         ; console cursor position
         zp_crsr_col     BYTE
         zp_crsr_row     BYTE
+        ; text colour of the cursor
+        ; (what colour is used when printing new characters)
+        zp_crsr_colour  BYTE
 .ENDE

@@ -16,7 +16,8 @@
 term_peek_con_cols:
 
         .IFDEF  SYSTEM_C64
-                _push_byte 39
+                lda # 39
+                jmp push_byte
         .ELSE
                 .FAIL
         .ENDIF
@@ -33,7 +34,8 @@ term_peek_con_cols:
 term_peek_con_rows:
 
         .IFDEF  SYSTEM_C64
-                _push_byte 24
+                lda # 24
+                jmp push_byte
         .ELSE
                 .FAIL
         .ENDIF
@@ -72,9 +74,26 @@ term_poke_con_back:
 
         .IFDEF  SYSTEM_C64
                 lda zp_stack, x
+                sta VIC_BORDER
                 sta VIC_BACKGROUND
                 dex
+        .ELSE
+                .FAIL
         .ENDIF
+        rts
+
+; con.home ( -- )
+;===============================================================================
+; homes the cursor -- moves it back to row/col 0
+;
+;-------------------------------------------------------------------------------
+        _prevTerm
+        .BYTE   8, "con.home"
+term_con_home:
+
+        lda # 0
+        sta zp_crsr_col
+        sta zp_crsr_row
         rts
 
 ; con.clear ( -- )
@@ -111,6 +130,9 @@ term_con_clear:
         sta pl_screen + $300, y
         dey
         bne -
+
+        ; home the cursor
+        jsr term_con_home
 
         pla
         sta CPU_CONTROL

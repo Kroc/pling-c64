@@ -15,13 +15,16 @@
 
 init:
         ;-----------------------------------------------------------------------
-        ; call the routine to clear the console
-        jsr term_con_clear
         ; change the screen colour; we could use Pling's BIOS routines
         ; but it would end up more code to push and pull from the stack
         lda # VIC_BLACK
         sta VIC_BORDER
         sta VIC_BACKGROUND
+        ; call the routine to clear the console
+        jsr term_con_clear
+        ; set the text colour
+        lda # VIC_YELLOW
+        sta zp_crsr_colour
 
 -       inc VIC_BORDER
         jmp -
