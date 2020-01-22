@@ -19,6 +19,10 @@
 .DEF    pl_zp           $02
 
 .ENUM   pl_zp
+        ; used for indirect jumps
+        ; when executing terms
+        zp_jmp          WORD
+
         ; address of the last defined term
         ; (updated when new terms are added)
         zp_last         WORD

@@ -7,17 +7,17 @@
 ; these are the absolute bear minimum of words that *have* to be implemented
 ; in native assembly language in order to port the rest of Pling
 
-; set ( b w -- )
+; ! ( b w -- )
 ;===============================================================================
-; stores the byte (3rd on stack) at the address (1st & 2nd bytes).
-; all bytes are consumed
+; pokes the byte atop the stack into the address below.
+; all items are consumed
 ;
 ;-------------------------------------------------------------------------------
         _prevTerm
-        .BYTE   3, "set"
+        .BYTE   1, "!"
 term_set:
         lda zp_stack+2, x       ; get value to store (3rd byte)
-        sta (zp_stack, x)       ; store via the address on the stack
+        sta [zp_stack, x]       ; store via the address on the stack
 
         inx                     ; consume...
         inx                     ; three...
@@ -25,32 +25,19 @@ term_set:
 
         rts
 
-; get ( addr.w -- b )
+; ? ( w -- b )
 ;===============================================================================
-; reads a byte from the address on the stack, (consuming the address)
+; peeks a byte from the address on the stack, (consuming the address)
 ; and pushes the value to the stack
 ;
 ;-------------------------------------------------------------------------------
         _prevTerm
-        .BYTE   3, "get"
+        .BYTE   1, "?"
 term_get:
-        lda (zp_stack, x)
+        lda [zp_stack, x]
         inx
         sta zp_stack, x
 
-        rts
-
-; dup ( b -- b b )
-;===============================================================================
-; duplicate the byte on top of the stack
-;
-;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   3, "dup"
-term_dup:
-        dex
-        lda zp_stack+1, x
-        sta zp_stack, x
         rts
 
 ; drop ( x -- )
@@ -62,96 +49,11 @@ term_dup:
         _prevTerm
         .BYTE   4, "drop"
 term_drop:
-        inx
-        rts
-
-; swap ( x x -- x x )
-;===============================================================================
-; swap the top two bytes
-;
-;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   4, "swap"
-term_swap:
-        lda zp_stack, x
-        ldy zp_stack+1, x
-        sta zp_stack+1, x
-        sty zp_stack, x
-        rts
-
-; not ( x -- x )
-;===============================================================================
-; bitwise NOT the byte on top of the stack (invert all bits)
-;
-;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   3, "not"
-term_not:
-        lda zp_stack+0, x
-        eor %11111111
-        sta zp_stack+0, x
-        
-        rts
-
-; and ( x x -- x )
-;===============================================================================
-; bitwise AND the two bytes on top of the stack
-;
-;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   3, "and"
-term_and:
-        lda zp_stack+1, x
-        and zp_stack+0, x
-        inx
-        sta zp_stack+0, x
-        
-        rts
-
-; or ( x x -- x )
-;===============================================================================
-; bitwise OR the two bytes on top of the stack
-;
-;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   2, "or"
-term_or:
-        lda zp_stack+1, x
-        ora zp_stack+0, x
-        inx
-        sta zp_stack+0, x
-        
-        rts
-
-; xor ( x x -- x )
-;===============================================================================
-; bitwise XOR the two bytes on top of the stack
-;
-;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   3, "xor"
-term_xor:
-        lda zp_stack+1, x
-        eor zp_stack+0, x
-        inx
-        sta zp_stack+0, x
-        
-        rts
-
-; + ( x x -- x )
-;===============================================================================
-; add the two bytes on top of the stack
-;
-;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   1, "+"
-term_add:
-        clc
-        lda zp_stack, x
-        adc zp_stack+1, x
-        sta zp_stack+1, x
-        inx
-
+        ; is the top-most item a byte or a word?
+        lda zp_type, x
+        beq +
+        inx                     ; drop word
++       inx                     ; drop byte
         rts
 
 ; execute ( w -- )
@@ -160,25 +62,22 @@ term_add:
 ;
 ;-------------------------------------------------------------------------------
         _prevTerm
-        .BYTE   7, "execute"
-term_execute:
+        .BYTE   4, "exec"
+term_exec:
 .IFDEF  CPU_65C02
-        ; we must reduce the stack by 2 bytes before we jump!
+        ; we must reduce the stack by 2 bytes *before* we jump!
         inx
         inx
-        ; 65C02: do a jump directly from the parameter stack,
+        ; 65C02: do a jump directly from the data stack,
         ; with +2 to compensate for already having popped the stack
-        jmp (zp_stack+2, x)
-.ELSE
-        ; 6502:
-        ; TODO: can we optimise this better? jmp(abs)?
-        ; TODO: will not work from ROM, use zp-vector?
-        lda zp_stack, x
-        sta @addr.w +1
-        inx
-        lda zp_stack, x
-        sta @addr.w +2
-        inx
+        jmp [zp_stack+2, x]
 
-@addr:  jmp $8888
+.ELSE   ; 6502:
+        lda zp_stack, x
+        sta zp_jmp+hi
+        inx
+        lda zp_stack, x
+        sta zp_jmp+lo
+        inx
+        jmp [zp_jmp]
 .ENDIF

@@ -113,18 +113,18 @@ new_term:
 .ENDIF
         lda pl_last_lo          ; load address lo-byte of last term
 .IFDEF  CPU_65C02
-        sta (pl_here)           ; save at the new term's address
+        sta [pl_here]           ; save at the new term's address
 .ELSE
-        sta (pl_here), y
+        sta [pl_here], y
 .ENDIF
         inc pl_here_lo          ; move to the next byte of memory
         bcc +                   ; page crossed?
         inc pl_here_hi          ; (move to next page)
 +       lda pl_last_hi          ; load address hi-byte of last term
 .IFDEF  CPU_65C02
-        sta (pl_here)           ; save at the new term's address
+        sta [pl_here]           ; save at the new term's address
 .ELSE
-        sta (pl_here), y
+        sta [pl_here], y
 .ENDIF
         inc pl_here_lo          ; move to the next byte of memory
         bcc +                   ; page crossed?
@@ -135,7 +135,7 @@ new_term:
         ;
         ldy # 0
 -       lda pl_buffer_term, y   ; read a character
-        sta (pl_here)           ; write a character
+        sta [pl_here]           ; write a character
         inc pl_here_lo          ; move to the next writing address
         bcc +                   ; page crossed?
         inc pl_here_hi          ; (move to next page)
@@ -160,7 +160,7 @@ term:
         
         ; skip initial delimiters:
         ;
--       lda (pl_buffer_addr)    ; read character from the buffer
+-       lda [pl_buffer_addr]    ; read character from the buffer
         beq @eol                ; end-of-line, null-terminator?
         cmp zp_stack, x         ; is it a delimiter?
         beq +                   ; yes, move on to reading characters
@@ -172,7 +172,7 @@ term:
         bne -
 
         ; start reading characters
-+       lda (pl_buffer_addr)    ; read a character
++       lda [pl_buffer_addr]    ; read a character
         beq @done               ; null terminator?
         cmp zp_stack, x         ; is it a delimiter?
         beq @done               ; if so, end term

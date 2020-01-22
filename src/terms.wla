@@ -2,6 +2,42 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
+
+;===============================================================================
+; push a byte onto the data stack,
+; setting the data type too
+;
+;   A = value
+;
+push_byte:
+    ;---------------------------------------------------------------------------
+    dex
+    sta zp_stack, x
+    lda # TYPE_BYTE
+    sta zp_type, x
+    rts
+
+;===============================================================================
+; push a word onto the data stack,
+; setting the data type too
+;
+;   Y = value, lo-byte
+;   A = value, hi-byte
+;
+push_word:
+    ;---------------------------------------------------------------------------
+    dex
+    sta zp_stack, x
+    lda # TYPE_WORD_HI
+    sta zp_type, x
+    
+    tya
+    dex
+    sta zp_stack, x
+    lda # TYPE_WORD_LO
+    sta zp_type, x
+    rts
+
 .INCLUDE    "bios.wla"
 .INCLUDE    "terms_core.wla"
 ;;.INCLUDE    "terms_interpret.wla"
