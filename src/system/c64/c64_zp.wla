@@ -5,34 +5,37 @@
 ; c64_zp.acme : Pling zero-page layout for C64
 ;===============================================================================
 
-; Pling's data stack works downwards from $FF to $C0 (64 bytes)
+; Pling's data stack works downwards; this direction was chosen specifically
+; so that the low byte of a word appears top-most on the stack, yet at the
+; same time the bytes are in little-Endian order, allowing for vectored jumps
+;
 ; TODO: may have to move due to KERNAL zp-usage?
 ;
-.DEF    zp_stack        $ff
-.DEF    zp_type         $bf
 
-; $00/$01 are not available on the C64 as these are the CPU port
-; (see "c64/system/c64.acme")
-;
-; base address of Pling's private zp-space:
-; TODO: use section / enum assignment here
-.DEF    pl_zp           $02
+.RAMSECTION "stack"     SLOT 0  ALIGN $10
+        zp_type_bottom  DSB 64
+        zp_type        .DSB 64
+        zp_stack_bottom DSB 64
+        zp_stack       .DSB 64
+.ENDS
 
-.ENUM   pl_zp
+.RAMSECTION "core"      SLOT 0
         ; used for indirect jumps
         ; when executing terms
         zp_jmp          WORD
-
+        
         ; address of the last defined term
         ; (updated when new terms are added)
         zp_last         WORD
         ; the address of the next free byte of memory
         zp_here         WORD
+.ENDS
 
+.RAMSECTION "console"   SLOT 0
         ; console cursor position
         zp_crsr_col     BYTE
         zp_crsr_row     BYTE
         ; text colour of the cursor
         ; (what colour is used when printing new characters)
         zp_crsr_colour  BYTE
-.ENDE
+.ENDS

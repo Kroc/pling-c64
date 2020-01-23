@@ -4,8 +4,8 @@
 ;
 ; c64.wla : shared C64 definitions
 ;===============================================================================
-.INCLUDE    "system/c64/hardware/c64.wla"
-.INCLUDE    "system/c64/c64_petscii.wla"
+.INC    "system/c64/hardware/c64.wla"
+.INC    "system/c64/c64_petscii.wla"
 
 ; memory map:
 ;
@@ -17,7 +17,7 @@
 ;                                        (moveable)     runtime  buffer
 ;
 
-.INCLUDE    "system/c64/c64_zp.wla"
+.INC    "system/c64/c64_zp.wla"
 
 .DEF    pl_screen       $0400
 .DEF    pl_code         $0800

@@ -7,11 +7,11 @@
 ; set the system to a C64, the include below will do
 ; the rest of the importing of machine-specific definitions
 ;
-.DEF            SYSTEM_C64     1
-.INCLUDE        "system/pling.wla"
+.DEF    SYSTEM_C64      1
+.INC    "system/pling.wla"
 
 ;===============================================================================
-.INCLUDE        "system/cbmbasic.wla"
+.INC    "system/cbmbasic.wla"
 
 init:
         ;-----------------------------------------------------------------------
@@ -30,4 +30,4 @@ init:
         jmp -
 
 ;===============================================================================
-.INCLUDE    "terms.wla"
+.INC    "terms.wla"

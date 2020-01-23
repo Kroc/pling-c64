@@ -4,48 +4,73 @@
 ;
 
 push_byte:
-    ;===========================================================================
-    ; push a byte onto the data stack,
-    ; setting the data type too
-    ;
-    ;   A = value
-    ;
-    ;---------------------------------------------------------------------------
-    dex
-    sta zp_stack, x
-    lda # TYPE_BYTE
-    sta zp_type, x
-    rts
+        ;=======================================================================
+        ; push a byte onto the data stack,
+        ; setting the data type too
+        ;
+        ;   A = value
+        ;
+        ;-----------------------------------------------------------------------
+        dex
+        sta zp_stack, x
+        lda # TYPE_BYTE
+        sta zp_type, x
+        rts
 
 push_word:
-    ;===========================================================================
-    ; push a word onto the data stack,
-    ; setting the data type too
-    ;
-    ;   Y = value, lo-byte
-    ;   A = value, hi-byte
-    ;
-    ;---------------------------------------------------------------------------
-    dex
-    sta zp_stack, x
-    lda # TYPE_WORD_HI
-    sta zp_type, x
-    
-    tya
-    dex
-    sta zp_stack, x
-    lda # TYPE_WORD_LO
-    sta zp_type, x
-    rts
+        ;=======================================================================
+        ; push a word onto the data stack,
+        ; setting the data type too
+        ;
+        ;   A = value, lo-byte
+        ;   Y = value, hi-byte
+        ;
+        ;-----------------------------------------------------------------------
+        ; push the stack pointer down twice first
+        ; (TODO: add stack-overflow checking)
+        dex
+        dex
 
-pop:
-    ;===========================================================================
-    ; pop a value off of the top of the stack
-    ;
-    ;---------------------------------------------------------------------------
+        ; write the lo-byte first at the new top-most position
+        sta zp_stack, x
+        lda # TYPE_WORD_LO
+        sta zp_type, x
+        ; write the hi-byte underneath that
+        tya
+        sta zp_stack+1, x
+        lda # TYPE_WORD_HI
+        sta zp_type+1, x
+
+        rts
+
+pop:    ;=======================================================================
+        ; pop a value off of the top of the stack
+        ; returns:
+        ; 
+        ;       A = word lo-byte, or single byte
+        ;       Y = word hi-byte (if data is a word)
+        ;       c = 0 for a byte, 1 for a word 
+        ;
+        ;-----------------------------------------------------------------------
+        ; is the top-most item a byte or a word?
+        lda zp_type, x          ; get the data type
+        cmp # 0                 ; return c=1 for word, and c=0 for byte!
+        beq +
+
+        inx
+.IFDEF  CPU_65C02
+        ldy zp_type, x
+.ELSE   ;6502
+        pha
+        lda zp_type, x
+        tay
+        pla
+.ENDIF
+
++       inx
+        rts
 
 
-
-.INCLUDE    "bios.wla"
-.INCLUDE    "terms_core.wla"
-;;.INCLUDE    "terms_interpret.wla"
+.INC    "console.wla"
+.INC    "terms_core.wla"
+;;.INC    "terms_interpret.wla"

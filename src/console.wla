@@ -2,7 +2,7 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; bios.wla : Pling's "BIOS" for machine-independent control
+; console.wla
 ;===============================================================================
 
 ; ?con.cols ( -- b )
@@ -138,3 +138,16 @@ term_con_clear:
         sta CPU_CONTROL
 
         rts
+
+; >con ( b -- )
+;===============================================================================
+; writes a byte to the console, advancing the cursor
+; and scrolling if necessary
+;
+;-------------------------------------------------------------------------------
+        _prevTerm
+        .BYTE   4, ">con"
+term_write_con:
+
+        jsr pop
+        ; TODO: error if data-type is word

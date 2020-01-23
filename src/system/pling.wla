@@ -9,13 +9,13 @@
 .DEF    hi              1
 
 .IFDEF  SYSTEM_C64
-        .INCLUDE        "system/c64/c64.wla"
+        .INC    "system/c64/c64.wla"
 .ENDIF
 .IFDEF  SYSTEM_X16
-        .INCLUDE        "system/x16/x16.wla"
+        .INC    "system/x16/x16.wla"
 .ENDIF
 .IFDEF  CPU_65XX
-        .INCLUDE        "system/65xx.wla"
+        .INC    "system/65xx.wla"
 .ENDIF
 
 ; data-types:
