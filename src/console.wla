@@ -4,11 +4,45 @@
 ;
 ; console.wla
 ;===============================================================================
+; machine constants for the console:
+;
+.IFDEF  SYSTEM_C64
+        ; the C64 cannot change screen resolution in text-mode,
+        ; so the console is a fixed size. the console is one-line
+        ; short of the screen-height to make room for a status bar
+
+        .DEF    CON_COLS        SCREEN_COLS
+        .DEF    CON_ROWS        SCREEN_ROWS-1
+
+        ; a pair of lookup tables (lo/hi) to find the starting screen-RAM
+        ; address for a given *screen* row. the console's rows might be
+        ; offset from these
+        ;
+        screen_rows_lo:
+        ;-----------------------------------------------------------------------
+        .REPEAT SCREEN_ROWS INDEX R
+                .BYTE   <(pl_screen + (R * 40))
+        .ENDR
+        screen_rows_hi:
+        ;-----------------------------------------------------------------------
+        .REPEAT SCREEN_ROWS INDEX R
+                .BYTE   >(pl_screen + (R * 40))
+        .ENDR
+.ELSE
+        .FAIL
+.ENDIF
+
+; TODO: calculate the cursor position from the screen-address --
+;       we don't need to advance the variable for every character printed
+;       as requests for cursor position will be much less common than printing
 
 ; ?con.cols ( -- b )
 ;===============================================================================
-; gets the number of console columns, minus 1 (i.e. zero-based);
-; note that some systems can change screen size!
+; gets the current number of console columns, minus 1 (i.e. zero-based).
+; NOTE: the number of columns in the console may not be the same as the number
+;       of columns on the screen! the console might have a scrollbar
+; NOTE: some systems can change screen size (e.g. Commander X16),
+;       so do not rely on the value being constant
 ;
 ;-------------------------------------------------------------------------------
         _prevTerm
@@ -16,7 +50,7 @@
 term_peek_con_cols:
 
         .IFDEF  SYSTEM_C64
-                lda # 39
+                lda # CON_COLS
                 jmp push_byte
         .ELSE
                 .FAIL
@@ -25,8 +59,11 @@ term_peek_con_cols:
 
 ; ?con.rows ( -- b )
 ;===============================================================================
-; gets the current number of console rows, minus 1 (i.e. zero-based);
-; note that some systems can change screen size!
+; gets the current number of console rows, minus 1 (i.e. zero-based).
+; NOTE: the number of rows in the console may not be the same as the number
+;       of rows on the screen! the console may be using a status / input line.
+; NOTE: some systems can change screen size (e.g. Commander X16),
+;       so do not rely on the value being constant
 ;
 ;-------------------------------------------------------------------------------
         _prevTerm
@@ -34,7 +71,7 @@ term_peek_con_cols:
 term_peek_con_rows:
 
         .IFDEF  SYSTEM_C64
-                lda # 24
+                lda # CON_ROWS
                 jmp push_byte
         .ELSE
                 .FAIL
@@ -91,6 +128,13 @@ term_poke_con_back:
         .BYTE   8, "con.home"
 term_con_home:
 
+        ; set the cursor write-address
+        ; to the beginning of screen RAM
+        lda #< pl_screen
+        sta zp_crsr_addr+lo
+        lda #> pl_screen
+        sta zp_crsr_addr+hi
+
         lda # 0
         sta zp_crsr_col
         sta zp_crsr_row
@@ -141,13 +185,63 @@ term_con_clear:
 
 ; >con ( b -- )
 ;===============================================================================
-; writes a byte to the console, advancing the cursor
-; and scrolling if necessary
+; writes a raw byte to the console, advancing the cursor and scrolling,
+; if necessary. DOES NOT DO ANY TEXT CONVERSION! the value of the byte
+; is machine-dependent:
+;
+;       C64 : screen code, mapping to character ROM
 ;
 ;-------------------------------------------------------------------------------
         _prevTerm
         .BYTE   4, ">con"
 term_write_con:
 
+        ; get the byte from the stack
+        ; TODO: error if data-type is word?
         jsr pop
-        ; TODO: error if data-type is word
+        ; write to the current screen-RAM address
+.IFDEF  CPU_65C02
+        sta (zp_crsr_addr)
+.ELSE
+        ldy # 0
+        sta (zp_crsr_addr), y
+.ENDIF
+        ; screen memory on the C64 is contiguous so we only need
+        ; to check for going off the last console row. unfortunately
+        ; the screen doesn't end on a page-boundary, so we have to
+        ; check for *every* cursor advancement, and that's sad :(
+        ;
+        ; we're going to try combine the two behaviours of
+        ; incrementing the cursor address and looking for
+        ; for the last screen address
+        ;
+        ldy zp_crsr_addr+lo
+        cpy #< (pl_screen + (CON_COLS * CON_ROWS)) - 1
+        bne ++
+
+        ; the lo-byte is that of the last-byte before the end of the console,
+        ; but the hi-byte has not been checked yet! our current logic however
+        ; means that we *know* what the next lo-address will be if we advance
+        ; the cursor [should the hi-byte not match]
+        ;
+        tya                     ; put aside lo-address
+        ldy zp_crsr_addr+hi     ; get hi-address
+
+        cpy #> (pl_screen + (CON_COLS * CON_ROWS)) - 1
+        ; if the hi-address doesn't match, then we advance the cursor as normal
+        bne +       
+
+        ; CONSOLE OVERFLOW:
+        ; TODO: scroll the screen down
+        jmp term_con_home
+
+        ; restore the lo-address
++       tay
+
+        ; increase the lo-address
+++      iny
+        sty zp_crsr_addr+lo
+        bne +
+        inc zp_crsr_addr+hi
+
++       rts

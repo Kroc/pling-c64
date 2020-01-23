@@ -5,7 +5,7 @@
 ; c64.wla : shared C64 definitions
 ;===============================================================================
 .INC    "system/c64/hardware/c64.wla"
-.INC    "system/c64/c64_petscii.wla"
+.INC    "system/c64/c64_pet.wla"
 
 ; memory map:
 ;

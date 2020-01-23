@@ -35,6 +35,9 @@
         ; console cursor position
         zp_crsr_col     BYTE
         zp_crsr_row     BYTE
+        ; current screen-RAM address of the cursor;
+        ; this is where the next character will be written
+        zp_crsr_addr    WORD
         ; text colour of the cursor
         ; (what colour is used when printing new characters)
         zp_crsr_colour  BYTE

@@ -7,6 +7,13 @@
 .DEF    CPU_6502        1
 .DEF    CPU_6510        1
 
+; number of rows / columns in text-mode (1-based)
+; this is defined across different systems to provide
+; standard screen width / height constants
+;
+.DEF    SCREEN_COLS             40
+.DEF    SCREEN_ROWS             25
+
 ; C64 memory map:
 ;
 .MEMORYMAP
@@ -16,7 +23,7 @@
         SLOT 0          $0003   ; zero-page (variable space)
         SLOT 1          $0100   ; 6502-stack (variable space)
         SLOTSIZE        $FE00
-        SLOT 2          $0000   ; main program RAM ("ROM")
+        SLOT 2          $0200   ; main program RAM ("ROM")
 .ENDME
 
 .ROMBANKSIZE            $FE00
