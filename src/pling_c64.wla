@@ -26,8 +26,18 @@ init:
         lda # VIC_YELLOW
         sta zp_crsr_colour
 
--       inc VIC_BORDER
-        jmp -
+.DEF    _str    $0e, $93, $9e, ">!< Pling! by Kroc Camen", 13, "    <github.com/Kroc/pling>", 13, "    built: ", WLA_TIME
+
+        ldx # 0
+-       lda @ver.w, x
+        jsr KERNAL_CHROUT
+        inx
+        cpx # _str.length
+        bne -
+
+-       jmp -
+
+@ver:   .ASC    _str
 
 ;===============================================================================
 .INC    "terms.wla"

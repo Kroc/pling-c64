@@ -7,6 +7,19 @@
 ; these are the absolute bear minimum of words that *have* to be implemented
 ; in native assembly language in order to port the rest of Pling
 
+; emit ( b -- )
+;===============================================================================
+; TODO: this implementation is temporary
+;
+;-------------------------------------------------------------------------------
+        _prevTerm
+        .BYTE   4, "emit"
+term_emit:
+
+        jsr pop
+        jsr KERNAL_CHROUT
+        rts
+
 ; ! ( b w -- )
 ;===============================================================================
 ; pokes the byte atop the stack into the address below.

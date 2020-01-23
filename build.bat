@@ -2,9 +2,9 @@
 CLS & TITLE Building Pling!...
 CD %~dp0
 
-SET WLA_6510="bin\wla-dx\wla-6510.exe" -i -I "src"
-SET WLA_65C02="bin\wla-dx\wla-65c02.exe" -i -I "src"
-SET WLA_Z80="bin\wla-dx\wla-z80.exe" -i -I "src"
+SET WLA_6510="bin\wla-dx\wla-6510.exe" -i -x -I "src"
+SET WLA_65C02="bin\wla-dx\wla-65c02.exe" -i -x -I "src"
+SET WLA_Z80="bin\wla-dx\wla-z80.exe" -i -x -I "src"
 SET WLA_LINK="bin\wla-dx\wlalink.exe" -i
 
 SET C1541="bin\vice\c1541.exe"
