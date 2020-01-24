@@ -15,6 +15,20 @@
 
 init:
         ;-----------------------------------------------------------------------
+        ; reset Pling's stacks
+        ;-----------------------------------------------------------------------
+        ldy # PL_STACK_SIZE-1
+-       lda # $88
+        sta zp_stack, y
+        lda # TYPE_BYTE
+        sta zp_type, y
+        dey
+        bpl -
+
+        ldx # PL_STACK_SIZE
+
+        ; set up the screen:
+        ;-----------------------------------------------------------------------
         ; change the screen colour; we could use Pling's BIOS routines
         ; but it would end up more code to push and pull from the stack
         lda # VIC_BLACK
@@ -39,18 +53,7 @@ init:
         cpy # _str.length
         bne -
 
-        ; reset Pling's stacks
         ;-----------------------------------------------------------------------
-        ldy # PL_STACK_SIZE-1
--       lda # $88
-        sta zp_stack, y
-        lda # TYPE_BYTE
-        sta zp_type, y
-        dey
-        bpl -
-
-        ldx # PL_STACK_SIZE
-
         lda # 4
         jsr push_byte
         lda #< @test
