@@ -1,0 +1,62 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; disk.wla : disk I/O, load & save
+;===============================================================================
+
+; chain ( w -- )
+;===============================================================================
+; loads, and executes, the file-name string address on the stack
+;
+;-------------------------------------------------------------------------------
+        _prevTerm
+        .BYTE   5, "chain"
+term_io_chain:
+
+        ; backup Pling's stack pointer
+        _phx
+
+        ; TODO: error if not a word
+        jsr pop
+        ; put the string address aside
+        sta zp_word+lo
+        sty zp_word+hi
+        jsr pop                 ; get the string-length
+        pha                     ; (put aside)
+
+        ; prepare for loading
+        ; TODO: use a variable for current dev#
+        ;
+        ldx ZP_KERNAL_DEV       ; last-used KERNAL device number
+        bne +                   ; not 0? good
+        ldx # DEV_DRV8          ; default to drive 8
++       ldy # $00               ; do not use PRG load-address
+        tya                     ; logical file number
+        jsr KERNAL_SETLFS
+
+        ldx zp_word+lo
+        ldy zp_word+hi
+        pla                     ; A is string-length
+        jsr KERNAL_SETNAM       ; set KERNAL file name
+
+        lda # 0                 ; load, not verify
+        ldx #< pl_disk
+        ldy #> pl_disk
+        jsr KERNAL_LOAD
+
+        bcc +
+        .BYTE   $22
++       
+        ; TODO: error handling
+        ; add a null-terminator after the file!
+        stx zp_word+lo
+        sty zp_word+hi
+        ldy # 1
+        lda # 0
+        sta (zp_word), y
+
+        ; restore stack position
+        _plx
+
+        rts

@@ -1,5 +1,0 @@
-( assembler -- provides a 65(C)02 assembler )
-
-: asm ( opcode -- )
-  compile: ... ;compile 
-;

@@ -9,12 +9,12 @@
 
 ; memory map:
 ;
-;  $0 $0800          $4000           $8000            $C000    $E000    $FFFF
-;  +--+------------------------------+----------------+--------+--------+
-;  |  | USER CODE                    | USER HEAP      | PLING! | DSKBUF |
-;  +--+------------------------------+----------------+--------+--------+
-;       ^ compiled pling code          ^ program heap   ^ pling  ^ disk
-;                                        (moveable)     runtime  buffer
+;  $0 $0800    ?        $4000           $8000            $C000    $E000    $FFFF
+;  +--+--------+------------------------+--------------------+----+--------+
+;  |  | PLING! | USER CODE              | USER HEAP          | IO | DSKBUF |
+;  +--+--------+------------------------+--------------------+----+--------+
+;               ^ compiled                ^ program heap            ^ disk
+;                 pling code                (moveable)                buffer
 ;
 
 .INC    "system/c64/c64_zp.wla"
@@ -22,5 +22,4 @@
 .DEF    pl_screen       $0400
 .DEF    pl_code         $0800
 .DEF    pl_heap         $8000
-.DEF    pl_runtime      $c000
 .DEF    pl_disk         $e000

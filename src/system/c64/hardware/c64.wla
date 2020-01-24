@@ -20,7 +20,7 @@
         DEFAULTSLOT     2
         SLOTSIZE        $00FD
         ; $00/$01 are not available on the C64 as these are the CPU port
-        SLOT 0          $0003   ; zero-page (variable space)
+        SLOT 0          $0051   ; zero-page (variable space)
         SLOT 1          $0100   ; 6502-stack (variable space)
         SLOTSIZE        $FE00
         SLOT 2          $0200   ; main program RAM ("ROM")

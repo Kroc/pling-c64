@@ -4,41 +4,29 @@
 ;
 ; c64_zp.acme : Pling zero-page layout for C64
 ;===============================================================================
-
+; if we want to make use of the built in functions of the KERNAL, we have
+; to pick our zero-page locations very, very carefully. finding enough
+; contiguous space for the stacks is the most difficult, so we do not
+; rely upon any auto-numbering to pick zero-page addresses for us
+;
 ; Pling's data stack works downwards; this direction was chosen specifically
 ; so that the low byte of a word appears top-most on the stack, yet at the
 ; same time the bytes are in little-Endian order, allowing for vectored jumps
 ;
-; TODO: may have to move due to KERNAL zp-usage?
-;
+; number of bytes in the data stack: note that this also implies
+; the same number of bytes for the data-type stack to match
+.DEF    PL_STACK_SIZE   32
 
-.RAMSECTION "stack"     SLOT 0  ALIGN $10
-        zp_type_bottom  DSB 64
-        zp_type        .DSB 64
-        zp_stack_bottom DSB 64
-        zp_stack       .DSB 64
-.ENDS
+; used for indirect jumps when executing terms        
+.DEF    zp_jmp          $03
+; a temporary address available for indirect addressing
+.DEF    zp_word         $05
 
-.RAMSECTION "core"      SLOT 0
-        ; used for indirect jumps
-        ; when executing terms
-        zp_jmp          WORD
-        
-        ; address of the last defined term
-        ; (updated when new terms are added)
-        zp_last         WORD
-        ; the address of the next free byte of memory
-        zp_here         WORD
-.ENDS
+; address of the last defined term
+; (updated when new terms are added)
+.DEF    zp_last         $07
+; the address of the next free byte of memory
+.DEF    zp_here         $09
 
-.RAMSECTION "console"   SLOT 0
-        ; console cursor position
-        zp_crsr_col     BYTE
-        zp_crsr_row     BYTE
-        ; current screen-RAM address of the cursor;
-        ; this is where the next character will be written
-        zp_crsr_addr    WORD
-        ; text colour of the cursor
-        ; (what colour is used when printing new characters)
-        zp_crsr_colour  BYTE
-.ENDS
+.DEF    zp_stack        $10
+.DEF    zp_type         zp_stack + PL_STACK_SIZE                        ;=$30

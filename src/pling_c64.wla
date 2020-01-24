@@ -26,18 +26,44 @@ init:
         lda # VIC_YELLOW
         sta zp_crsr_colour
 
-.DEF    _str    $0e, $93, $9e, ">!< Pling! by Kroc Camen", 13, "    <github.com/Kroc/pling>", 13, "    built: ", WLA_TIME
+.DEF    _str    $0e, $93, $9e
+.REDEF  _str    _str, $12, "OK                    USER:16384 HEAP:64", $92
+.REDEF  _str    _str, 13, ">!< Pling! by Kroc Camen"
+.REDEF  _str    _str, 13,"    <github.com/Kroc/pling>"
+.REDEF  _str    _str, 13, "    built: ", WLA_TIME
 
-        ldx # 0
--       lda @ver.w, x
+        ldy # 0
+-       lda @ver.w, y
         jsr KERNAL_CHROUT
-        inx
-        cpx # _str.length
+        iny
+        cpy # _str.length
         bne -
+
+        ; reset Pling's stacks
+        ;-----------------------------------------------------------------------
+        ldy # PL_STACK_SIZE-1
+-       lda # $88
+        sta zp_stack, y
+        lda # TYPE_BYTE
+        sta zp_type, y
+        dey
+        bpl -
+
+        ldx # PL_STACK_SIZE
+
+        lda # 4
+        jsr push_byte
+        lda #< @test
+        ldy #> @test
+        jsr push_word
+
+        jsr term_io_chain
 
 -       jmp -
 
 @ver:   .ASC    _str
+
+@test:  .ASC    "test", 0
 
 ;===============================================================================
 .INC    "terms.wla"

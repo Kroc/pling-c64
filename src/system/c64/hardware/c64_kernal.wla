@@ -3,7 +3,12 @@
 ; how you please as long as you retain the copyright notice
 ;
 ;===============================================================================
+; zero-page addresses used by KERNAL:
+;-------------------------------------------------------------------------------
+.DEF    ZP_KERNAL_DEV   $ba     ; last-used device, e.g. drive 8
 
+; other addresses used by KERNAL:
+;-------------------------------------------------------------------------------
 ; BASIC programs starting address
 .DEF    basic_start     $0801
 ; BASIC/KERNAL input buffer
@@ -25,7 +30,7 @@
 ;
 .ENUMID                 0
 .ENUMID DEV_KEY         ; 0  : keyboard
-.ENUMID DEV_TAPE        ; 1  : datasette
+.ENUMID DEV_TAPE        ; 1  : Datasette
 .ENUMID DEV_RS232       ; 2  : RS232 serial port
 .ENUMID DEV_SCR         ; 3  : the screen
 .ENUMID DEV_LPT1        ; 4  : first printer
@@ -40,9 +45,6 @@
 .ENUMID DEV_DRV13       ; 13 : ...
 .ENUMID DEV_DRV14       ; 14 : ...
 .ENUMID DEV_DRV15       ; 15 : drives above 15 are extremely rare
-
-; zero-page addresss used by the KERNAL
-.DEF    ZP_KERNAL_DEV   $ba     ; last-used device, e.g. drive 8
 
 ; KERNAL vectors:
 ;-------------------------------------------------------------------------------
