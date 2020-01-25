@@ -1,0 +1,242 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; interpret.wla
+;===============================================================================
+
+; interpret ( w b -- )
+;===============================================================================
+; read source code input and execute
+;
+; in:   word    address of null-terminated ASCII text to interpret
+;
+;       byte    character code, ASCII, to use as term-delimiter
+;
+; TODO: for now this merely reads a string already in memory, but with the
+;       introduction of stream I/O we'll want this to be able to read from
+;       any source
+;
+;-------------------------------------------------------------------------------
+        _prevTerm
+        .BYTE   9, "interpret"
+
+interpret:
+        ;-----------------------------------------------------------------------
+        ; jump straight to the routine for reading a single term,
+        ; the same parameters apply
+        jsr term_read_term
+
+        brk
+        
+        rts
+
+; read-term ( w b -- w )
+;===============================================================================
+; read a term name from a string
+;
+; in:   word    address of null-terminated ASCII text to read
+;
+;               since a term-name is limited to 31 characters, the string
+;               will be indexed with 8-bits, placing an arbitrary limitation
+;               that there cannot be more than 256-31 characters of delimiters
+;               before the term-name begins
+;
+;       byte    character code, ASCII, to use as term-delimiter
+;
+; out:  word    address of the new position of the input buffer,
+;               the address having been moved forward over the new term
+;
+;-------------------------------------------------------------------------------
+        _prevTerm
+        .BYTE   9, "read-term"
+
+term_read_term:
+        ;-----------------------------------------------------------------------
+        jsr pop                 ; ASCII delimiter to use
+        sta zp_delimiter
+        
+        ; since the top of the stack is a word, and we're going to return
+        ; a word, we're going to just overwrite it instead of popping/pushing.
+        ; we do need to move the value to the zero-page, though, for 6502
+        ; indexed addressing
+        ;
+        lda zp_stack+0, x
+        sta zp_addr+lo
+        lda zp_stack+1, x
+        sta zp_addr+hi
+
+        ; skip initial delimiters:
+        ;-----------------------------------------------------------------------
+        ldy # 0
+-       lda [zp_addr], y        ; read character from the buffer
+        beq @eol                ; end-of-line, null-terminator?
+        iny                     ; pre-emptively move to the next character
+        cmp zp_delimiter        ; was it a delimiter?
+        beq -                   ; yes, keep reading
+
+        ; start reading characters:
+        ;-----------------------------------------------------------------------
+        ; backup Pling's stack pointer
+        _phx
+        ; the first byte of the term-name buffer is the string length.
+        ; X will be used as the index into the term-name buffer
+        ldx # 0
+        stx zp_term_name
+        ; begins at 1 because the 0th byte is the string-length
+        inx
+
+-       lda [zp_addr], y        ; read a character
+        beq @done               ; null terminator?
+        iny                     ; pre-emptively move to the next character
+        cmp zp_delimiter        ; was it a delimiter?
+        beq @done               ; if so, end term
+      
+        ; add the character to the term-name buffer
+        sta zp_term_name, x     ; write character to the term buffer
+        inc zp_term_name        ; increment its length
+        inx                     ; move to the next available space
+
+        ; go read next character        
+        bne -
+
+        ;-----------------------------------------------------------------------
+        ; the term name has been read:
+        ;
+        ; restore Pling's stack pointer
+@done:  _plx
+
+        ; move the input buffer's address forward
+        ; by the number of characters we read
+        ;
+        tya                     ; number of characters read (inc. delimiters)
+        clc                     ; (it's math time!)
+        adc zp_addr+lo          ; add to the original address
+        sta zp_stack+0, x       ; return the lo-byte
+        lda zp_addr+hi          ; ripple the carry...
+        adc # 0                 ; to the address hi-byte
+        sta zp_stack+1, x       ; return the hi-byte
+
+        rts
+
+        ; end-of-line:
+        ;-----------------------------------------------------------------------
+@eol:   ; put $0000 on the stack to indicate no term found:
+        ;
+.IFDEF  CPU_65C02
+        ; (this is not actually faster, just clearer intent)
+        stz zp_stack+0, x
+        stz zp_stack+1, x
+.ELSE   ;6502
+        ; (the null-terminator was already zero,
+        ;  so we don't have to load a zero)
+        sta zp_stack+0, x
+        sta zp_stack+1, x
+.ENDIF
+        rts
+
+;;; here ( -- addr.w )
+;;;=============================================================================
+;;; places the address of the next free byte of RAM on the stack.
+;;; used when compiling new words
+;;;
+;;;-----------------------------------------------------------------------------
+;;        _prevTerm
+;;        .BYTE   4, "here"
+;;here:
+;;        ;---------------------------------------------------------------------
+;;        ; read the address of free memory from the pointer in zero-page
+;;        dex
+;;        lda pl_here_hi          ; contains hi-byte of next free address
+;;        sta zp_stack, x
+;;        dex
+;;        lda pl_here_lo          ; contains lo-byte of next free address
+;;        sta zp_stack, x
+;;        
+;;        rts
+
+;;; new-term ( -- )
+;;;=============================================================================
+;;; create a new term; the name of the term is read from the input buffer
+;;;
+;;;-----------------------------------------------------------------------------
+;;        _prevTerm
+;;        .BYTE   8, "new-term"
+;;new_term:
+;;        ;---------------------------------------------------------------------
+;;        ; read the name of the next term:
+;;        ;
+;;        lda # $20               ; space = delimiter
+;;        dex
+;;        sta zp_stack, x
+;;        jsr term
+;;
+;;        ; this is now the last defined term:
+;;        lda pl_here_lo
+;;        sta pl_last_lo
+;;        lda pl_here_hi
+;;        sta pl_last_hi
+;;
+;;        ; the new term begins with the address
+;;        ; of the previous one: (back-link)
+;;        ;
+;;.IFNDEF CPU_65C02
+;;        ldy # 0
+;;.ENDIF
+;;        lda pl_last_lo          ; load address lo-byte of last term
+;;.IFDEF  CPU_65C02
+;;        sta [pl_here]           ; save at the new term's address
+;;.ELSE
+;;        sta [pl_here], y
+;;.ENDIF
+;;        inc pl_here_lo          ; move to the next byte of memory
+;;        bcc +                   ; page crossed?
+;;        inc pl_here_hi          ; (move to next page)
+;;+       lda pl_last_hi          ; load address hi-byte of last term
+;;.IFDEF  CPU_65C02
+;;        sta [pl_here]           ; save at the new term's address
+;;.ELSE
+;;        sta [pl_here], y
+;;.ENDIF
+;;        inc pl_here_lo          ; move to the next byte of memory
+;;        bcc +                   ; page crossed?
+;;        inc pl_here_hi          ; (move to next page)
+;;
+;;        ; write the name of the term to its terminology entry;
+;;        ; this includes the first byte which is the length of the term name
+;;        ;
+;;        ldy # 0
+;;-       lda pl_buffer_term, y   ; read a character
+;;        sta [pl_here]           ; write a character
+;;        inc pl_here_lo          ; move to the next writing address
+;;        bcc +                   ; page crossed?
+;;        inc pl_here_hi          ; (move to next page)
+;;+       iny
+;;        cpy pl_buffer_term
+;;        bne -
+;;
+;;        rts
+
+
+;;; find ( str-addr.w -- str-addr.w 0 | xt.w 1 | xt.w -1 )
+;;;=============================================================================
+;;; given an address that points to a string, searches
+;;; the terminology for a term with a matching name
+;;;
+;;;-----------------------------------------------------------------------------
+;;        _prevTerm
+;;        .BYTE   4, "find"
+;;find:
+;;        phx                     ; backup parameter-stack position
+;;
+;;        ; copy the string address,
+;;        ; but leave it on the stack
+;;        lda zp_stack, x
+;;        sta pl_buffer_addr_lo
+;;        lda zp_stack+1, x
+;;        sta pl_buffer_addr_hi
+;;        ; length of search string?
+;;        ldy # 0
+;;
+;;        plx                     ; restore parameter-stack position 
+;;        rts

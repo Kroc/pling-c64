@@ -21,6 +21,7 @@
 ; data-types:
 ;===============================================================================
 .DEF    TYPE_BYTE       %00000000
+.DEF    TYPE_EOS        %00000001       ; "End Of Stream"
 .DEF    TYPE_WORD_LO    %10000000
 .DEF    TYPE_WORD_HI    %11000000
 .DEF    TYPE_FLOAT      %01000000

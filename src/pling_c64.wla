@@ -27,6 +27,13 @@ init:
 
         ldx # PL_STACK_SIZE
 
+        ; upon initialising, set the user-space starting address,
+        ; where new terms will be compiled
+        lda #< pl_code
+        sta zp_here+lo
+        lda #> pl_code
+        sta zp_here+hi
+
         ; set up the screen:
         ;-----------------------------------------------------------------------
         ; change the screen colour; we could use Pling's BIOS routines

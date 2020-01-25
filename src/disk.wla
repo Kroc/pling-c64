@@ -20,8 +20,8 @@ term_io_chain:
         ; TODO: error if not a word
         jsr pop
         ; put the string address aside
-        sta zp_word+lo
-        sty zp_word+hi
+        sta zp_addr+lo
+        sty zp_addr+hi
         jsr pop                 ; get the string-length
         pha                     ; (put aside)
 
@@ -35,8 +35,8 @@ term_io_chain:
         tya                     ; logical file number
         jsr KERNAL_SETLFS
 
-        ldx zp_word+lo
-        ldy zp_word+hi
+        ldx zp_addr+lo
+        ldy zp_addr+hi
         pla                     ; A is string-length
         jsr KERNAL_SETNAM       ; set KERNAL file name
 
@@ -50,13 +50,26 @@ term_io_chain:
 +       
         ; TODO: error handling
         ; add a null-terminator after the file!
-        stx zp_word+lo
-        sty zp_word+hi
+        stx zp_addr+lo
+        sty zp_addr+hi
         ldy # 1
         lda # 0
-        sta (zp_word), y
+        sta (zp_addr), y
 
         ; restore stack position
         _plx
 
         rts
+
+; open-read ( w -- h | e )
+;===============================================================================
+; open a file on the currently active storage device for reading
+;
+; out:  handle  a stream handle is returned. read `<` from the stream handle
+;               to read from the opened file
+;
+;  or:  error   if the file could not be opened for reading,
+;               an error code is returned instead   
+;
+;-------------------------------------------------------------------------------
+        

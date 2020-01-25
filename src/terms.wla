@@ -81,5 +81,5 @@ pop:    ;=======================================================================
 
 .INC    "console.wla"
 .INC    "disk.wla"
-.INC    "terms_core.wla"
-;;.INC    "terms_interpret.wla"
+.INC    "core.wla"
+.INC    "interpret.wla"

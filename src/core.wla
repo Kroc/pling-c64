@@ -38,14 +38,14 @@ term_set:
 
         rts
 
-; ? ( w -- b )
+; @ ( w -- b )
 ;===============================================================================
 ; peeks a byte from the address on the stack, (consuming the address)
 ; and pushes the value to the stack
 ;
 ;-------------------------------------------------------------------------------
         _prevTerm
-        .BYTE   1, "?"
+        .BYTE   1, "@"
 term_get:
         lda [zp_stack, x]
         inx

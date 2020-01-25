@@ -9,6 +9,7 @@
 ; contiguous space for the stacks is the most difficult, so we do not
 ; rely upon any auto-numbering to pick zero-page addresses for us
 ;
+;-------------------------------------------------------------------------------
 ; Pling's data stack works downwards; this direction was chosen specifically
 ; so that the low byte of a word appears top-most on the stack, yet at the
 ; same time the bytes are in little-Endian order, allowing for vectored jumps
@@ -16,17 +17,29 @@
 ; number of bytes in the data stack: note that this also implies
 ; the same number of bytes for the data-type stack to match
 .DEF    PL_STACK_SIZE   32
+.DEF    zp_stack        $10
+.DEF    zp_type         zp_stack + PL_STACK_SIZE    ;=$30-$50
 
 ; used for indirect jumps when executing terms        
 .DEF    zp_jmp          $03
 ; a temporary address available for indirect addressing
-.DEF    zp_word         $05
+.DEF    zp_addr         $05
 
 ; address of the last defined term
 ; (updated when new terms are added)
 .DEF    zp_last         $07
+
 ; the address of the next free byte of memory
+; in user-space. this is where new terms are compiled
 .DEF    zp_here         $09
 
-.DEF    zp_stack        $10
-.DEF    zp_type         zp_stack + PL_STACK_SIZE                        ;=$30
+; string buffer for term names (32 chars)
+.DEF    zp_term_name    $50                         ;=$50-$70
+; current delimiter between terms
+.DEF    zp_delimiter    $70
+
+; active device number (system-dependent);
+; this is the same ZP byte used by the KERNAL
+; to store the last-used device number
+;
+.DEF    zp_device       ZP_KERNAL_DEV
