@@ -13,7 +13,8 @@ SET VICE="bin\vice\x64.exe"
 
 %WLA_6510% -v ^
     -o "build\pling_c64.o" ^
-       "pling_c64.wla"
+    -D SYSTEM_C64=1 ^
+       "pling.wla"
 
 IF ERRORLEVEL 1 EXIT /B 1
 

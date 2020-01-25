@@ -23,3 +23,5 @@
 .DEF    pl_code         $0800
 .DEF    pl_heap         $8000
 .DEF    pl_disk         $e000
+
+.INC    "system/c64/c64_init.wla"

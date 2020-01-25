@@ -4,13 +4,6 @@
 ;
 ; pling_c64.wla : main program file for the Commodore 64
 ;===============================================================================
-; set the system to a C64, the include below will do
-; the rest of the importing of machine-specific definitions
-;
-.DEF    SYSTEM_C64      1
-.INC    "system/pling.wla"
-
-;===============================================================================
 .INC    "system/cbmbasic.wla"
 
 init:
@@ -74,6 +67,3 @@ init:
 @ver:   .ASC    _str
 
 @test:  .ASC    "test", 0
-
-;===============================================================================
-.INC    "terms.wla"

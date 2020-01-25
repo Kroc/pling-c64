@@ -2,6 +2,46 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
+;===============================================================================
+; import machine-specific headers:
+;-------------------------------------------------------------------------------
+.DEF    lo              0
+.DEF    hi              1
+
+.IFDEF  SYSTEM_C64
+        .INC    "system/c64/c64.wla"
+.ENDIF
+.IFDEF  CPU_65XX
+        .INC    "system/65xx.wla"
+.ENDIF
+
+; data-types:
+;===============================================================================
+.DEF    TYPE_BYTE       %00000000
+.DEF    TYPE_EOD        %00000001       ; "End Of Data" (read / write)
+.DEF    TYPE_WORD_LO    %10000000
+.DEF    TYPE_WORD_HI    %11000000
+.DEF    TYPE_FLOAT      %01000000
+.DEF    TYPE_FLOAT1     %01000100
+.DEF    TYPE_FLOAT2     %01000011
+.DEF    TYPE_FLOAT3     %01000010
+.DEF    TYPE_FLOAT4     %01000001
+.DEF    TYPE_FLOAT5     %01000000
+
+;===============================================================================
+.DEF    IMMEDIATE       %10000000
+.DEF    HIDDEN          %01000000
+.DEF    NO_TAIL_CALL    %00100000
+.DEF    TERMLEN_MASK    %00011111       ; term name up to 31 chars
+
+;-------------------------------------------------------------------------------
+.DEF    prev_term       $0000
+.MACRO  _prevTerm
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        .WORD   prev_term
+        .REDEF  prev_term       CADDR - 2
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+.ENDM
 
 push_byte:
         ;=======================================================================
@@ -77,7 +117,6 @@ pop:    ;=======================================================================
         lda zp_stack-2, x
 .ENDIF
         rts
-
 
 .INC    "console.wla"
 .INC    "disk.wla"
