@@ -5,13 +5,11 @@
 ; interpret.wla
 ;===============================================================================
 
-; interpret ( w b -- )
+; interpret ( w -- )
 ;===============================================================================
 ; read source code input and execute
 ;
 ; in:   word    address of null-terminated ASCII text to interpret
-;
-;       byte    character code, ASCII, to use as term-delimiter
 ;
 ; TODO: for now this merely reads a string already in memory, but with the
 ;       introduction of stream I/O we'll want this to be able to read from
@@ -32,7 +30,7 @@ interpret:
 
 ; read-term ( w -- w )
 ;===============================================================================
-; read a term name from a string
+; read a term name from input
 ;
 ; in:   word    address of null-terminated ASCII text to read
 ;
@@ -128,25 +126,80 @@ term_read_term:
 .ENDIF
         rts
 
-;;; here ( -- addr.w )
-;;;=============================================================================
-;;; places the address of the next free byte of RAM on the stack.
-;;; used when compiling new words
-;;;
-;;;-----------------------------------------------------------------------------
-;;        _term   "here"
-;;
-;;here:
-;;        ;---------------------------------------------------------------------
-;;        ; read the address of free memory from the pointer in zero-page
-;;        dex
-;;        lda pl_here_hi          ; contains hi-byte of next free address
-;;        sta zp_stack, x
-;;        dex
-;;        lda pl_here_lo          ; contains lo-byte of next free address
-;;        sta zp_stack, x
-;;        
-;;        rts
+; find-term ( -- w )
+;===============================================================================
+; searches the terminology for a term matching the name currently
+; in the term-name buffer (use `read-term` to populate this)
+;
+; out:  word    execution address of the found term
+;
+;-------------------------------------------------------------------------------
+        _term   "find-term"
+
+term_find_term:
+        ;-----------------------------------------------------------------------
+        ; start searching from the last defined word. this address points
+        ; to the term header, *not* the term's code
+        ;
+        ; the first two bytes of a term header are the address of the previous
+        ; term, allowing one to follow the chain back through terms
+        ;
+        lda zp_last+lo
+        sta zp_addr+lo
+        lda zp_last+hi
+        sta zp_addr+hi
+
+        ldy # 2
+        jmp @len
+
+        ; (this is a post-loop fall-through)
+        ;-----------------------------------------------------------------------
+        ; not same length! move to the next term in the chain:
+        ; read the back-link address from the term-header
+@next:  ldy # 0
+        lda [zp_addr], y
+        sta zp_addr+lo
+        iny                     ; Y=1
+        lda [zp_addr], y
+        beq @none
+        sta zp_addr+hi
+        iny                     ; Y=2
+
+        ; after this, follows the term's name, the first byte is the length.
+        ; read the length from the header: (third byte)
+@len:   lda [zp_addr], y
+        ; TODO: error if length of term-name is 0
+
+        ; a speed optimisation common with Forths is to simply
+        ; compare string lengths first... (the first byte of
+        ; the term-name buffer is its length)
+        cmp zp_term_name
+        ; if not the same length, move to the next term
+        bne @next
+
+        ; compare strings:
+        ;-----------------------------------------------------------------------
+        ; walk along the bytes of the two strings and compare each letter:
+-       iny
+        lda zp_term_name-3, y   ; (the offsets differ, so compensate)
+        beq +                   ; end of the string, word matches!
+        cmp [zp_addr], y        ; (this is so cool you can do this)   
+        beq -                   ; letters, match, keep searching
+
+        ; names do not match -- move to the next term in the chain
+        bne @next
+
+        ; term found!
+        ;-----------------------------------------------------------------------
+        ; push the found term's execution address
++       lda zp_addr+lo
+        ldy zp_addr+hi
+        jmp push_word
+
+        ; term not found!
+        ;-----------------------------------------------------------------------
+@none:  brk
+        brk
 
 ;;; new-term ( -- )
 ;;;=============================================================================
@@ -208,29 +261,4 @@ term_read_term:
 ;;        cpy pl_buffer_term
 ;;        bne -
 ;;
-;;        rts
-
-
-;;; find ( str-addr.w -- str-addr.w 0 | xt.w 1 | xt.w -1 )
-;;;=============================================================================
-;;; given an address that points to a string, searches
-;;; the terminology for a term with a matching name
-;;;
-;;;-----------------------------------------------------------------------------
-;;        _term   "find"
-;;
-;;find:
-;;        ;---------------------------------------------------------------------
-;;        phx                     ; backup parameter-stack position
-;;
-;;        ; copy the string address,
-;;        ; but leave it on the stack
-;;        lda zp_stack, x
-;;        sta pl_buffer_addr_lo
-;;        lda zp_stack+1, x
-;;        sta pl_buffer_addr_hi
-;;        ; length of search string?
-;;        ldy # 0
-;;
-;;        plx                     ; restore parameter-stack position 
 ;;        rts

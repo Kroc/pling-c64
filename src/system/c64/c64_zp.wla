@@ -33,10 +33,11 @@
 ; in user-space. this is where new terms are compiled
 .DEF    zp_here         $09
 
-; string buffer for term names (32 chars)
-.DEF    zp_term_name    $50                         ;=$50-$70
 ; current delimiter between terms
-.DEF    zp_delimiter    $70
+.DEF    zp_delimiter    $50
+; string buffer for term names
+.DEF    PL_TERM_LEN     31
+.DEF    zp_term_name    $51                         ;=$51-$70
 
 ; active device number (system-dependent);
 ; this is the same ZP byte used by the KERNAL

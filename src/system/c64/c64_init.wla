@@ -2,7 +2,7 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; pling_c64.wla : main program file for the Commodore 64
+; c64_init.wla : machine-specific intialisation for the Commodore 64
 ;===============================================================================
 .INC    "system/cbmbasic.wla"
 
@@ -18,31 +18,37 @@ init:
         dey
         bpl -
 
-        ldx # PL_STACK_SIZE
+        ; the last term to be defined:
+        lda #< term_last_term
+        sta zp_last+lo
+        lda #> term_last_term
+        sta zp_last+hi
 
-        ; upon initialising, set the user-space starting address,
+        ; set the user-space starting address,
         ; where new terms will be compiled
-        lda #< pl_code
+        lda #< begin_here
         sta zp_here+lo
-        lda #> pl_code
+        lda #> begin_here
         sta zp_here+hi
 
         ; set the default delimiter for the interpreter
         lda # $20               ; TODO: consts for ASCII codes
         sta zp_delimiter
 
+        ; clear the term-name buffer
+        lda # 0
+        ldy # PL_TERM_LEN
+-       sta zp_term_name, y
+        dey
+        bpl -
+
+        ldx # PL_STACK_SIZE
+
         ; set up the screen:
         ;-----------------------------------------------------------------------
-        ; change the screen colour; we could use Pling's BIOS routines
-        ; but it would end up more code to push and pull from the stack
         lda # VIC_BLACK
         sta VIC_BORDER
         sta VIC_BACKGROUND
-        ; call the routine to clear the console
-        jsr term_con_clear
-        ; set the text colour
-        lda # VIC_YELLOW
-        sta zp_crsr_colour
 
 .DEF    _str    $0e, $93, $9e
 .REDEF  _str    _str, $12, "OK                    USER $4000 HEAP 64", $92

@@ -20,13 +20,13 @@
 .DEF    TYPE_BYTE       %00000000
 .DEF    TYPE_EOD        %00000001       ; "End Of Data" (read / write)
 .DEF    TYPE_WORD_LO    %10000000
-.DEF    TYPE_WORD_HI    %11000000
-.DEF    TYPE_FLOAT      %01000000
-.DEF    TYPE_FLOAT1     %01000100
-.DEF    TYPE_FLOAT2     %01000011
-.DEF    TYPE_FLOAT3     %01000010
-.DEF    TYPE_FLOAT4     %01000001
-.DEF    TYPE_FLOAT5     %01000000
+.DEF    TYPE_WORD_HI    %10000001
+.DEF    TYPE_FLOAT      %11000000
+.DEF    TYPE_FLOAT1     %11000100
+.DEF    TYPE_FLOAT2     %11000011
+.DEF    TYPE_FLOAT3     %11000010
+.DEF    TYPE_FLOAT4     %11000001
+.DEF    TYPE_FLOAT5     %11000000
 
 ;===============================================================================
 .DEF    IMMEDIATE       %10000000
@@ -120,7 +120,29 @@ pop:    ;=======================================================================
 .ENDIF
         rts
 
-.INC    "console.wla"
-.INC    "disk.wla"
+
 .INC    "core.wla"
 .INC    "interpret.wla"
+.INC    "stream.wla"
+.INC    "disk.wla"
+;;.INC    "console.wla"
+
+; last-term ( -- w )
+;===============================================================================
+; pushes the address of the last term defined.
+; used by the interpreter to begin the search for term names
+;
+;-------------------------------------------------------------------------------
+        _term   "last-term"
+
+term_last_term:
+        ;-----------------------------------------------------------------------
+        lda zp_last+lo
+        ldy zp_last+hi
+        jmp push_word
+
+;===============================================================================
+; WARNING: *ANY* code / data placed after this point
+; will be overwritten by the compiler!
+; 
+begin_here:

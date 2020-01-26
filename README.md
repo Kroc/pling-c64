@@ -2,9 +2,9 @@
     <img src="readme_logo.png" width="640" height="240" />
 </p>
 
-__Pling!__ is a native 8-bit [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language))-like scripting language, under development, for 8-bit micro-computers; first for the Commodore 64 with plans for the Commander X16 later.
+__Pling!__ is a native 8-bit [Forth]-like scripting language, under development, for 8-bit micro-computers; first for the [Commodore 64] with plans for the [Commander X16] later.
 
-> The term "Pling" is another name for an exclamation mark, apparently coined by [Acorn Computers Ltd.](https://en.wikipedia.org/wiki/Acorn_Computers) as the term is used often in regards to [RISC OS](https://en.wikipedia.org/wiki/RISC_OS).
+> The term "Pling" is another name for an exclamation mark, apparently coined by [Acorn Computers Ltd.] as the term is used often in regards to [RISC OS].
 
 ### Why "scripting language" and not "programming language"?
 
@@ -27,3 +27,10 @@ For example, every number is 16-bits, like it or not. You can write 8-bits to me
 _Pling!_ is 8-bit by default, meaning that its code is just that bit simpler, leaner and more efficient for the the 8-bit micro-computers it's designed for.
 
 This does not mean that _Pling!_ cannot handle 16-bit operations, rather that the extra internal work for 16-bit operations is only necessary when 16-bits is needed.
+
+[Forth]: https://en.wikipedia.org/wiki/Forth_(programming_language)
+[RISC OS]: https://en.wikipedia.org/wiki/RISC_OS
+[Acorn Computers Ltd.]: https://en.wikipedia.org/wiki/Acorn_Computers
+[DurexForth]: https://github.com/jkotlinski/durexforth
+[Commodore 64]: https://en.wikipedia.org/wiki/Commodore_64
+[Commander X16]: https://github.com/commanderx16/x16-emulator
