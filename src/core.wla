@@ -72,7 +72,7 @@ term_drop:
 +       inx                     ; drop byte
         rts
 
-; execute ( w -- )
+; exec ( w -- )
 ;===============================================================================
 ; execute the address on top of the stack
 ;

@@ -20,9 +20,15 @@
 
 interpret:
         ;-----------------------------------------------------------------------
-        ; jump straight to the routine for reading a single term,
+        ; jump straight to the routine for reading a term from input,
         ; the same parameters apply
         jsr term_read_term
+        ; TODO: error handling
+        ; find the term in the terminology
+        jsr term_find_term
+        ; TODO: error handling
+        ; execute it!
+        jsr term_exec
 
         brk
         

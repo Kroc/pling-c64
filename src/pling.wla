@@ -45,6 +45,49 @@
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM
 
+; shared Pling initialisation:
+;===============================================================================
+pling_init:
+        ;-----------------------------------------------------------------------
+        ; reset Pling's stacks
+        ;-----------------------------------------------------------------------
+        ldy # PL_STACK_SIZE-1
+-       lda # $88
+        sta zp_stack, y
+        lda # TYPE_BYTE
+        sta zp_type, y
+        dey
+        bpl -
+
+        ; the last term to be defined:
+        lda #< term_last_term
+        sta zp_last+lo
+        lda #> term_last_term
+        sta zp_last+hi
+
+        ; set the user-space starting address,
+        ; where new terms will be compiled
+        lda #< begin_here
+        sta zp_here+lo
+        lda #> begin_here
+        sta zp_here+hi
+
+        ; set the default delimiter for the interpreter
+        lda # $20               ; TODO: consts for ASCII codes
+        sta zp_delimiter
+
+        ; clear the term-name buffer
+        lda # 0
+        ldy # PL_TERM_LEN
+-       sta zp_term_name, y
+        dey
+        bpl -
+
+        ldx # PL_STACK_SIZE
+
+        ; TODO!       
+-       jmp -
+
 push_byte:
         ;=======================================================================
         ; push a byte onto the data stack,
