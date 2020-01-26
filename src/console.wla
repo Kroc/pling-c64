@@ -58,10 +58,10 @@
 ;       so do not rely on the value being constant
 ;
 ;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   9, "?con.cols"
-term_peek_con_cols:
+        _term   "?con.cols"
 
+term_peek_con_cols:
+        ;-----------------------------------------------------------------------
         .IFDEF  SYSTEM_C64
                 lda # CON_COLS
                 jmp push_byte
@@ -79,10 +79,10 @@ term_peek_con_cols:
 ;       so do not rely on the value being constant
 ;
 ;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   9, "?con.rows"
-term_peek_con_rows:
+        _term   "?con.rows"
 
+term_peek_con_rows:
+        ;-----------------------------------------------------------------------
         .IFDEF  SYSTEM_C64
                 lda # CON_ROWS
                 jmp push_byte
@@ -97,10 +97,10 @@ term_peek_con_rows:
 ; Pling makes no effort to normalise colour across systems
 ;
 ;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   9, "?con.back"
-term_peek_con_back:
+        _term   "?con.back"
 
+term_peek_con_back:
+        ;-----------------------------------------------------------------------
         .IFDEF  SYSTEM_C64
                 lda VIC_BACKGROUND
                 inx
@@ -118,10 +118,10 @@ term_peek_con_back:
 ; Pling makes no effort to normalise colour across systems
 ;
 ;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   9, "!con.back"
-term_poke_con_back:
+        _term   "!con.back"
 
+term_poke_con_back:
+        ;-----------------------------------------------------------------------
         .IFDEF  SYSTEM_C64
                 lda zp_stack, x
                 sta VIC_BORDER
@@ -137,10 +137,10 @@ term_poke_con_back:
 ; homes the cursor -- moves it back to row/col 0
 ;
 ;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   8, "con.home"
-term_con_home:
+        _term   "con.home"
 
+term_con_home:
+        ;-----------------------------------------------------------------------
         ; set the cursor write-address
         ; to the beginning of screen RAM
         lda #< pl_screen
@@ -158,10 +158,10 @@ term_con_home:
 ; clears the console
 ;
 ;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   9, "con.clear"
-term_con_clear:
+        _term   "con.clear"
 
+term_con_clear:
+        ;-----------------------------------------------------------------------
         ; swtich on I/O
         lda CPU_CONTROL
         pha
@@ -205,10 +205,10 @@ term_con_clear:
 ;       C64 : screen code, mapping to character ROM
 ;
 ;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   4, ">con"
-term_write_con:
+        _term   ">con"
 
+term_write_con:
+        ;-----------------------------------------------------------------------
         ; get the byte from the stack
         ; TODO: error if data-type is word?
         jsr pop

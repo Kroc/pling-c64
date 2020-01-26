@@ -27,6 +27,10 @@ init:
         lda #> pl_code
         sta zp_here+hi
 
+        ; set the default delimiter for the interpreter
+        lda # $20               ; TODO: consts for ASCII codes
+        sta zp_delimiter
+
         ; set up the screen:
         ;-----------------------------------------------------------------------
         ; change the screen colour; we could use Pling's BIOS routines
@@ -41,7 +45,7 @@ init:
         sta zp_crsr_colour
 
 .DEF    _str    $0e, $93, $9e
-.REDEF  _str    _str, $12, "OK                    USER:16384 HEAP:64", $92
+.REDEF  _str    _str, $12, "OK                    USER $4000 HEAP 64", $92
 .REDEF  _str    _str, 13, ">!< Pling! by Kroc Camen"
 .REDEF  _str    _str, 13,"    <github.com/Kroc/pling>"
 .REDEF  _str    _str, 13, "    built: ", WLA_TIME

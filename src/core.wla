@@ -12,10 +12,10 @@
 ; TODO: this implementation is temporary
 ;
 ;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   4, "emit"
-term_emit:
+        _term   "emit"
 
+term_emit:
+        ;-----------------------------------------------------------------------
         jsr pop
         jsr KERNAL_CHROUT
         rts
@@ -26,9 +26,10 @@ term_emit:
 ; all items are consumed
 ;
 ;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   1, "!"
+        _term   "!"
+
 term_set:
+        ;-----------------------------------------------------------------------
         lda zp_stack+2, x       ; get value to store (3rd byte)
         sta [zp_stack, x]       ; store via the address on the stack
 
@@ -44,9 +45,10 @@ term_set:
 ; and pushes the value to the stack
 ;
 ;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   1, "@"
+        _term   "@"
+
 term_get:
+        ;-----------------------------------------------------------------------
         lda [zp_stack, x]
         inx
         sta zp_stack, x
@@ -59,9 +61,10 @@ term_get:
 ; to the next item
 ;
 ;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   4, "drop"
+        _term   "drop"
+
 term_drop:
+        ;-----------------------------------------------------------------------
         ; is the top-most item a byte or a word?
         lda zp_type, x
         beq +
@@ -74,9 +77,10 @@ term_drop:
 ; execute the address on top of the stack
 ;
 ;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   4, "exec"
+        _term   "exec"
+
 term_exec:
+        ;-----------------------------------------------------------------------
 .IFDEF  CPU_65C02
         ; we must reduce the stack by 2 bytes *before* we jump!
         inx

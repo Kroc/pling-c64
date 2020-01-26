@@ -18,8 +18,7 @@
 ;       any source
 ;
 ;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   9, "interpret"
+        _term   "interpret"
 
 interpret:
         ;-----------------------------------------------------------------------
@@ -31,7 +30,7 @@ interpret:
         
         rts
 
-; read-term ( w b -- w )
+; read-term ( w -- w )
 ;===============================================================================
 ; read a term name from a string
 ;
@@ -42,20 +41,14 @@ interpret:
 ;               that there cannot be more than 256-31 characters of delimiters
 ;               before the term-name begins
 ;
-;       byte    character code, ASCII, to use as term-delimiter
-;
 ; out:  word    address of the new position of the input buffer,
 ;               the address having been moved forward over the new term
 ;
 ;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   9, "read-term"
+        _term   "read-term"
 
 term_read_term:
         ;-----------------------------------------------------------------------
-        jsr pop                 ; ASCII delimiter to use
-        sta zp_delimiter
-        
         ; since the top of the stack is a word, and we're going to return
         ; a word, we're going to just overwrite it instead of popping/pushing.
         ; we do need to move the value to the zero-page, though, for 6502
@@ -141,8 +134,8 @@ term_read_term:
 ;;; used when compiling new words
 ;;;
 ;;;-----------------------------------------------------------------------------
-;;        _prevTerm
-;;        .BYTE   4, "here"
+;;        _term   "here"
+;;
 ;;here:
 ;;        ;---------------------------------------------------------------------
 ;;        ; read the address of free memory from the pointer in zero-page
@@ -160,8 +153,8 @@ term_read_term:
 ;;; create a new term; the name of the term is read from the input buffer
 ;;;
 ;;;-----------------------------------------------------------------------------
-;;        _prevTerm
-;;        .BYTE   8, "new-term"
+;;        _term   "new-term"
+;;
 ;;new_term:
 ;;        ;---------------------------------------------------------------------
 ;;        ; read the name of the next term:
@@ -224,9 +217,10 @@ term_read_term:
 ;;; the terminology for a term with a matching name
 ;;;
 ;;;-----------------------------------------------------------------------------
-;;        _prevTerm
-;;        .BYTE   4, "find"
+;;        _term   "find"
+;;
 ;;find:
+;;        ;---------------------------------------------------------------------
 ;;        phx                     ; backup parameter-stack position
 ;;
 ;;        ; copy the string address,

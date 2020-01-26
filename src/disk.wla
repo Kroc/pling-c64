@@ -10,10 +10,10 @@
 ; loads, and executes, the file-name string address on the stack
 ;
 ;-------------------------------------------------------------------------------
-        _prevTerm
-        .BYTE   5, "chain"
-term_io_chain:
+        _term   "chain"
 
+term_io_chain:
+        ;-----------------------------------------------------------------------
         ; backup Pling's stack pointer
         _phx
 
