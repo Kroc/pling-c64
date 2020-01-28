@@ -29,9 +29,9 @@
 .ROMBANKSIZE            $FE00
 .ROMBANKS               1
 
-.INC    "system/c64/hardware/c64_cia.wla"
-.INC    "system/c64/hardware/c64_vic.wla"
-.INC    "system/c64/hardware/c64_kernal.wla"
+.INC    "c64/hardware/c64_cia.wla"
+.INC    "c64/hardware/c64_vic.wla"
+.INC    "c64/hardware/c64_kernal.wla"
 
 ;-------------------------------------------------------------------------------
 .MACRO  .bit_skip1

@@ -9,12 +9,12 @@
 .DEF    HI              1
 
 .IFDEF  SYSTEM_C64
-        .INC    "system/c64/c64.wla"
+        .INC    "c64/c64.wla"
 .ENDIF
 .IFDEF  CPU_65XX
         ; macros for 6502-based systems (6502, 6510, 65C02)
         ; to polyfill differences in instruction sets 
-        .INC    "system/65xx.wla"
+        .INC    "65xx.wla"
 .ENDIF
 
 ; data-types:

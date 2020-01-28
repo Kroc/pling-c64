@@ -4,8 +4,8 @@
 ;
 ; c64.wla : shared C64 definitions
 ;===============================================================================
-.INC    "system/c64/hardware/c64.wla"
-.INC    "system/c64/c64_pet.wla"
+.INC    "c64/hardware/c64.wla"
+.INC    "c64/c64_pet.wla"
 
 ; memory map:
 ; (disk version)
@@ -18,11 +18,11 @@
 ;       runtime    pling code               (moveable)                buffer
 ;
 
-.INC    "system/c64/c64_zp.wla"
+.INC    "c64/c64_zp.wla"
 
 .DEF    pl_screen       $0400
 .DEF    pl_code         $0800
 .DEF    pl_heap         $8000
 .DEF    pl_disk         $e000
 
-.INC    "system/c64/c64_init.wla"
+.INC    "c64/c64_init.wla"
