@@ -6,54 +6,17 @@
 ;===============================================================================
 
 
-stack_underflow:
+err_stack_underflow:
     ;---------------------------------------------------------------------------
     lda # 0
-    jmp error
+    jmp sys_error
 
-stack_overflow:
+err_stack_overflow:
     ;---------------------------------------------------------------------------
     lda # 1
-    jmp error
+    jmp sys_error
 
-error:
+err_type
     ;---------------------------------------------------------------------------
-    pha
-
-    ldy # 0
--   lda @clear, y
-    beq +
-    jsr KERNAL_CHROUT
-    iny
-    bne -
-
-+   pla
-    tay
-    lda @errmsg_lo, y
-    sta zp_addr+LO
-    lda @errmsg_hi, y
-    sta zp_addr+HI
-
--   lda [zp_addr], y
-    beq +
-    jsr KERNAL_CHROUT
-    iny
-    bne -
-
-+
--   inc VIC_BORDER
-    jmp -
-
-@clear:
-    .BYTE   13, 13, $92, $9e, $0e, 0
-@errmsg_lo:
-    .BYTE   <@errmsg_stack_underflow
-    .BYTE   <@errmsg_stack_overflow
-@errmsg_hi:
-    .BYTE   >@errmsg_stack_underflow
-    .BYTE   >@errmsg_stack_overflow
-
-@errmsg_stack_underflow:
-    .ASC    "Stack underflow!", 0
-@errmsg_stack_overflow:
-    .ASC    "Stack overflow!", 0
+    lda # 2
+    jmp sys_error

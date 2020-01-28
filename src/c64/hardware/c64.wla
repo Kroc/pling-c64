@@ -7,9 +7,9 @@
 .DEF    CPU_6502        1
 .DEF    CPU_6510        1
 
-; number of rows / columns in text-mode (1-based)
-; this is defined across different systems to provide
-; standard screen width / height constants
+; number of rows / columns in text-mode, 1-based.
+; (this is defined across different systems to provide
+;  standard screen width / height constants)
 ;
 .DEF    SCREEN_COLS             40
 .DEF    SCREEN_ROWS             25
@@ -19,8 +19,9 @@
 .MEMORYMAP
         DEFAULTSLOT     2
         SLOTSIZE        $00FD
-        ; $00/$01 are not available on the C64 as these are the CPU port
-        SLOT 0          $0051   ; zero-page (variable space)
+        ; $00/$01 are not available on
+        ; the C64 as these are the CPU port
+        SLOT 0          $0002   ; zero-page (variable space)
         SLOT 1          $0100   ; 6502-stack (variable space)
         SLOTSIZE        $FE00
         SLOT 2          $0200   ; main program RAM ("ROM")
@@ -33,26 +34,6 @@
 .INC    "c64/hardware/c64_vic.wla"
 .INC    "c64/hardware/c64_kernal.wla"
 
-;-------------------------------------------------------------------------------
-.MACRO  .bit_skip1
-        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        .BYTE   $24
-        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-.ENDM
-;-------------------------------------------------------------------------------
-.MACRO  .bit_skip2
-        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        .BYTE   $2c
-        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-.ENDM
-;-------------------------------------------------------------------------------
-; "halt & catch fire"
-;
-.MACRO  .hcf
-        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        .BYTE   $f2
-        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-.ENDM
 
 ; CPU port: memory layout & Datasette
 ;===============================================================================

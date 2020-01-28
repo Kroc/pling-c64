@@ -214,10 +214,10 @@ term_write_con:
         jsr pop
         ; write to the current screen-RAM address
 .IFDEF  CPU_65C02
-        sta (zp_crsr_addr)
+        sta [zp_crsr_addr]
 .ELSE
         ldy # 0
-        sta (zp_crsr_addr), y
+        sta [zp_crsr_addr], y
 .ENDIF
         ; screen memory on the C64 is contiguous so we only need
         ; to check for going off the last console row. unfortunately

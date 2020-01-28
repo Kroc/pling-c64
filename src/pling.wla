@@ -110,7 +110,7 @@ pling_init:
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         dex
         bpl @lowerStack__\@
-        jmp stack_overflow
+        jmp err_stack_overflow
 
 @lowerStack__\@:
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -123,7 +123,7 @@ pling_init:
         dex
         dex
         bpl @lowerStack2__\@
-        jmp stack_overflow
+        jmp err_stack_overflow
 
 @lowerStack2__\@:
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -140,7 +140,7 @@ pling_init:
         inx
         cpx # PL_STACK_SIZE+1
         bcc @raiseStack__\@
-        jmp stack_underflow
+        jmp err_stack_underflow
 
 @raiseStack__\@:
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -154,7 +154,7 @@ pling_init:
         inx
         cpx # PL_STACK_SIZE+1
         bcc @raiseStack2__\@
-        jmp stack_underflow
+        jmp err_stack_underflow
 
 @raiseStack2__\@:
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -203,14 +203,15 @@ push_word:
 
 pop_byte:
         ;=======================================================================
-        lda zp_type, x
-        bne +
+        lda zp_type, x          ; check the data-type of the top stack item
+        bne +                   ; if not a byte, error!
 
         lda zp_stack, x
         .raiseStack
         rts
 
-+       kil
+        ; not a byte!
++       jmp err_type
 
 pop_word:
         ;=======================================================================
@@ -228,7 +229,8 @@ pop_word:
 .ENDIF  
         rts
 
-+       kil
+        ; not a word!
++       jmp err_type
 
 ;;pop:    ;=====================================================================
 ;;        ; pop a value off of the top of the stack

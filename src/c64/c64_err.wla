@@ -1,0 +1,55 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; c64_err.wla : C64-specific error handling
+;===============================================================================
+
+; an error has occurred, allow the C64 to print it
+; in its own particular... demeanour?
+;===============================================================================
+sys_error:
+    ;---------------------------------------------------------------------------
+    pha
+
+    ldy # 0
+-   lda @clear, y
+    beq +
+    jsr KERNAL_CHROUT
+    iny
+    bne -
+
++   pla
+    tay
+    lda @errmsg_lo, y
+    sta zp_addr+LO
+    lda @errmsg_hi, y
+    sta zp_addr+HI
+
+-   lda [zp_addr], y
+    beq +
+    jsr KERNAL_CHROUT
+    iny
+    bne -
+
++
+-   inc VIC_BORDER
+    jmp -
+
+@clear:
+    .BYTE   13, 13, $92, $9e, $0e, 0
+@errmsg_lo:
+    .BYTE   <@errmsg_stack_underflow
+    .BYTE   <@errmsg_stack_overflow
+    .BYTE   <@errmsg_type
+@errmsg_hi:
+    .BYTE   >@errmsg_stack_underflow
+    .BYTE   >@errmsg_stack_overflow
+    .BYTE   >@errmsg_type
+
+@errmsg_stack_underflow:
+    .ASC    "Stack underflow!", 0
+@errmsg_stack_overflow:
+    .ASC    "Stack overflow!", 0
+@errmsg_type:
+    .ASC    "Unexpected data type!", 0

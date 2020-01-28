@@ -26,3 +26,4 @@
 .DEF    pl_disk         $e000
 
 .INC    "c64/c64_init.wla"
+.INC    "c64/c64_err.wla"
