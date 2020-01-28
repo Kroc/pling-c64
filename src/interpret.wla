@@ -58,6 +58,7 @@ term_read_term:
         ; we do need to move the value to the zero-page, though, for 6502
         ; indexed addressing
         ;
+        ; TODO: must check for stack underflow first!
         lda zp_stack+0, x
         sta zp_addr+LO
         lda zp_stack+1, x
@@ -100,8 +101,7 @@ term_read_term:
         ;-----------------------------------------------------------------------
         ; the term name has been read:
         ;
-        ; restore Pling's stack pointer
-@done:  .plx
+@done:  .plx                    ; restore Pling's stack pointer
 
         ; move the input buffer's address forward
         ; by the number of characters we read
@@ -139,6 +139,8 @@ term_read_term:
 ;
 ; out:  word    execution address of the found term
 ;
+; TODO: return an End Of Data token instead of $0000;
+;       will rely on error-type checking / testing
 ;-------------------------------------------------------------------------------
         .term   "find-term"
 
@@ -167,8 +169,10 @@ term_find_term:
         sta zp_addr+LO
         iny                     ; Y=1
         lda [zp_addr], y
-        beq @none
         sta zp_addr+HI
+        ; if back-link address is $0000, then we've reached the end
+        ; of the chain -- the term has not been found
+        beq @done
         iny                     ; Y=2
 
         ; after this, follows the term's name, the first byte is the length.
@@ -188,24 +192,73 @@ term_find_term:
         ; walk along the bytes of the two strings and compare each letter:
 -       iny
         lda zp_term_name-3, y   ; (the offsets differ, so compensate)
-        beq +                   ; end of the string, word matches!
+        beq @done               ; end of the string, word matches!
         cmp [zp_addr], y        ; (this is so cool you can do this)   
         beq -                   ; letters, match, keep searching
 
         ; names do not match -- move to the next term in the chain
         bne @next
 
-        ; term found!
         ;-----------------------------------------------------------------------
-        ; push the found term's execution address
-+       lda zp_addr+LO
+        ; push the term's execution address;
+        ; this will be $0000 if the term was not found
+@done   lda zp_addr+LO
         ldy zp_addr+HI
         jmp push_word
 
-        ; term not found!
+; parse-number ( -- b | w )
+;===============================================================================
+; parses the term-name buffer for a number:
+; numbers can be in the format:
+;
+;        128    : decimal integers. <256 = byte, >255 = word
+;         -1    : (negatives allowed)
+;       0128    : zero-prefix forces word-size for decimals
+;        -01    : (also for negatives)
+;        $FF    : hexadecimal, 2 digits = byte
+;      $0000    : 4 digits = word, even if value is <256
+;  %01010101    : binary. 8 digits = byte, 16 digits = word
+;
+;-------------------------------------------------------------------------------
+        .term   "parse-number"
+
+term_parse_number:
         ;-----------------------------------------------------------------------
-@none:  brk
-        brk
+        ; sanity check on length of term-name buffer
+        ; TODO: error if 0
+        ldy zp_term_name
+        dey
+        beq @single
+
+        ; check the first character for hex `$` or `%` sigil
+        lda zp_term_name+1
+        cmp # '$'
+        beq @hex
+        cmp # '%'
+        beq @bin
+
+        ; optimisation for a single character:
+        ;-----------------------------------------------------------------------
+        ; a single character can only be a valid number if it's 0-9
+        ;
+@single lda zp_term_name+1
+        sec
+        sbc # '0'
+        bcc +
+
+        ; ASCII code is not a number!
+-       jmp err_parse
+
+        ; is it > "9"?
++       cmp # 10
+        bcs -
+
+        ; A is now the number
+        jmp push_byte
+
+@hex:
+@bin:
+
 
 ;;; new-term ( -- )
 ;;;=============================================================================

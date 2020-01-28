@@ -16,7 +16,6 @@ system_init:
         sta VIC_BACKGROUND
 
 .DEF    @str    $0e, $93, $9e
-.REDEF  @str    @str, $12, "OK                    USER $4000 HEAP 64", $92
 .REDEF  @str    @str, 13, ">!< Pling! by Kroc Camen"
 .REDEF  @str    @str, 13,"    <github.com/Kroc/pling>"
 .REDEF  @str    @str, 13, "    built: ", WLA_TIME

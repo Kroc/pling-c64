@@ -42,10 +42,12 @@ sys_error:
     .BYTE   <@errmsg_stack_underflow
     .BYTE   <@errmsg_stack_overflow
     .BYTE   <@errmsg_type
+    .BYTE   <@errmsg_parse
 @errmsg_hi:
     .BYTE   >@errmsg_stack_underflow
     .BYTE   >@errmsg_stack_overflow
     .BYTE   >@errmsg_type
+    .BYTE   >@errmsg_parse
 
 @errmsg_stack_underflow:
     .ASC    "Stack underflow!", 0
@@ -53,3 +55,5 @@ sys_error:
     .ASC    "Stack overflow!", 0
 @errmsg_type:
     .ASC    "Unexpected data type!", 0
+@errmsg_parse:
+    .ASC    "Not a known term or valid number!", 0

@@ -31,7 +31,7 @@
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM
 
-; macro to polyfill 65C02's PulL-X instruction
+; macro to polyfill 65C02's PuLl-X instruction
 ;-------------------------------------------------------------------------------
 .MACRO  .plx                                                            ;cycles
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -44,7 +44,7 @@
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM
 
-; macro to polyfill 65C02's PulL-Y instruction
+; macro to polyfill 65C02's PuLl-Y instruction
 ;-------------------------------------------------------------------------------
 .MACRO  .ply                                                            ;cycles
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -70,16 +70,35 @@
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM
 
-;-------------------------------------------------------------------------------
-.MACRO  .bit_skip1
-        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        .BYTE   $24
-        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-.ENDM
-
+; an optimisation, to avoid extra branching, is to jump into the middle of an
+; instruction which is then interpretted as some other instruction. a common
+; example of this is using the `bit` instruction as a 'do nothing' instruction
+; with the option to jump over the `bit` opcode and treat the 2-byte parameter
+; as a different instruction:
+;
+;     bit $00a9 ;<-- this is `lda # $00` if you skip the `bit` opcode
+;
+; this macro simply outputs the opcode for the `bit` instruction,
+; causing the next 2-byte instruction to be 'ignored'. for example:
+;
+;    do_one_thing:
+;         lda # $ff
+;        .bit_skip2     ; skip the next `lda` by making it a `bit` instruction
+;
+;     do_a_different_thing:
+;         lda # $00
+;
 ;-------------------------------------------------------------------------------
 .MACRO  .bit_skip2
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         .BYTE   $2c
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+.ENDM
+
+; this is a version that skips one byte
+;-------------------------------------------------------------------------------
+.MACRO  .bit_skip1
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        .BYTE   $24
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM
