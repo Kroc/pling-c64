@@ -5,39 +5,42 @@
 ;===============================================================================
 ; import machine-specific headers:
 ;-------------------------------------------------------------------------------
-.DEF    lo              0
-.DEF    hi              1
+.DEF    LO              0
+.DEF    HI              1
 
 .IFDEF  SYSTEM_C64
         .INC    "system/c64/c64.wla"
 .ENDIF
 .IFDEF  CPU_65XX
+        ; macros for 6502-based systems (6502, 6510, 65C02)
+        ; to polyfill differences in instruction sets 
         .INC    "system/65xx.wla"
 .ENDIF
 
 ; data-types:
 ;===============================================================================
-.DEF    TYPE_BYTE       %00000000
-.DEF    TYPE_EOD        %00000001       ; "End Of Data" (read / write)
-.DEF    TYPE_WORD_LO    %10000000
-.DEF    TYPE_WORD_HI    %10000001
+.DEF    TYPE_BYTE       %00000000       ; a data byte, but not a token!
+.DEF    TYPE_WORD_LO    %10000000       ; the lo-byte of a word
+.DEF    TYPE_WORD_HI    %10000001       ; the hi-byte of a word
+; TODO: floats to be considered later
 .DEF    TYPE_FLOAT      %11000000
 .DEF    TYPE_FLOAT1     %11000100
 .DEF    TYPE_FLOAT2     %11000011
 .DEF    TYPE_FLOAT3     %11000010
 .DEF    TYPE_FLOAT4     %11000001
 .DEF    TYPE_FLOAT5     %11000000
+.DEF    TYPE_EOD        %00000001       ; "End Of Data" (read / write)
 
 ;===============================================================================
 .DEF    IMMEDIATE       %10000000
 .DEF    HIDDEN          %01000000
 .DEF    NO_TAIL_CALL    %00100000
-.DEF    TERMLEN_MASK    %00011111       ; term name up to 31 chars
+.DEF    TERMLEN_MASK    %00011111       ; term name is up to 31 chars
 
 ;-------------------------------------------------------------------------------
 .DEF    prev_term       $0000
 
-.MACRO  _term   ARGS    str
+.MACRO  .term   ARGS    str
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         .WORD   prev_term
         .REDEF  prev_term       CADDR - 2
@@ -52,41 +55,110 @@ pling_init:
         ; reset Pling's stacks
         ;-----------------------------------------------------------------------
         ldy # PL_STACK_SIZE-1
--       lda # $88
+-       lda # $00
         sta zp_stack, y
-        lda # TYPE_BYTE
+        lda # TYPE_EOD
         sta zp_type, y
         dey
         bpl -
 
         ; the last term to be defined:
         lda #< term_last_term
-        sta zp_last+lo
+        sta zp_last+LO
         lda #> term_last_term
-        sta zp_last+hi
+        sta zp_last+HI
 
         ; set the user-space starting address,
         ; where new terms will be compiled
         lda #< begin_here
-        sta zp_here+lo
+        sta zp_here+LO
         lda #> begin_here
-        sta zp_here+hi
+        sta zp_here+HI
 
         ; set the default delimiter for the interpreter
-        lda # $20               ; TODO: consts for ASCII codes
+        lda # ' '
         sta zp_delimiter
 
         ; clear the term-name buffer
-        lda # 0
-        ldy # PL_TERM_LEN
+        lda # $00
+        ldy # PL_TERM_LEN-1
 -       sta zp_term_name, y
         dey
         bpl -
 
         ldx # PL_STACK_SIZE
 
+        lda # 4
+        jsr push_byte
+        lda #< @test
+        ldy #> @test
+        jsr push_word
+        jsr term_io_chain
+
         ; TODO!       
 -       jmp -
+
+@test:  .ASC    "test", 0
+
+; lower the stack
+;-------------------------------------------------------------------------------
+; this lowers the stack, checking for overflow, but does not change any data.
+; the direction the stack moves is implementation specific and never exposed
+; to Pling scripts
+;
+.MACRO  .lowerStack
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        dex
+        bpl @lowerStack__\@
+        jmp stack_overflow
+
+@lowerStack__\@:
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+.ENDM
+
+; lower the stack twice, using one error check for efficiency
+;
+.MACRO  .lowerStack2
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        dex
+        dex
+        bpl @lowerStack2__\@
+        jmp stack_overflow
+
+@lowerStack2__\@:
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+.ENDM
+
+; raise the stack
+;-------------------------------------------------------------------------------
+; this raises the stack, checking for underflow, but does not change any data.
+; the direction the stack moves is implementation specific and never exposed
+; to Pling scripts
+;
+.MACRO  .raiseStack
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        inx
+        cpx # PL_STACK_SIZE+1
+        bcc @raiseStack__\@
+        jmp stack_underflow
+
+@raiseStack__\@:
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+.ENDM
+
+; raise the stack twice, using one error check for efficiency
+;
+.MACRO  .raiseStack2
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        inx
+        inx
+        cpx # PL_STACK_SIZE+1
+        bcc @raiseStack2__\@
+        jmp stack_underflow
+
+@raiseStack2__\@:
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+.ENDM
 
 push_byte:
         ;=======================================================================
@@ -96,7 +168,7 @@ push_byte:
         ;   A = value
         ;
         ;-----------------------------------------------------------------------
-        dex
+        .lowerStack
         sta zp_stack, x
         lda # TYPE_BYTE
         sta zp_type, x
@@ -112,58 +184,87 @@ push_word:
         ;
         ;-----------------------------------------------------------------------
         ; push the stack pointer down twice first
-        ; (TODO: add stack-overflow checking)
-        dex
-        dex
+        .lowerStack2
         ; write the lo-byte first at the new top-most position
-        sta zp_stack-0, x
+        sta zp_stack+0, x
         lda # TYPE_WORD_LO
-        sta zp_type-0, x
+        sta zp_type+0, x
         ; write the hi-byte underneath that
+.IFDEF  CPU_65C02
+        sty zp_stack+1, x
+.ELSE   ;6502:
         tya
         sta zp_stack+1, x
+.ENDIF
         lda # TYPE_WORD_HI
         sta zp_type+1, x
 
         rts
 
-pop:    ;=======================================================================
-        ; pop a value off of the top of the stack
-        ; returns:
-        ; 
-        ;       A = word lo-byte, or single byte
-        ;       Y = word hi-byte (if data is a word)
-        ;       c = 0 for a byte, 1 for a word 
-        ;
-        ;-----------------------------------------------------------------------
-        ; TODO: we'll need to check for stack underflow
-        ;       before we try to ascertain the data-type!
-        inx
+pop_byte:
+        ;=======================================================================
+        lda zp_type, x
+        bne +
 
-        ; was the top-most item a byte or a word?
-        lda zp_type-1, x        ; get the data type
-        cmp # 0                 ; return c=1 for word, and c=0 for byte!
-        bmi +
-
-        ; read a byte:
-        lda zp_stack-1, x
+        lda zp_stack, x
+        .raiseStack
         rts
 
-        ; read a word:
-+       inx                     ; move the stack up another byte
++       kil
+
+pop_word:
+        ;=======================================================================
+        lda zp_type, x
+        bpl +
+
+        .raiseStack2
 .IFDEF  CPU_65C02
         lda zp_stack-2, x
         ldy zp_stack-1, x
 .ELSE   ;6502
-        ; read the hi-byte first, to put it into Y
-        ldy # 0
-        lda zp_stack-1, x
-        tay
-        lda zp_stack-2, x
-.ENDIF
+        lda zp_stack-1, x       ; read the hi-byte first,
+        tay                     ; to put it into Y
+        lda zp_stack-2, x       ; and then A for the lo-byte
+.ENDIF  
         rts
 
++       kil
 
+;;pop:    ;=====================================================================
+;;        ; pop a value off of the top of the stack
+;;        ; returns:
+;;        ; 
+;;        ;       A = word lo-byte, or single byte
+;;        ;       Y = word hi-byte (if data is a word)
+;;        ;       c = 0 for a byte, 1 for a word 
+;;        ;
+;;        ;---------------------------------------------------------------------
+;;        ; is the top-most item a byte or a word?
+;;        lda zp_type, x          ; get the data type
+;;        ;;cmp # 0                 ; return c=1 for word, and c=0 for byte!
+;;        bmi +
+;;
+;;        ; read a byte:
+;;        ;---------------------------------------------------------------------
+;;        .raiseStack
+;;        lda zp_stack-1, x
+;;        rts
+;;
+;;        ; read a word:
+;;        ;---------------------------------------------------------------------
+;;+       .raiseStack2
+;;.IFDEF  CPU_65C02
+;;        lda zp_stack-2, x
+;;        ldy zp_stack-1, x
+;;.ELSE   ;6502
+;;        lda zp_stack-1, x       ; read the hi-byte first,
+;;        tay                     ; to put it into Y
+;;        lda zp_stack-2, x       ; and then A for the lo-byte
+;;.ENDIF  
+;;        rts
+
+;===============================================================================
+.INC    "error.wla"
 .INC    "core.wla"
 .INC    "interpret.wla"
 .INC    "stream.wla"
@@ -176,12 +277,12 @@ pop:    ;=======================================================================
 ; used by the interpreter to begin the search for term names
 ;
 ;-------------------------------------------------------------------------------
-        _term   "last-term"
+        .term   "last-term"
 
 term_last_term:
         ;-----------------------------------------------------------------------
-        lda zp_last+lo
-        ldy zp_last+hi
+        lda zp_last+LO
+        ldy zp_last+HI
         jmp push_word
 
 ;===============================================================================

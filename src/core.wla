@@ -12,13 +12,12 @@
 ; TODO: this implementation is temporary
 ;
 ;-------------------------------------------------------------------------------
-        _term   "emit"
+        .term   "emit"
 
 term_emit:
         ;-----------------------------------------------------------------------
-        jsr pop
-        jsr KERNAL_CHROUT
-        rts
+        jsr pop_byte
+        jmp KERNAL_CHROUT
 
 ; ! ( b w -- )
 ;===============================================================================
@@ -26,7 +25,7 @@ term_emit:
 ; all items are consumed
 ;
 ;-------------------------------------------------------------------------------
-        _term   "!"
+        .term   "!"
 
 term_set:
         ;-----------------------------------------------------------------------
@@ -45,7 +44,7 @@ term_set:
 ; and pushes the value to the stack
 ;
 ;-------------------------------------------------------------------------------
-        _term   "@"
+        .term   "@"
 
 term_get:
         ;-----------------------------------------------------------------------
@@ -61,7 +60,7 @@ term_get:
 ; to the next item
 ;
 ;-------------------------------------------------------------------------------
-        _term   "drop"
+        .term   "drop"
 
 term_drop:
         ;-----------------------------------------------------------------------
@@ -77,24 +76,23 @@ term_drop:
 ; execute the address on top of the stack
 ;
 ;-------------------------------------------------------------------------------
-        _term   "exec"
+        .term   "exec"
 
 term_exec:
         ;-----------------------------------------------------------------------
-.IFDEF  CPU_65C02
         ; we must reduce the stack by 2 bytes *before* we jump!
-        inx
-        inx
+        ; (must check for stack underflow before jumping)
+        .raiseStack2
+
+.IFDEF  CPU_65C02
         ; 65C02: do a jump directly from the data stack,
         ; with +2 to compensate for already having popped the stack
         jmp [zp_stack+2, x]
 
 .ELSE   ; 6502:
-        lda zp_stack, x
-        sta zp_jmp+hi
-        inx
-        lda zp_stack, x
-        sta zp_jmp+lo
-        inx
+        lda zp_stack+2, x
+        sta zp_jmp+LO
+        lda zp_stack+3, x
+        sta zp_jmp+HI
         jmp [zp_jmp]
 .ENDIF

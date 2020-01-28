@@ -58,7 +58,7 @@
 ;       so do not rely on the value being constant
 ;
 ;-------------------------------------------------------------------------------
-        _term   "?con.cols"
+        .term   "?con.cols"
 
 term_peek_con_cols:
         ;-----------------------------------------------------------------------
@@ -79,7 +79,7 @@ term_peek_con_cols:
 ;       so do not rely on the value being constant
 ;
 ;-------------------------------------------------------------------------------
-        _term   "?con.rows"
+        .term   "?con.rows"
 
 term_peek_con_rows:
         ;-----------------------------------------------------------------------
@@ -97,7 +97,7 @@ term_peek_con_rows:
 ; Pling makes no effort to normalise colour across systems
 ;
 ;-------------------------------------------------------------------------------
-        _term   "?con.back"
+        .term   "?con.back"
 
 term_peek_con_back:
         ;-----------------------------------------------------------------------
@@ -118,7 +118,7 @@ term_peek_con_back:
 ; Pling makes no effort to normalise colour across systems
 ;
 ;-------------------------------------------------------------------------------
-        _term   "!con.back"
+        .term   "!con.back"
 
 term_poke_con_back:
         ;-----------------------------------------------------------------------
@@ -137,16 +137,16 @@ term_poke_con_back:
 ; homes the cursor -- moves it back to row/col 0
 ;
 ;-------------------------------------------------------------------------------
-        _term   "con.home"
+        .term   "con.home"
 
 term_con_home:
         ;-----------------------------------------------------------------------
         ; set the cursor write-address
         ; to the beginning of screen RAM
         lda #< pl_screen
-        sta zp_crsr_addr+lo
+        sta zp_crsr_addr+LO
         lda #> pl_screen
-        sta zp_crsr_addr+hi
+        sta zp_crsr_addr+HI
 
         lda # 0
         sta zp_crsr_col
@@ -158,7 +158,7 @@ term_con_home:
 ; clears the console
 ;
 ;-------------------------------------------------------------------------------
-        _term   "con.clear"
+        .term   "con.clear"
 
 term_con_clear:
         ;-----------------------------------------------------------------------
@@ -205,7 +205,7 @@ term_con_clear:
 ;       C64 : screen code, mapping to character ROM
 ;
 ;-------------------------------------------------------------------------------
-        _term   ">con"
+        .term   ">con"
 
 term_write_con:
         ;-----------------------------------------------------------------------
@@ -228,7 +228,7 @@ term_write_con:
         ; incrementing the cursor address and looking for
         ; for the last screen address
         ;
-        ldy zp_crsr_addr+lo
+        ldy zp_crsr_addr+LO
         cpy #< (pl_screen + (CON_COLS * CON_ROWS)) - 1
         bne ++
 
@@ -238,7 +238,7 @@ term_write_con:
         ; the cursor [should the hi-byte not match]
         ;
         tya                     ; put aside lo-address
-        ldy zp_crsr_addr+hi     ; get hi-address
+        ldy zp_crsr_addr+HI     ; get hi-address
 
         cpy #> (pl_screen + (CON_COLS * CON_ROWS)) - 1
         ; if the hi-address doesn't match, then we advance the cursor as normal
@@ -253,8 +253,8 @@ term_write_con:
 
         ; increase the lo-address
 ++      iny
-        sty zp_crsr_addr+lo
+        sty zp_crsr_addr+LO
         bne +
-        inc zp_crsr_addr+hi
+        inc zp_crsr_addr+HI
 
 +       rts

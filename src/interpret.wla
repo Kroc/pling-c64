@@ -16,7 +16,7 @@
 ;       any source
 ;
 ;-------------------------------------------------------------------------------
-        _term   "interpret"
+        .term   "interpret"
 
 interpret:
         ;-----------------------------------------------------------------------
@@ -30,7 +30,7 @@ interpret:
         ; execute it!
         jsr term_exec
 
-        brk
+        kil
         
         rts
 
@@ -49,7 +49,7 @@ interpret:
 ;               the address having been moved forward over the new term
 ;
 ;-------------------------------------------------------------------------------
-        _term   "read-term"
+        .term   "read-term"
 
 term_read_term:
         ;-----------------------------------------------------------------------
@@ -59,9 +59,9 @@ term_read_term:
         ; indexed addressing
         ;
         lda zp_stack+0, x
-        sta zp_addr+lo
+        sta zp_addr+LO
         lda zp_stack+1, x
-        sta zp_addr+hi
+        sta zp_addr+HI
 
         ; skip initial delimiters:
         ;-----------------------------------------------------------------------
@@ -75,7 +75,7 @@ term_read_term:
         ; start reading characters:
         ;-----------------------------------------------------------------------
         ; backup Pling's stack pointer
-        _phx
+        .phx
         ; the first byte of the term-name buffer is the string length.
         ; X will be used as the index into the term-name buffer
         ldx # 0
@@ -101,16 +101,16 @@ term_read_term:
         ; the term name has been read:
         ;
         ; restore Pling's stack pointer
-@done:  _plx
+@done:  .plx
 
         ; move the input buffer's address forward
         ; by the number of characters we read
         ;
         tya                     ; number of characters read (inc. delimiters)
         clc                     ; (it's math time!)
-        adc zp_addr+lo          ; add to the original address
+        adc zp_addr+LO          ; add to the original address
         sta zp_stack+0, x       ; return the lo-byte
-        lda zp_addr+hi          ; ripple the carry...
+        lda zp_addr+HI          ; ripple the carry...
         adc # 0                 ; to the address hi-byte
         sta zp_stack+1, x       ; return the hi-byte
 
@@ -140,7 +140,7 @@ term_read_term:
 ; out:  word    execution address of the found term
 ;
 ;-------------------------------------------------------------------------------
-        _term   "find-term"
+        .term   "find-term"
 
 term_find_term:
         ;-----------------------------------------------------------------------
@@ -150,10 +150,10 @@ term_find_term:
         ; the first two bytes of a term header are the address of the previous
         ; term, allowing one to follow the chain back through terms
         ;
-        lda zp_last+lo
-        sta zp_addr+lo
-        lda zp_last+hi
-        sta zp_addr+hi
+        lda zp_last+LO
+        sta zp_addr+LO
+        lda zp_last+HI
+        sta zp_addr+HI
 
         ldy # 2
         jmp @len
@@ -164,11 +164,11 @@ term_find_term:
         ; read the back-link address from the term-header
 @next:  ldy # 0
         lda [zp_addr], y
-        sta zp_addr+lo
+        sta zp_addr+LO
         iny                     ; Y=1
         lda [zp_addr], y
         beq @none
-        sta zp_addr+hi
+        sta zp_addr+HI
         iny                     ; Y=2
 
         ; after this, follows the term's name, the first byte is the length.
@@ -198,8 +198,8 @@ term_find_term:
         ; term found!
         ;-----------------------------------------------------------------------
         ; push the found term's execution address
-+       lda zp_addr+lo
-        ldy zp_addr+hi
++       lda zp_addr+LO
+        ldy zp_addr+HI
         jmp push_word
 
         ; term not found!
@@ -212,7 +212,7 @@ term_find_term:
 ;;; create a new term; the name of the term is read from the input buffer
 ;;;
 ;;;-----------------------------------------------------------------------------
-;;        _term   "new-term"
+;;        .term   "new-term"
 ;;
 ;;new_term:
 ;;        ;---------------------------------------------------------------------

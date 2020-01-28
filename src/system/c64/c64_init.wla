@@ -29,16 +29,6 @@ system_init:
         bne -
 
         ;-----------------------------------------------------------------------
-        lda # 4
-        jsr push_byte
-        lda #< @test
-        ldy #> @test
-        jsr push_word
-
-        jsr term_io_chain
-
         jmp pling_init
 
 @ver:   .ASC    @str
-
-@test:  .ASC    "test", 0

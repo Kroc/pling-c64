@@ -8,13 +8,14 @@
 .INC    "system/c64/c64_pet.wla"
 
 ; memory map:
+; (disk version)
 ;
 ;  $0 $0800    ?        $4000           $8000            $C000    $E000    $FFFF
 ;  +--+--------+------------------------+--------------------+----+--------+
 ;  |  | PLING! | USER CODE              | USER HEAP          | IO | DSKBUF |
 ;  +--+--------+------------------------+--------------------+----+--------+
-;               ^ compiled                ^ program heap            ^ disk
-;                 pling code                (moveable)                buffer
+;       ^        ^ compiled               ^ program heap            ^ disk
+;       runtime    pling code               (moveable)                buffer
 ;
 
 .INC    "system/c64/c64_zp.wla"

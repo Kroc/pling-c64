@@ -10,20 +10,19 @@
 ; loads, and executes, the file-name string address on the stack
 ;
 ;-------------------------------------------------------------------------------
-        _term   "chain"
+        .term   "chain"
 
 term_io_chain:
         ;-----------------------------------------------------------------------
-        ; backup Pling's stack pointer
-        _phx
-
-        ; TODO: error if not a word
-        jsr pop
         ; put the string address aside
-        sta zp_addr+lo
-        sty zp_addr+hi
-        jsr pop                 ; get the string-length
-        pha                     ; (put aside)
+        jsr pop_word
+        sta zp_addr+LO
+        sty zp_addr+HI
+        jsr pop_byte            ; get the string-length
+        sta zp_jmp              ; (put aside)
+
+        ; backup Pling's stack pointer
+        .phx
 
         ; prepare for loading
         ; TODO: use a variable for current dev#
@@ -35,30 +34,29 @@ term_io_chain:
         tya                     ; logical file number
         jsr KERNAL_SETLFS
 
-        ldx zp_addr+lo
-        ldy zp_addr+hi
-        pla                     ; A is string-length
+        ldx zp_addr+LO
+        ldy zp_addr+HI
+        lda zp_jmp              ; A is string-length
         jsr KERNAL_SETNAM       ; set KERNAL file name
 
-        lda # 0                 ; load, not verify
+        lda # $00               ; load, not verify
         ldx #< pl_disk
         ldy #> pl_disk
         jsr KERNAL_LOAD
 
         bcc +
-        .BYTE   $22
+        kil
 +       
         ; TODO: error handling
         ; add a null-terminator after the file!
-        stx zp_addr+lo
-        sty zp_addr+hi
+        stx zp_addr+LO
+        sty zp_addr+HI
         ldy # 1
         lda # 0
-        sta (zp_addr), y
+        sta [zp_addr], y
 
         ; restore stack position
-        _plx
-
+        .plx
         rts
 
 ; open-read ( w -- h | e )
