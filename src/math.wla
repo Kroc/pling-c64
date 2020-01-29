@@ -1,0 +1,95 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; math.wla : core number & math routines
+;===============================================================================
+
+; 0 ( -- b)
+;===============================================================================
+; pushes zero (as a byte) on to the stack;
+; an optimisation to avoid the number-parser
+;
+;-------------------------------------------------------------------------------
+        .term   "0"
+
+term_0:
+        ;-----------------------------------------------------------------------
+        ; normally we would call `push_byte`, but since we know the value
+        ; will be zero, and the byte data-type is zero as well, we can combine
+        ; them. this optimisation relies upon `TYPE_BYTE` being zero, so we
+        ; sanity check this in case of unintended change in the future
+        ;
+        .IF TYPE_BYTE != 0
+                .PRINT "TYPE_BYTE is not 0!"
+                .FAIL
+        .ENDIF
+
+        ; lower the stack to make room for the byte
+        .lowerStack
+
+        ; write two zeroes:
+.IFDEF  CPU_65C02
+        stz zp_stack, x
+        stz zp_type, x
+.ELSE   ;6502
+        lda # 0
+        sta zp_stack, x
+        sta zp_type, x
+.ENDIF
+        rts
+
+; 00 ( -- w)
+;===============================================================================
+; pushes zero (as a word) on to the stack;
+; an optimisation to avoid the number-parser
+;
+;-------------------------------------------------------------------------------
+        .term   "00"
+
+term_00:
+        ;-----------------------------------------------------------------------
+        ; push the stack pointer down twice first
+        .lowerStack2
+        ; write the lo/hi-byte
+.IFDEF  CPU_65C02
+        stz zp_stack+0, x
+        stz zp_stack+1, x
+.ELSE   ;6502
+        lda # 0
+        sta zp_stack+0, x
+        sta zp_stack+1, x
+.ENDIF
+        ; set the data-types:
+        ;-----------------------------------------------------------------------
+.IFDEF  CPU_65C02
+        ; this optimisation relies on `TYPE_WORD_HI` being `TYPE_WORD_LO` + 1;
+        ; we sanity-check this assumption in case of unexpected change
+        .IF TYPE_WORD_HI != TYPE_WORD_LO+1
+                !PRINT "TYPE_WORD_HI != TYPE_WORD_LO+1"
+                !FAIL
+        .ENDIF
+
+        lda # TYPE_WORD_LO
+        sta zp_type+0, x
+        inc                     ; saves 1-byte
+        sta zp_type+1, x
+.ELSE   ;6502
+        lda # TYPE_WORD_LO
+        sta zp_type+0, x
+        lda # TYPE_WORD_HI
+        sta zp_type+1, x
+.ENDIF
+
+; * ( b b -- w )
+;===============================================================================
+; multiply two bytes into a word:
+; TODO: check type, implement word*word
+;
+;-------------------------------------------------------------------------------
+        .term   "*"
+
+term_multiply:
+        ;-----------------------------------------------------------------------
+        ; TODO: we can use the two input bytes directly from the stack without
+        ; popping, but we will have to check underflow & data-type

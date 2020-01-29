@@ -1,0 +1,76 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; string.wla
+;===============================================================================
+
+; asc2lower ( b -- b )
+;===============================================================================
+; convert an ASCII character to lower-case:
+;
+;-------------------------------------------------------------------------------
+    .term   "asc2lower"
+
+term_asc2lower:
+    ;---------------------------------------------------------------------------
+    ; no need to pop+push, we'll just rewrite the value atop the stack.
+    ; first, peek the byte atop the stack, verifying data-type & underflow
+    jsr peek_byte
+
+    sec
+    sbc # 'A'
+    cmp # 26+1
+    bcc +
+
+    ; character is not in upper-case range... return as-is.
+    ; the stack still holds the original ASCII value,
+    ; but for convenience we also return the value in A
+    lda zp_stack, x
+    rts
+
+    ;---------------------------------------------------------------------------
+    ; ASCII codes 65-90 ("A"-"Z"), having essentially been rebased to 0-25,
+    ; can be converted to lower-case by rebasing again to ASCII code 97 ("a").
+    ; (note that logically the carry is clear)
++   adc # 'a'
+    ; update the value already on the stack:
+    ; we've already error-checked with the peek,
+    ; so we don't need to use a routine for it
+    sta zp_stack, x
+    rts
+
+; asc2upper ( b -- b )
+;===============================================================================
+; convert an ASCII character to upper-case:
+;
+;-------------------------------------------------------------------------------
+    .term   "asc2upper"
+
+term_asc2upper:
+    ;---------------------------------------------------------------------------
+    ; no need to pop+push, we'll just rewrite the value atop the stack.
+    ; first, peek the byte atop the stack, verifying data-type & underflow
+    jsr peek_byte
+
+    sec
+    sbc # 'a'
+    cmp # 26+1
+    bcc +
+
+    ; character is not in lower-case range... return as-is.
+    ; the stack still holds the original ASCII value,
+    ; but for convenience we also return the value in A
+    lda zp_stack, x
+    rts
+
+    ;---------------------------------------------------------------------------
+    ; ASCII codes 97-122 ("a"-"z"), having essentially been rebased to 0-25,
+    ; can be converted to upper-case by rebasing again to ASCII code 65 ("A").
+    ; (note that logically the carry is clear)
++   adc # 'A'
+    ; update the value already on the stack:
+    ; we've already error-checked with the peek,
+    ; so we don't need to use a routine for it
+    sta zp_stack, x
+    rts

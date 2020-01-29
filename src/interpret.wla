@@ -2,7 +2,7 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; interpret.wla
+; interpret.wla : string & number parsing
 ;===============================================================================
 
 ; interpret ( w -- )
@@ -58,11 +58,10 @@ term_read_term:
         ; we do need to move the value to the zero-page, though, for 6502
         ; indexed addressing
         ;
-        ; TODO: must check for stack underflow first!
-        lda zp_stack+0, x
+        ; this routine will check stack underflow & data-type
+        jsr peek_word
         sta zp_addr+LO
-        lda zp_stack+1, x
-        sta zp_addr+HI
+        sty zp_addr+HI
 
         ; skip initial delimiters:
         ;-----------------------------------------------------------------------
@@ -97,11 +96,20 @@ term_read_term:
 
         ; go read next character        
         bne -
+        kil
 
         ;-----------------------------------------------------------------------
         ; the term name has been read:
+@done:  ; the captured term name must be null-terminated
         ;
-@done:  .plx                    ; restore Pling's stack pointer
+.IFDEF  CPU_65C02
+        stz zp_term_name, x
+.ELSE   ;6502
+        lda # 0
+        sta zp_term_name, x
+.ENDIF
+        ; restore Pling's stack pointer
+        .plx
 
         ; move the input buffer's address forward
         ; by the number of characters we read
@@ -208,7 +216,7 @@ term_find_term:
 
 ; parse-number ( -- b | w )
 ;===============================================================================
-; parses the term-name buffer for a number:
+; parses the term-name buffer for a number.
 ; numbers can be in the format:
 ;
 ;        128    : decimal integers. <256 = byte, >255 = word
@@ -219,16 +227,26 @@ term_find_term:
 ;      $0000    : 4 digits = word, even if value is <256
 ;  %01010101    : binary. 8 digits = byte, 16 digits = word
 ;
+; TODO: ASCII character parsing, e.g. " 'a' "
+; TODO: implement negative numbers
+; TODO: allow negative hexadecimal / binary?
+;
+; this routine was roughly adapted from DurexForth's number parser:
+; https://github.com/jkotlinski/durexforth/blob/master/interpreter.asm
 ;-------------------------------------------------------------------------------
+-       jmp err_parse
+
         .term   "parse-number"
 
 term_parse_number:
         ;-----------------------------------------------------------------------
-        ; sanity check on length of term-name buffer
-        ; TODO: error if 0
-        ldy zp_term_name
-        dey
-        beq @single
+        ldy zp_term_name        ; how many characters?
+        beq -                   ; sanity check should NOT be zero!
+        dey                     ; 1-character only?
+        beq @single             ; optimisation for single character
+
+        ; make room on top of the stack for our working number
+        jsr term_00
 
         ; check the first character for hex `$` or `%` sigil
         lda zp_term_name+1
@@ -237,28 +255,87 @@ term_parse_number:
         cmp # '%'
         beq @bin
 
+        ; parse decimal string
+        ;-----------------------------------------------------------------------
+        lda # 10                ; set base 10
+        sta zp_int_base
+        bne @loop
+        kil
+
         ; optimisation for a single character:
         ;-----------------------------------------------------------------------
         ; a single character can only be a valid number if it's 0-9
         ;
 @single lda zp_term_name+1
         sec
-        sbc # '0'
-        bcc +
-
-        ; ASCII code is not a number!
--       jmp err_parse
-
-        ; is it > "9"?
-+       cmp # 10
-        bcs -
+        sbc # '0'               ; ASCI "0" or above?
+        cmp # 10                ; no higher than 9?
+        bcs +
 
         ; A is now the number
         jmp push_byte
 
-@hex:
-@bin:
+        ; ASCII code is not a number!
++       jmp err_parse
 
+        ;-----------------------------------------------------------------------
+@hex:   lda # 16
+        sta zp_int_base
+        iny
+        bne @loop
+
+@bin:   lda # 2
+        sta zp_int_base
+        iny
+        bne @loop
+
+        ;=======================================================================
+        ; one digit converted! add to our running total
+        ; carry is already clear thanks to the base compare :)
+@next:  adc zp_stack+0, x
+        bcc +
+        inc zp_stack+1, x
+        ; are there more digits to process?
++       iny                     ; move to next character
+        cpy zp_term_name        ; reached length of term?
+        bcs @done
+
+        ; multiply working number by the base
+        ; to effectively move up the digits
+        kil
+
+        ;-----------------------------------------------------------------------
+        ; get an ASCII character
+@loop:  lda zp_term_name+2, y
+
+        ; convert to upper-case: note that Pling operates with ASCII
+        ; internally; in ASCII, the capital letters follow the numerals,
+        ; not the lower-case letters as is with PETSCII!
+        ; TODO: do this only for hexadecimal?
+        jsr term_asc2upper
+
+        ; check for ASCII "0"-"9"
+        sec
+        sbc # '0'       ; ASCI "0" or above?
+        cmp # 10        ; no higher than 9?
+        bcc +
+        ; there are 7 ASCII characters between "9" & "A", so if we subtract 7
+        ; then "A" becomes 10, "B" = 11, ... "F" = 15 (since we've already
+        ; established logically that the ASCII code is > "9")
+        sbc # 7
+        
+        ; digit is 0-9 and "A" (10), or above, including > "F".
+        ; check if the value is within the base range; if the base is 16
+        ; then ASCII codes that were > "F" will not pass
+        ;
++       cmp zp_int_base         ; is this within the intended base?
+        bcc @next               ; if so, process the next digit
+
+        ; fall through if base was incorrect for the size of the digit
+@err:   jmp err_parse
+
+        ;-----------------------------------------------------------------------
+@done:  rts
 
 ;;; new-term ( -- )
 ;;;=============================================================================

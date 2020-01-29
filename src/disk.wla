@@ -19,7 +19,7 @@ term_io_chain:
         sta zp_addr+LO
         sty zp_addr+HI
         jsr pop_byte            ; get the string-length
-        sta zp_jmp              ; (put aside)
+        sta zp_temp             ; (put aside)
 
         ; backup Pling's stack pointer
         .phx
@@ -36,7 +36,7 @@ term_io_chain:
 
         ldx zp_addr+LO
         ldy zp_addr+HI
-        lda zp_jmp              ; A is string-length
+        lda zp_temp             ; A is string-length
         jsr KERNAL_SETNAM       ; set KERNAL file name
 
         lda # $00               ; load, not verify

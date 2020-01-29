@@ -14,7 +14,7 @@
 .IFDEF  CPU_65XX
         ; macros for 6502-based systems (6502, 6510, 65C02)
         ; to polyfill differences in instruction sets 
-        .INC    "65xx.wla"
+        .INC    "sys_65xx.wla"
 .ENDIF
 
 ; data-types:
@@ -101,12 +101,14 @@ pling_init:
 @test:  .ASC    "test", 0
 
 ;===============================================================================
-.INC    "stack.wla"
-.INC    "error.wla"
-.INC    "core.wla"
-.INC    "interpret.wla"
-.INC    "stream.wla"
-.INC    "disk.wla"
+.INC    "error.wla"             ; error handling
+.INC    "stack.wla"             ; Pling's data/type stack routines
+.INC    "core.wla"              ; core native primitives
+.INC    "math.wla"              ; core number & math routines
+.INC    "string.wla"            ; core string routines
+.INC    "interpret.wla"         ; parser, interpreter & compiler
+.INC    "stream.wla"            ; I/O streams
+.INC    "disk.wla"              ; disk I/O
 ;;.INC    "console.wla"
 
 ; last-term ( -- w )

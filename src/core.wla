@@ -2,10 +2,8 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; terms_nucleus.wla
+; core.wla
 ;===============================================================================
-; these are the absolute bear minimum of words that *have* to be implemented
-; in native assembly language in order to port the rest of Pling
 
 ; emit ( b -- )
 ;===============================================================================
@@ -18,53 +16,6 @@ term_emit:
         ;-----------------------------------------------------------------------
         jsr pop_byte
         jmp KERNAL_CHROUT
-
-; 0 ( -- b)
-;===============================================================================
-; pushes zero (as a byte) on to the stack:
-; this is provided as an optimisation to avoid the number-parser
-;
-;-------------------------------------------------------------------------------
-        .term "0"
-
-term_0:
-        ;-----------------------------------------------------------------------
-        ; normally we would call `push_byte`, but since we know the value
-        ; will be zero, and the byte data-type is zero as well, we can combine
-        ; them. this optimisation relies upon `TYPE_BYTE` being zero, so we
-        ; sanity check this in case of unintended change in the future
-        ;
-        .IF TYPE_BYTE != 0
-                .PRINT "TYPE_BYTE is not 0!"
-                .FAIL
-        .ENDIF
-
-        ; raise the stack to make room for the byte
-        jsr .raiseStack
-
-        ; write two zeroes:
-.IFDEF  CPU_65C02
-        stz zp_stack, x
-        stz zp_type, x
-.ELSE   ;6502
-        lda # 0
-        sta zp_stack, x
-        sta zp_type, x
-.ENDIF
-        rts
-
-; 00 ( -- w)
-;===============================================================================
-; pushes zero (as a word) on to the stack:
-; this is provided as an optimisation to avoid the number-parser
-;
-;-------------------------------------------------------------------------------
-        .term "00"
-
-term_00:
-        ;-----------------------------------------------------------------------
-        lda # 0
-        jmp push_word
 
 ; ! ( b w -- )
 ;===============================================================================
@@ -128,7 +79,7 @@ term_drop:
 term_exec:
         ;-----------------------------------------------------------------------
         ; we must reduce the stack by 2 bytes *before* we jump!
-        ; (must check for stack underflow before jumping)
+        ; (check for stack underflow before jumping)
         .raiseStack2
 
 .IFDEF  CPU_65C02

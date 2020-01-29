@@ -2,7 +2,7 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; c64_zp.acme : Pling zero-page layout for C64
+; c64_zp.wla : Pling zero-page layout for C64
 ;===============================================================================
 ; if we want to make use of the built in functions of the KERNAL, we have
 ; to pick our zero-page locations very, very carefully. finding enough
@@ -35,14 +35,19 @@
 .DEF    zp_jmp          $03
 ; a temporary address available for indirect addressing
 .DEF    zp_addr         $05
+; a temporary value available for conversions
+.DEF    zp_temp         $07
 
 ; address of the last defined term
 ; (updated when new terms are added)
-.DEF    zp_last         $07
+.DEF    zp_last         $09
 
 ; the address of the next free byte of memory in user-space.
 ; this is where new terms are compiled
-.DEF    zp_here         $09
+.DEF    zp_here         $0b
+
+; number base (2, 10, 16) used during number parsing
+.DEF    zp_int_base     $0d
 
 ; current delimiter between terms
 .DEF    zp_delimiter    $50

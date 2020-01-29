@@ -2,7 +2,7 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; 65xx.wla : macros for 6502/6510/65C02
+; sys_65xx.wla : macros for 6502/6510/65C02
 ;===============================================================================
 
 ; macro to polyfill 65C02's PusH-X instruction

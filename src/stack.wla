@@ -2,11 +2,11 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; stack.pla : shared stack routines
+; stack.wla : shared stack routines
 ;===============================================================================
 
 ; lower the stack
-;-------------------------------------------------------------------------------
+;===============================================================================
 ; this lowers the stack, checking for overflow, but does not change any data.
 ; the direction the stack moves is implementation specific and never exposed
 ; to Pling scripts
@@ -21,8 +21,9 @@
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM
 
-; lower the stack twice, using one error check for efficiency
-;
+; lower the stack twice, using one
+; error check for efficiency
+;-------------------------------------------------------------------------------
 .MACRO  .lowerStack2
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         dex
@@ -35,7 +36,7 @@
 .ENDM
 
 ; raise the stack
-;-------------------------------------------------------------------------------
+;===============================================================================
 ; this raises the stack, checking for underflow, but does not change any data.
 ; the direction the stack moves is implementation specific and never exposed
 ; to Pling scripts
@@ -52,7 +53,7 @@
 .ENDM
 
 ; raise the stack twice, using one error check for efficiency
-;
+;-------------------------------------------------------------------------------
 .MACRO  .raiseStack2
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         inx
@@ -66,16 +67,16 @@
 .ENDM
 
 push_byte:
-        ;=======================================================================
-        ; push a byte onto the data stack,
-        ; setting the data-type too
-        ;
-        ;   A = value
-        ;
-        ;-----------------------------------------------------------------------
-        .lowerStack
-        ; set the byte value:
-        sta zp_stack, x
+;===============================================================================
+; push a byte onto the data stack,
+; setting the data-type too
+;
+;   A = value
+;
+;-------------------------------------------------------------------------------
+        .lowerStack             ; push stack down to check for overflow
+        sta zp_stack, x         ; set the byte value
+
         ; set the data-type:
 .IFDEF  CPU_65C02
         ; this 65C02 optimisation relies upon `TYPE_BYTE` being zero...
@@ -92,20 +93,21 @@ push_byte:
         rts
 
 push_word:
-        ;=======================================================================
-        ; push a word onto the data stack,
-        ; setting the data type too
-        ;
-        ;   A = value, lo-byte
-        ;   Y = value, hi-byte
-        ;
-        ;-----------------------------------------------------------------------
-        ; push the stack pointer down twice first
+;===============================================================================
+; push a word onto the data stack,
+; setting the data type too
+;
+;   A = value, lo-byte
+;   Y = value, hi-byte
+;
+;-------------------------------------------------------------------------------
+        ; push the stack down twice first to check for overflow
         .lowerStack2
         ; write the lo-byte first at the new top-most position
         sta zp_stack+0, x
         lda # TYPE_WORD_LO
         sta zp_type+0, x
+
         ; write the hi-byte underneath that
 .IFDEF  CPU_65C02
         sty zp_stack+1, x
@@ -118,8 +120,54 @@ push_word:
 
         rts
 
+peek_byte:
+;===============================================================================
+; reads the byte value atop the stack, checking underflow and data-type
+;
+;-------------------------------------------------------------------------------
+        ; is there anything on the stack to peek?
+        cpx # PL_STACK_SIZE+1
+        bcs @under
+        ; verify data type
+        lda zp_type, x
+        bne @type
+        ; all valid, get the byte
+        lda zp_stack, x
+        rts
+        
+@under  jmp err_stack_underflow
+@type   jmp err_type
+
+peek_word:
+;===============================================================================
+; reads the word value atop the stack, checking underflow and data-type
+;
+;-------------------------------------------------------------------------------
+        ; is there anything on the stack to peek?
+        cpx # PL_STACK_SIZE+1
+        bcs @under
+        ; verify data type
+        lda zp_type, x
+        bpl @type
+        ; all valid, get the byte
+.IFDEF  CPU_65C02
+        lda zp_stack+0, x
+        ldy zp_stack+1, x
+.ELSE
+        lda zp_stack+1, x
+        tay
+        lda zp_stack+0, x
+.ENDIF
+        rts
+        
+@under  jmp err_stack_underflow
+@type   jmp err_type
+
+
 pop_byte:
-        ;=======================================================================
+;===============================================================================
+;
+;-------------------------------------------------------------------------------
         lda zp_type, x          ; check the data-type of the top stack item
         bne +                   ; if not a byte, error!
 
@@ -131,7 +179,9 @@ pop_byte:
 +       jmp err_type
 
 pop_word:
-        ;=======================================================================
+;===============================================================================
+;
+;-------------------------------------------------------------------------------
         lda zp_type, x
         bpl +
 
