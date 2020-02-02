@@ -26,6 +26,7 @@ sys_error:
         lda @errmsg_hi, y
         sta zp_addr+HI
 
+        ldy # 0
 -       lda [zp_addr], y
         beq +
         jsr KERNAL_CHROUT

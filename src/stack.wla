@@ -226,6 +226,7 @@ pop_int:
 
         ; read a byte:
         ;-----------------------------------------------------------------------
+        ; TODO: check for tokens
         lda zp_stack, x         ; read the byte atop the stack
         ldy # 0                 ; set Y to 0 to form a word
         inx                     ; raise the stack level
@@ -234,16 +235,18 @@ pop_int:
 +       ; read a word:
         ;-----------------------------------------------------------------------
 .IFDEF  CPU_65C02
-        lda zp_stack-1, x
-        ldy zp_stack-0, x
+        lda zp_stack+1, x
+        ldy zp_stack+0, x
 .ELSE   ;6502
-        lda zp_stack-0, x       ; read the hi-byte first,
+        lda zp_stack+0, x       ; read the hi-byte first,
         tay                     ; to put it into Y
-        lda zp_stack-1, x       ; and then A for the lo-byte
+        lda zp_stack+1, x       ; and then A for the lo-byte
 .ENDIF  ; raise the stack twice
         inx
         inx
         rts
+
+-       jmp err_stack_underflow
 
 pop_byte:
 ;===============================================================================

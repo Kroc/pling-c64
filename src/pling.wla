@@ -83,12 +83,27 @@ pling_init:
         ; unless backed up / restored by a routine
         ldx # PL_STACK_SIZE
 
-        lda # 4
-        jsr push_byte
-        lda #< @test
-        ldy #> @test
+        ;;lda # 4
+        ;;jsr push_byte
+        ;;lda #< @test
+        ;;ldy #> @test
+        ;;jsr push_word
+        ;;jsr term_disk_chain
+
+        lda #< $ffff
+        ldy #> $ffff
         jsr push_word
-        jsr term_disk_chain
+        jsr term_print_dec
+
+        lda # 13
+        jsr sys_print
+        jsr sys_print
+        lda # 'O'
+        jsr sys_print
+        lda # 'K'
+        jsr sys_print
+        lda # '.'
+        jsr sys_print
 
         ; TODO!       
 -       jmp -
@@ -100,6 +115,7 @@ pling_init:
 .INC    "stack.wla"             ; Pling's data/type stack routines
 .INC    "core.wla"              ; core native primitives
 .INC    "math.wla"              ; core number & math routines
+.INC    "print.wla"             ; printing text/data to screen
 .INC    "string.wla"            ; core string routines
 .INC    "interpret.wla"         ; parser, interpreter & compiler
 .INC    "stream.wla"            ; I/O streams

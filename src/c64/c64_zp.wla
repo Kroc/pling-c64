@@ -10,12 +10,14 @@
 ; rely upon any auto-numbering to pick zero-page addresses for us
 ;
 ;-------------------------------------------------------------------------------
-; used for indirect jumps when executing terms        
-.DEF    zp_jmp          $03
 ; a temporary address available for indirect addressing
-.DEF    zp_addr         $05
+.DEF    zp_addr         $03
 ; a temporary value available for conversions
-.DEF    zp_temp         $07
+.DEF    zp_temp         $05
+.DEF    zp_temp1        $05
+.DEF    zp_temp2        $06
+; likewise, but for the output value
+.DEF    zp_word         $07
 ; overflow for word*word calculations
 .DEF    zp_overflow     $09
 

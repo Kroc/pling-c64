@@ -7,7 +7,7 @@
 .INC    "sys_cbmbasic.wla"
 
 ;===============================================================================
-system_init:
+sys_init:
         ;-----------------------------------------------------------------------
         ; set up the screen:
         ;-----------------------------------------------------------------------
@@ -19,6 +19,7 @@ system_init:
 .REDEF  @str    @str, 13, ">!< Pling! by Kroc Camen"
 .REDEF  @str    @str, 13,"    <github.com/Kroc/pling>"
 .REDEF  @str    @str, 13, "    built: ", WLA_TIME
+.REDEF  @str    @str, 13, 13
 
         ldy # 0
 -       lda @ver.w, y

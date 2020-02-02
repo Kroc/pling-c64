@@ -5,13 +5,74 @@
 ; print.wla : screen output
 ;===============================================================================
 
-
 ; . ( b -- )
 ;===============================================================================
-; print the byte atop the stack as an ASCII character
+; print the byte atop the stack as an ASCII character:
 ;
 ;-------------------------------------------------------------------------------
         .term   "."
 
 term_print:
         ;-----------------------------------------------------------------------
+        ; pop the byte (checking for underflow)
+        jsr pop_byte
+        ; jump to the system-specific print routine that will do ASCII
+        ; conversion to the system's character encoding and handle
+        ; writing to the screen
+        jmp sys_print
+
+; .dec ( i -- )
+;===============================================================================
+; print the integer atop the stack as a decimal string:
+;
+;-------------------------------------------------------------------------------
+        .term   ".dec"
+
+term_print_dec:
+        ;-----------------------------------------------------------------------
+        ; pop the integer (byte or word), checking for underflow
+        ; TODO: optimised routine for printing a byte
+        jsr pop_int
+        ; A = lo, Y = hi is always returned,
+        ; even if the item was a byte
+        sta zp_word+LO
+        sty zp_word+HI
+
+; adapted from:
+; <http://forum.6502.org/viewtopic.php?p=55800#p55800>
+;
+@print:
+        lda # 0                 ; null delimiter for print
+        pha
+@div10: ; divide value by 10
+        lda # 0
+        sta zp_temp2            ; clr BCD
+        lda # 16
+        sta zp_temp1            ; {>} = loop counter
+
+@loop:  asl zp_word+LO          ; value is gradually replaced
+        rol zp_word+HI          ; with the quotient
+        rol zp_temp2            ; BCD result is gradually replaced
+        lda zp_temp2            ; with the remainder
+        sec
+        sbc # 10                ; partial BCD >= 10 ?
+        bcc +
+        sta zp_temp2            ; yes: update the partial result
+        inc zp_word+LO          ; set low bit in partial quotient
+
++       dec zp_temp1
+        bne @loop               ; loop 16 times
+        
+        lda zp_temp2
+        ora # '0'               ; convert BCD result to ASCII
+        pha                     ; stack digits in ascending
+        lda zp_word+LO          ; order ('0' for zero)
+        ora zp_word+HI
+        bne @div10              ; } until value is 0
+        pla
+
+-       jsr sys_emit            ; print digits in descending
+        pla                     ; order until delimiter is
+        bne -                   ; encountered
+
+        rts

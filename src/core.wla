@@ -5,18 +5,6 @@
 ; core.wla
 ;===============================================================================
 
-; emit ( b -- )
-;===============================================================================
-; TODO: this implementation is temporary
-;
-;-------------------------------------------------------------------------------
-        .term   "emit"
-
-term_emit:
-        ;-----------------------------------------------------------------------
-        jsr pop_byte
-        jmp KERNAL_CHROUT
-
 ; ! ( b w -- )
 ;===============================================================================
 ; pokes the byte atop the stack into the address below.
@@ -89,8 +77,8 @@ term_exec:
 
 .ELSE   ; 6502:
         lda zp_stack+2, x
-        sta zp_jmp+LO
+        sta zp_addr+LO
         lda zp_stack+3, x
-        sta zp_jmp+HI
-        jmp [zp_jmp]
+        sta zp_addr+HI
+        jmp [zp_addr]
 .ENDIF
