@@ -5,6 +5,24 @@
 ; stack.wla : shared stack routines
 ;===============================================================================
 
+
+; check if the stack is empty, pending a pop
+;===============================================================================
+; this checks the stack level to see if a pop is possible. this assumes that
+; the stack will be popped, so an underflow error occurs if the stack is empty
+;
+.MACRO  .checkUnderflow
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        ; check if the current stack index is over the top
+        cpx # PL_STACK_SIZE+1
+        bcc @\.__\@
+
+        jmp err_stack_underflow
+
+@\.__\@:
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+.ENDM
+
 ; lower the stack
 ;===============================================================================
 ; this lowers the stack, checking for overflow, but does not change any data.
@@ -160,21 +178,65 @@ peek_word:
 .ENDIF
         rts
         
-@under  jmp err_stack_underflow
-@type   jmp err_type
+@type:  jmp err_type
+@under:
+-       jmp err_stack_underflow
 
+pop_int:
+;===============================================================================
+; pops the top item from the stack, be it a byte or word. if a byte is popped,
+; the Y register is set to zero, so as to automatically form a word, if desired
+;
+; in:   A       word lo-byte, or single byte
+;       Y       word hi-byte, or zero if byte
+;       c       0 for a byte, 1 for a word
+;
+; out:  A       clobbered
+;       X, Y    preserved
+;
+; TODO: what to do with error tokens?
+;-------------------------------------------------------------------------------
+        cpx # PL_STACK_SIZE+1   ; check if the stack index is over the top
+        bcs -                   ; stack is empty? error!
+
+        ; is the top-most item a byte or a word?
+        lda zp_type, x          ; get the data type
+        cmp # 0                 ; return c=1 for word, and c=0 for byte!
+        bmi +
+
+        ; read a byte:
+        ;-----------------------------------------------------------------------
+        lda zp_stack, x         ; read the byte atop the stack
+        ldy # 0                 ; set Y to 0 to form a word
+        inx                     ; raise the stack level
+        rts
+
++       ; read a word:
+        ;-----------------------------------------------------------------------
+.IFDEF  CPU_65C02
+        lda zp_stack-1, x
+        ldy zp_stack-0, x
+.ELSE   ;6502
+        lda zp_stack-0, x       ; read the hi-byte first,
+        tay                     ; to put it into Y
+        lda zp_stack-1, x       ; and then A for the lo-byte
+.ENDIF  ; raise the stack twice
+        inx
+        inx
+        rts
 
 pop_byte:
 ;===============================================================================
 ;
 ;-------------------------------------------------------------------------------
-        ; TODO: check for empty stack!
+        cpx # PL_STACK_SIZE+1   ; check if the stack index is over the top
+        bcs -                   ; stack is empty? error!
 
         lda zp_type, x          ; check the data-type of the top stack item
         bne +                   ; if not a byte, error!
 
-        lda zp_stack, x
-        .raiseStack
+        lda zp_stack, x         ; read the byte
+        inx                     ; raise the stack
         rts
 
         ; not a byte!
@@ -184,60 +246,76 @@ pop_word:
 ;===============================================================================
 ;
 ;-------------------------------------------------------------------------------
-        ; TODO: check for empty stack!
+        cpx # PL_STACK_SIZE+1   ; check if the stack index is over the top
+        bcs -                   ; stack is empty? error!
 
-        lda zp_type, x
-        bpl +
+        lda zp_type, x          ; check the data-type of the top stack item
+        bpl +                   ; if not a word, error!
 
-        .raiseStack2
 .IFDEF  CPU_65C02
-        lda zp_stack-2, x
-        ldy zp_stack-1, x
+        lda zp_stack+0, x       ; word lo-byte
+        ldy zp_stack+1, x       ; word hi-byte
 .ELSE   ;6502
-        lda zp_stack-1, x       ; read the hi-byte first,
+        lda zp_stack+1, x       ; read the hi-byte first,
         tay                     ; to put it into Y
-        lda zp_stack-2, x       ; and then A for the lo-byte
-.ENDIF  
+        lda zp_stack+0, x       ; then A for the lo-byte
+.ENDIF  ; raise the stack twice
+        inx
+        inx
         rts
 
-        ; not a word!
-+       jmp err_type
+        ;-----------------------------------------------------------------------
++       jmp err_type            ; not a word!
 
-
-pop_data:
+; byte2word ( b -- w )
 ;===============================================================================
+; converts the integer on top of the stack to a word:
+; if the item is already a word, no change happens.
+; stack underflow occurs if the stack is empty
 ;
 ;-------------------------------------------------------------------------------
+-       jmp err_stack_underflow
 
-;;pop:    ;=====================================================================
-;;        ; pop a value off of the top of the stack
-;;        ; returns:
-;;        ; 
-;;        ;       A = word lo-byte, or single byte
-;;        ;       Y = word hi-byte (if data is a word)
-;;        ;       c = 0 for a byte, 1 for a word 
-;;        ;
-;;        ;---------------------------------------------------------------------
-;;        ; is the top-most item a byte or a word?
-;;        lda zp_type, x          ; get the data type
-;;        ;;cmp # 0                 ; return c=1 for word, and c=0 for byte!
-;;        bmi +
-;;
-;;        ; read a byte:
-;;        ;---------------------------------------------------------------------
-;;        .raiseStack
-;;        lda zp_stack-1, x
-;;        rts
-;;
-;;        ; read a word:
-;;        ;---------------------------------------------------------------------
-;;+       .raiseStack2
-;;.IFDEF  CPU_65C02
-;;        lda zp_stack-2, x
-;;        ldy zp_stack-1, x
-;;.ELSE   ;6502
-;;        lda zp_stack-1, x       ; read the hi-byte first,
-;;        tay                     ; to put it into Y
-;;        lda zp_stack-2, x       ; and then A for the lo-byte
-;;.ENDIF  
-;;        rts
+        .term   "byte2word"
+
+term_byte2word:
+        ;-----------------------------------------------------------------------
+        cpx # PL_STACK_SIZE+1   ; check if the stack index is over the top
+        bcs -                   ; stack is empty? error!
+
+        lda zp_type, x          ; check the data-type of the top stack item
+        bpl +                   ; if not a word, continue testing
+
+        ; top-of-stack is already a word, exit
+        rts
+
+        ; TODO: if an error token, throw an unhandled exception error?
++       .lowerStack             ; lower the stack by one
+        lda zp_stack+1, x       ; read the old byte
+        sta zp_stack+0, x       ; write it to the word lo-byte
+.IFDEF  CPU_65C02
+        stz zp_stack+1, x       ; set word hi-byte to zero
+.ELSE   ;6502
+        lda # 0
+        sta zp_stack+1, x       ; set word hi-byte to zero
+.ENDIF
+
+.IFDEF  CPU_65C02
+        ; this optimisation relies on `TYPE_WORD_HI` being `TYPE_WORD_LO` + 1;
+        ; we sanity-check this assumption in case of unexpected change
+        .IF TYPE_WORD_HI != TYPE_WORD_LO+1
+                !PRINT "TYPE_WORD_HI != TYPE_WORD_LO+1"
+                !FAIL
+        .ENDIF
+
+        lda # TYPE_WORD_LO
+        sta zp_type+0, x
+        inc                     ; saves 1-byte
+        sta zp_type+1, x
+.ELSE   ;6502
+        lda # TYPE_WORD_LO
+        sta zp_type+0, x
+        lda # TYPE_WORD_HI
+        sta zp_type+1, x
+.ENDIF
+        rts

@@ -18,16 +18,26 @@
 ;
 .MEMORYMAP
         DEFAULTSLOT     2
-        SLOTSIZE        $00FD
-        ; $00/$01 are not available on
-        ; the C64 as these are the CPU port
-        SLOT 0          $0002   ; zero-page (variable space)
-        SLOT 1          $0100   ; 6502-stack (variable space)
-        SLOTSIZE        $FE00
-        SLOT 2          $0200   ; main program RAM ("ROM")
+        ; zero-page:
+        ; $00/$01 are not available on the C64,
+        ; as these are the CPU port
+        SLOTSIZE        $00FE
+        SLOT 0          $0002   "zero-page"
+        ; 6502 hardware stack:
+        SLOTSIZE        $0100
+        SLOT 1          $0100   "stack"
+        ; main program RAM ("ROM")
+        SLOTSIZE        $FDFA   ; $FFFA-$FFFF are 6502 interrupt vectors
+        SLOT 2          $0200   "main"
+
+        SLOTSIZE        $1000
+        SLOT 3          $C000   "hiram"
+        SLOT 4          $D000   "i/o"
+        SLOTSIZE        $2000
+        SLOT 5          $E000   "kernal-space"
 .ENDME
 
-.ROMBANKSIZE            $FE00
+.ROMBANKSIZE            $FDFA
 .ROMBANKS               1
 
 .INC    "c64/hardware/c64_cia.wla"

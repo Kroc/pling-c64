@@ -81,15 +81,5 @@ term_00:
         sta zp_type+1, x
 .ENDIF
 
-; * ( b b -- w )
 ;===============================================================================
-; multiply two bytes into a word:
-; TODO: check type, implement word*word
-;
-;-------------------------------------------------------------------------------
-        .term   "*"
-
-term_multiply:
-        ;-----------------------------------------------------------------------
-        ; TODO: we can use the two input bytes directly from the stack without
-        ; popping, but we will have to check underflow & data-type
+.INC    "math_muldiv.wla"

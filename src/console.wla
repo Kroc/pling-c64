@@ -5,7 +5,7 @@
 ; console.wla
 ;===============================================================================
 
-.RAMSECTION "console"   SLOT 0  RETURNORG
+.RAMSECTION "console"   SLOT "zero-page" RETURNORG
         ; console cursor position
         zp_crsr_col     BYTE
         zp_crsr_row     BYTE

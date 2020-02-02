@@ -10,6 +10,27 @@
 ; rely upon any auto-numbering to pick zero-page addresses for us
 ;
 ;-------------------------------------------------------------------------------
+; used for indirect jumps when executing terms        
+.DEF    zp_jmp          $03
+; a temporary address available for indirect addressing
+.DEF    zp_addr         $05
+; a temporary value available for conversions
+.DEF    zp_temp         $07
+; overflow for word*word calculations
+.DEF    zp_overflow     $09
+
+; address of the last defined term
+; (updated when new terms are added)
+.DEF    zp_last         $0b
+
+; the address of the next free byte of memory in user-space.
+; this is where new terms are compiled
+.DEF    zp_here         $0d
+
+; number base (2, 10, 16) used during number parsing
+.DEF    zp_int_base     $0f
+
+;-------------------------------------------------------------------------------
 ; Pling's data stack works downwards; this direction was chosen specifically
 ; so that the low byte of a word appears top-most on the stack, yet at the
 ; same time the bytes are in little-Endian order, allowing for vectored jumps
@@ -30,24 +51,6 @@
 .DEF    PL_STACK_SIZE   32
 .DEF    zp_stack        $10                                         ;=$10..$30
 .DEF    zp_type         zp_stack + PL_STACK_SIZE                    ;=$30..$50
-
-; used for indirect jumps when executing terms        
-.DEF    zp_jmp          $03
-; a temporary address available for indirect addressing
-.DEF    zp_addr         $05
-; a temporary value available for conversions
-.DEF    zp_temp         $07
-
-; address of the last defined term
-; (updated when new terms are added)
-.DEF    zp_last         $09
-
-; the address of the next free byte of memory in user-space.
-; this is where new terms are compiled
-.DEF    zp_here         $0b
-
-; number base (2, 10, 16) used during number parsing
-.DEF    zp_int_base     $0d
 
 ; current delimiter between terms
 .DEF    zp_delimiter    $50

@@ -12,7 +12,7 @@
 ;-------------------------------------------------------------------------------
         .term   "chain"
 
-term_io_chain:
+term_disk_chain:
         ;-----------------------------------------------------------------------
         ; put the string address aside
         jsr pop_word
@@ -58,16 +58,3 @@ term_io_chain:
         ; restore stack position
         .plx
         rts
-
-; open-read ( w -- h | e )
-;===============================================================================
-; open a file on the currently active storage device for reading
-;
-; out:  handle  a stream handle is returned. read `<` from the stream handle
-;               to read from the opened file
-;
-;  or:  error   if the file could not be opened for reading,
-;               an error code is returned instead   
-;
-;-------------------------------------------------------------------------------
-        

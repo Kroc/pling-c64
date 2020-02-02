@@ -290,7 +290,7 @@ term_parse_number:
         bne @loop
 
         ;=======================================================================
-        ; one digit converted! add to our running total
+        ; one digit converted! add to our running total:
         ; carry is already clear thanks to the base compare :)
 @next:  adc zp_stack+0, x
         bcc +
@@ -300,10 +300,15 @@ term_parse_number:
         cpy zp_term_name        ; reached length of term?
         bcs @done
 
+        .phy
+
         ; multiply working number by the base
         ; to effectively move up the digits
-        kil
+        lda zp_int_base
+        jsr push_byte
+        jsr term_multiply
 
+        .ply
         ;-----------------------------------------------------------------------
         ; get an ASCII character
 @loop:  lda zp_term_name+2, y

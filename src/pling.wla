@@ -13,7 +13,7 @@
 .ENDIF
 .IFDEF  CPU_65XX
         ; macros for 6502-based systems (6502, 6510, 65C02)
-        ; to polyfill differences in instruction sets 
+        ; to polyfill differences in instruction sets
         .INC    "sys_65xx.wla"
 .ENDIF
 
@@ -22,20 +22,8 @@
 .DEF    TYPE_BYTE       %00000000       ; a data byte, but not a token!
 .DEF    TYPE_WORD_LO    %10000000       ; the lo-byte of a word
 .DEF    TYPE_WORD_HI    %10000001       ; the hi-byte of a word
-; TODO: floats to be considered later
-.DEF    TYPE_FLOAT      %11000000
-.DEF    TYPE_FLOAT1     %11000100
-.DEF    TYPE_FLOAT2     %11000011
-.DEF    TYPE_FLOAT3     %11000010
-.DEF    TYPE_FLOAT4     %11000001
-.DEF    TYPE_FLOAT5     %11000000
-.DEF    TYPE_EOD        %00000001       ; "End Of Data" (read / write)
 
-;===============================================================================
-.DEF    IMMEDIATE       %10000000
-.DEF    HIDDEN          %01000000
-.DEF    NO_TAIL_CALL    %00100000
-.DEF    TERMLEN_MASK    %00011111       ; term name is up to 31 chars
+.DEF    TYPE_EOD        %00000001       ; "End Of Data" (read / write)
 
 ;-------------------------------------------------------------------------------
 .DEF    prev_term       $0000
@@ -75,7 +63,7 @@ pling_init:
         lda #> begin_here
         sta zp_here+HI
 
-        ; set the default delimiter for the interpreter
+        ; set the default delimiter for the interpreter (ASCII)
         lda # ' '
         sta zp_delimiter
 
@@ -86,6 +74,13 @@ pling_init:
         dey
         bpl -
 
+        ; set the data stack pointer to the starting (empty) position:
+        ; note that this will not be the first item position on the stack,
+        ; but the underflow position above the stack -- the stack is empty /
+        ; underflowed until the first item is pushed on it
+        ;
+        ; from this point on, register X will be the data stack's index,
+        ; unless backed up / restored by a routine
         ldx # PL_STACK_SIZE
 
         lda # 4
@@ -93,7 +88,7 @@ pling_init:
         lda #< @test
         ldy #> @test
         jsr push_word
-        jsr term_io_chain
+        jsr term_disk_chain
 
         ; TODO!       
 -       jmp -
