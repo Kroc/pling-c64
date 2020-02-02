@@ -123,9 +123,6 @@ push_word:
         .lowerStack2
         ; write the lo-byte first at the new top-most position
         sta zp_stack+0, x
-        lda # TYPE_WORD_LO
-        sta zp_type+0, x
-
         ; write the hi-byte underneath that
 .IFDEF  CPU_65C02
         sty zp_stack+1, x
@@ -133,9 +130,32 @@ push_word:
         tya
         sta zp_stack+1, x
 .ENDIF
+        ; note the fall-through to the next routine...
+
+set_type_word:
+;===============================================================================
+; sets the data-type for the top two bytes on the stack to a word.
+; this is an internal tail-call, no validation is done at all
+;
+;-------------------------------------------------------------------------------
+.IFDEF  CPU_65C02
+        ; this optimisation relies on `TYPE_WORD_HI` being `TYPE_WORD_LO` + 1;
+        ; we sanity-check this assumption in case of unexpected change
+        .IF TYPE_WORD_HI != TYPE_WORD_LO+1
+                !PRINT "TYPE_WORD_HI != TYPE_WORD_LO+1"
+                !FAIL
+        .ENDIF
+
+        lda # TYPE_WORD_LO
+        sta zp_type+0, x
+        inc                     ; saves 1-byte
+        sta zp_type+1, x
+.ELSE   ;6502
+        lda # TYPE_WORD_LO
+        sta zp_type+0, x
         lda # TYPE_WORD_HI
         sta zp_type+1, x
-
+.ENDIF
         rts
 
 peek_byte:
@@ -299,23 +319,4 @@ term_byte2word:
         lda # 0
         sta zp_stack+1, x       ; set word hi-byte to zero
 .ENDIF
-
-.IFDEF  CPU_65C02
-        ; this optimisation relies on `TYPE_WORD_HI` being `TYPE_WORD_LO` + 1;
-        ; we sanity-check this assumption in case of unexpected change
-        .IF TYPE_WORD_HI != TYPE_WORD_LO+1
-                !PRINT "TYPE_WORD_HI != TYPE_WORD_LO+1"
-                !FAIL
-        .ENDIF
-
-        lda # TYPE_WORD_LO
-        sta zp_type+0, x
-        inc                     ; saves 1-byte
-        sta zp_type+1, x
-.ELSE   ;6502
-        lda # TYPE_WORD_LO
-        sta zp_type+0, x
-        lda # TYPE_WORD_HI
-        sta zp_type+1, x
-.ENDIF
-        rts
+        jmp set_type_word

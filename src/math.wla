@@ -60,26 +60,8 @@ term_00:
         sta zp_stack+0, x
         sta zp_stack+1, x
 .ENDIF
-        ; set the data-types:
-        ;-----------------------------------------------------------------------
-.IFDEF  CPU_65C02
-        ; this optimisation relies on `TYPE_WORD_HI` being `TYPE_WORD_LO` + 1;
-        ; we sanity-check this assumption in case of unexpected change
-        .IF TYPE_WORD_HI != TYPE_WORD_LO+1
-                !PRINT "TYPE_WORD_HI != TYPE_WORD_LO+1"
-                !FAIL
-        .ENDIF
-
-        lda # TYPE_WORD_LO
-        sta zp_type+0, x
-        inc                     ; saves 1-byte
-        sta zp_type+1, x
-.ELSE   ;6502
-        lda # TYPE_WORD_LO
-        sta zp_type+0, x
-        lda # TYPE_WORD_HI
-        sta zp_type+1, x
-.ENDIF
+        ; set the word data-type
+        jmp set_type_word
 
 ;===============================================================================
 .INC    "math_muldiv.wla"
