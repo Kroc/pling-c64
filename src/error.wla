@@ -5,22 +5,45 @@
 ; error.wla : error handling / messages
 ;===============================================================================
 
-err_stack_underflow:
-    ;---------------------------------------------------------------------------
-    lda # 0
-    jmp sys_error
+; a stack over/under-flow error:
+; (we detect which here)
+;
+err_stack:
+        ;-----------------------------------------------------------------------
+        ; transferring X to A gives us a bit check for free (zero/sign)
+        txa
+        ; since the stack index works backwards (for this implementation),
+        ; the very bottom of the stack will be index 0. if the stack index
+        ; has gone negative, we have overflow
+        bmi err_stack_overflow
+
+        ; has the stack underflowed?
+        ; this is dependent on the stack's size
+        cpx # PL_STACK_SIZE+1
+        bcs err_stack_underflow
+
+        ; implementation error!
+        ;
+        ; a stack error has been initiated, but the stack
+        ; is neither under- nor over-flowed
+        kil
 
 err_stack_overflow:
-    ;---------------------------------------------------------------------------
-    lda # 1
-    jmp sys_error
+        ;-----------------------------------------------------------------------
+        lda # 1
+        jmp sys_error
+
+err_stack_underflow:
+        ;-----------------------------------------------------------------------
+        lda # 0
+        jmp sys_error
 
 err_type
-    ;---------------------------------------------------------------------------
-    lda # 2
-    jmp sys_error
+        ;-----------------------------------------------------------------------
+        lda # 2
+        jmp sys_error
 
 err_parse
-    ;---------------------------------------------------------------------------
-    lda # 3
-    jmp sys_error
+        ;-----------------------------------------------------------------------
+        lda # 3
+        jmp sys_error

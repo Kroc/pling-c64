@@ -9,51 +9,51 @@
 ; in its own particular... demeanour?
 ;===============================================================================
 sys_error:
-    ;---------------------------------------------------------------------------
-    pha
+        ;-----------------------------------------------------------------------
+        pha
 
-    ldy # 0
--   lda @clear, y
-    beq +
-    jsr KERNAL_CHROUT
-    iny
-    bne -
+        ldy # 0
+-       lda @clear, y
+        beq +
+        jsr KERNAL_CHROUT
+        iny
+        bne -
 
-+   pla
-    tay
-    lda @errmsg_lo, y
-    sta zp_addr+LO
-    lda @errmsg_hi, y
-    sta zp_addr+HI
++       pla
+        tay
+        lda @errmsg_lo, y
+        sta zp_addr+LO
+        lda @errmsg_hi, y
+        sta zp_addr+HI
 
--   lda [zp_addr], y
-    beq +
-    jsr KERNAL_CHROUT
-    iny
-    bne -
+-       lda [zp_addr], y
+        beq +
+        jsr KERNAL_CHROUT
+        iny
+        bne -
 
 +
--   inc VIC_BORDER
-    jmp -
+-       inc VIC_BORDER
+        jmp -
 
 @clear:
-    .BYTE   13, 13, $92, $9e, $0e, 0
+        .BYTE   13, 13, $92, $9e, $0e, 0
 @errmsg_lo:
-    .BYTE   <@errmsg_stack_underflow
-    .BYTE   <@errmsg_stack_overflow
-    .BYTE   <@errmsg_type
-    .BYTE   <@errmsg_parse
+        .BYTE   <@errmsg_stack_underflow
+        .BYTE   <@errmsg_stack_overflow
+        .BYTE   <@errmsg_type
+        .BYTE   <@errmsg_parse
 @errmsg_hi:
-    .BYTE   >@errmsg_stack_underflow
-    .BYTE   >@errmsg_stack_overflow
-    .BYTE   >@errmsg_type
-    .BYTE   >@errmsg_parse
+        .BYTE   >@errmsg_stack_underflow
+        .BYTE   >@errmsg_stack_overflow
+        .BYTE   >@errmsg_type
+        .BYTE   >@errmsg_parse
 
 @errmsg_stack_underflow:
-    .ASC    "Stack underflow!", 0
+        .ASC    "Stack underflow!", 0
 @errmsg_stack_overflow:
-    .ASC    "Stack overflow!", 0
+        .ASC    "Stack overflow!", 0
 @errmsg_type:
-    .ASC    "Unexpected data type!", 0
+        .ASC    "Unexpected data type!", 0
 @errmsg_parse:
-    .ASC    "Not a known term or valid number!", 0
+        .ASC    "Not a known term or valid number!", 0
