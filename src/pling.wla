@@ -32,6 +32,7 @@
 ;
 .ENUMID 1
 .ENUMID TOKEN_STK       ; Stack under/overflow 
+.ENUMID TOKEN_TYP       ; data-type error 
 .ENUMID TOKEN_EOD       ; "End Of Data" (read / write)
 
 ;-------------------------------------------------------------------------------

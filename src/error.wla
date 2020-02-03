@@ -5,6 +5,27 @@
 ; error.wla : error handling / messages
 ;===============================================================================
 
+;===============================================================================
+; produce an error from a token value:
+;
+; in:   A       a token data-type
+;
+;-------------------------------------------------------------------------------
+err_token:
+        ;-----------------------------------------------------------------------
+        tay
+        dey
+        bne +
+        jmp err_stack
++       dey
+        bne +
+        jmp err_type
++       
+        ; implementation error!
+        ;
+        ; a token hasn't been handled
+        kil
+
 ; a stack over/under-flow error:
 ; (we detect which here)
 ;

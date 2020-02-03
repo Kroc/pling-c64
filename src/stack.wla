@@ -11,25 +11,69 @@ get_type:
 ; this also serves as an automatic stack under/overflow check due to
 ; the stack error markers placed at each end of the data-type stack
 ;
-; out:  A       data-type value
+; out:  A       data-type (including tokens)
 ;
 ;-------------------------------------------------------------------------------
         ; read the data-type without checking stack position;
         ; error tokens exist at the bytes just outside the data-type stack
-        ; to easily tell us of stack under/overflow without testing X
+        ; to easily tell us of stack under/overflow without checking the index
         ;
         lda zp_stack, x
-        beq @rts                ; a byte
-        bmi @rts                ; a word
 
-        ; a token of some kind:
+        cmp # TOKEN_STK         ; is it one of the stack error markers?
+        beq +                   ; if yes, stack under/over-flow!
+        rts                     ; all other types, including tokens, are okay
+
+; NOTE: this label is for the benefit of the routines that follow,
+;       `get_type` does not call this label directly
+;
+get_type_err:
+        ;-----------------------------------------------------------------------
         ; is it one of the stack error markers?
         cmp # TOKEN_STK
-        beq @err                ; (BNE is the more common, faster case)
-
-@rts:   rts
+        beq +
+        jmp err_type
         ; this handler will work out if the stack under- or over-flowed
-@err:   jmp err_stack
++       jmp err_stack
+
+
+get_type_byte:
+;===============================================================================
+; get the data-type of the item atop the stack, but error if it is not a byte.
+; (stack under/over-flow automatically raises an error)
+;
+; out:  A       data-type (byte)
+;
+;-------------------------------------------------------------------------------
+        ; read the data-type without checking stack position;
+        ; error tokens exist at the bytes just outside the data-type stack
+        ; to easily tell us of stack under/overflow without checking the index
+        ;
+        lda zp_stack, x
+        bne get_type_err        ; not a byte? (inc. tokens)
+        bmi get_type_err        ; is it a word?
+
+        ; is a byte, return
+        rts
+
+
+get_type_word:
+;===============================================================================
+; get the data-type of the item atop the stack, but error if it is not a word.
+; (stack under/over-flow automatically raises an error)
+;
+; out:  A       data-type (word)
+;
+;-------------------------------------------------------------------------------
+        ; read the data-type without checking stack position;
+        ; error tokens exist at the bytes just outside the data-type stack
+        ; to easily tell us of stack under/overflow without checking the index
+        ;
+        lda zp_stack, x
+        bpl get_type_err        ; not a word?
+
+        ; is a word, return
+        rts
 
 ; lower the stack
 ;===============================================================================
@@ -171,28 +215,22 @@ peek_byte:
 ; reads the byte value atop the stack, checking underflow and data-type
 ;
 ;-------------------------------------------------------------------------------
-        ; get the data-type of the item atop the stack
-        ; (this will do an optimised underflow check for us)
-        jsr get_type
-        ; verify data type
-        bne @type
+        ; get the data-type of the item atop the stack, and error if it
+        ; is not a byte (this will do an optimised underflow check for us)
+        jsr get_type_byte
         ; all valid, get the byte
         lda zp_stack, x
         rts
-
-@type   jmp err_type
 
 peek_word:
 ;===============================================================================
 ; reads the word value atop the stack, checking underflow and data-type
 ;
 ;-------------------------------------------------------------------------------
-        ; get the data-type of the item atop the stack
-        ; (this will do an optimised underflow check for us)
-        jsr get_type
-        ; verify data type
-        bpl @type
-        ; all valid, get the byte
+        ; get the data-type of the item atop the stack, and error if it
+        ; is not a word (this will do an optimised underflow check for us)
+        jsr get_type_byte
+
 .IFDEF  CPU_65C02
         lda zp_stack+0, x
         ldy zp_stack+1, x
@@ -202,8 +240,6 @@ peek_word:
         lda zp_stack+0, x
 .ENDIF
         rts
-        
-@type:  jmp err_type
 
 pop_int:
 ;===============================================================================
@@ -254,28 +290,21 @@ pop_byte:
 ;===============================================================================
 ;
 ;-------------------------------------------------------------------------------
-        ; get the data-type of the item atop the stack
-        ; (this will do an optimised underflow check for us)
-        jsr get_type
-      
-        bne +                   ; if not a byte, error!
+        ; get the data-type of the item atop the stack, and error if it
+        ; is not a byte (this will do an optimised underflow check for us)
+        jsr get_type_byte
 
         lda zp_stack, x         ; read the byte
         inx                     ; raise the stack
         rts
 
-        ; not a byte!
-+       jmp err_type
-
 pop_word:
 ;===============================================================================
 ;
 ;-------------------------------------------------------------------------------
-        ; get the data-type of the item atop the stack
-        ; (this will do an optimised underflow check for us)
-        jsr get_type
-
-        bpl +                   ; if not a word, error!
+        ; get the data-type of the item atop the stack, and error if it
+        ; is not a word (this will do an optimised underflow check for us)
+        jsr get_type_word
 
 .IFDEF  CPU_65C02
         lda zp_stack+0, x       ; word lo-byte
@@ -288,9 +317,6 @@ pop_word:
         inx
         inx
         rts
-
-        ;-----------------------------------------------------------------------
-+       jmp err_type            ; not a word!
 
 ; byte2word ( b -- w )
 ;===============================================================================
