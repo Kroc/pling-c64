@@ -9,6 +9,9 @@
 ;===============================================================================
 ; print the byte atop the stack as an ASCII character:
 ;
+; in:   byte    ASCII code to print to screen
+;
+; data-type error occurs if top of stack is not a byte
 ;-------------------------------------------------------------------------------
         .term   "."
 
@@ -24,6 +27,8 @@ term_print:
 ; .dec ( i -- )
 ;===============================================================================
 ; print the integer atop the stack as a decimal string:
+;
+; in:   int     integer (byte or word) to print as decimal
 ;
 ;-------------------------------------------------------------------------------
         .term   ".dec"

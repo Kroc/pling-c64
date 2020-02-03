@@ -50,15 +50,18 @@
 ;
 ; number of bytes in the data stack: note that this also implies
 ; the same number of bytes for the data-type stack to match
-.DEF    PL_STACK_SIZE   32
-.DEF    zp_stack        $10                                         ;=$10..$30
-.DEF    zp_type         zp_stack + PL_STACK_SIZE                    ;=$30..$50
+.DEF    PL_STACK_SIZE   64
+.DEF    zp_stack        $10                                         ;=$10..$50
+.DEF    zp_type_und     $50
+.DEF    zp_type         $51                                         ;=$51..$91
+.DEF    zp_type_ovr     $91
 
 ; current delimiter between terms
-.DEF    zp_delimiter    $50
+.DEF    zp_delimiter    $033b
+
 ; string buffer for term names
 .DEF    PL_TERM_LEN     31
-.DEF    zp_term_name    $51                                         ;=$51..$70
+.DEF    zp_term_name    $033c
 
 ; active device number (system-dependent);
 ; this is the same ZP byte used by the KERNAL

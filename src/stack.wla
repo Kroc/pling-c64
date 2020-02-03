@@ -5,23 +5,31 @@
 ; stack.wla : shared stack routines
 ;===============================================================================
 
-
-; check if the stack is empty, pending a pop
+get_type:
 ;===============================================================================
-; this checks the stack level to see if a pop is possible. this assumes that
-; the stack will be popped, so an underflow error occurs if the stack is empty
+; get the data-type of the item atop the stack:
+; this also serves as an automatic stack under/overflow check due to
+; the stack error markers placed at each end of the data-type stack
 ;
-.MACRO  .checkUnderflow
-        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        ; check if the current stack index is over the top
-        cpx # PL_STACK_SIZE+1
-        bcc @\.__\@
+; out:  A       data-type value
+;
+;-------------------------------------------------------------------------------
+        ; read the data-type without checking stack position;
+        ; error tokens exist at the bytes just outside the data-type stack
+        ; to easily tell us of stack under/overflow without testing X
+        ;
+        lda zp_stack, x
+        beq @rts                ; a byte
+        bmi @rts                ; a word
 
-        jmp err_stack_underflow
+        ; a token of some kind:
+        ; is it one of the stack error markers?
+        cmp # TOKEN_STK
+        beq @err                ; (BNE is the more common, faster case)
 
-@\.__\@:
-        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-.ENDM
+@rts:   rts
+        ; this handler will work out if the stack under- or over-flowed
+@err:   jmp err_stack
 
 ; lower the stack
 ;===============================================================================
@@ -89,7 +97,7 @@ push_byte:
 ; push a byte onto the data stack,
 ; setting the data-type too
 ;
-;   A = value
+; in:   A       value
 ;
 ;-------------------------------------------------------------------------------
         .lowerStack             ; push stack down to check for overflow
@@ -163,17 +171,15 @@ peek_byte:
 ; reads the byte value atop the stack, checking underflow and data-type
 ;
 ;-------------------------------------------------------------------------------
-        ; is there anything on the stack to peek?
-        cpx # PL_STACK_SIZE+1
-        bcs @under
+        ; get the data-type of the item atop the stack
+        ; (this will do an optimised underflow check for us)
+        jsr get_type
         ; verify data type
-        lda zp_type, x
         bne @type
         ; all valid, get the byte
         lda zp_stack, x
         rts
-        
-@under  jmp err_stack_underflow
+
 @type   jmp err_type
 
 peek_word:
@@ -181,11 +187,10 @@ peek_word:
 ; reads the word value atop the stack, checking underflow and data-type
 ;
 ;-------------------------------------------------------------------------------
-        ; is there anything on the stack to peek?
-        cpx # PL_STACK_SIZE+1
-        bcs @under
+        ; get the data-type of the item atop the stack
+        ; (this will do an optimised underflow check for us)
+        jsr get_type
         ; verify data type
-        lda zp_type, x
         bpl @type
         ; all valid, get the byte
 .IFDEF  CPU_65C02
@@ -199,8 +204,6 @@ peek_word:
         rts
         
 @type:  jmp err_type
-@under:
--       jmp err_stack_underflow
 
 pop_int:
 ;===============================================================================
@@ -216,11 +219,10 @@ pop_int:
 ;
 ; TODO: what to do with error tokens?
 ;-------------------------------------------------------------------------------
-        cpx # PL_STACK_SIZE+1   ; check if the stack index is over the top
-        bcs -                   ; stack is empty? error!
-
+        ; get the data-type of the item atop the stack
+        ; (this will do an optimised underflow check for us)
+        jsr get_type
         ; is the top-most item a byte or a word?
-        lda zp_type, x          ; get the data type
         cmp # 0                 ; return c=1 for word, and c=0 for byte!
         bmi +
 
@@ -252,10 +254,10 @@ pop_byte:
 ;===============================================================================
 ;
 ;-------------------------------------------------------------------------------
-        cpx # PL_STACK_SIZE+1   ; check if the stack index is over the top
-        bcs -                   ; stack is empty? error!
-
-        lda zp_type, x          ; check the data-type of the top stack item
+        ; get the data-type of the item atop the stack
+        ; (this will do an optimised underflow check for us)
+        jsr get_type
+      
         bne +                   ; if not a byte, error!
 
         lda zp_stack, x         ; read the byte
@@ -269,10 +271,10 @@ pop_word:
 ;===============================================================================
 ;
 ;-------------------------------------------------------------------------------
-        cpx # PL_STACK_SIZE+1   ; check if the stack index is over the top
-        bcs -                   ; stack is empty? error!
+        ; get the data-type of the item atop the stack
+        ; (this will do an optimised underflow check for us)
+        jsr get_type
 
-        lda zp_type, x          ; check the data-type of the top stack item
         bpl +                   ; if not a word, error!
 
 .IFDEF  CPU_65C02
@@ -303,10 +305,10 @@ pop_word:
 
 term_byte2word:
         ;-----------------------------------------------------------------------
-        cpx # PL_STACK_SIZE+1   ; check if the stack index is over the top
-        bcs -                   ; stack is empty? error!
+        ; get the data-type of the item atop the stack
+        ; (this will do an optimised underflow check for us)
+        jsr get_type
 
-        lda zp_type, x          ; check the data-type of the top stack item
         bpl +                   ; if not a word, continue testing
 
         ; top-of-stack is already a word, exit

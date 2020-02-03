@@ -23,7 +23,16 @@
 .DEF    TYPE_WORD_LO    %10000000       ; the lo-byte of a word
 .DEF    TYPE_WORD_HI    %10000001       ; the hi-byte of a word
 
-.DEF    TYPE_EOD        %00000001       ; "End Of Data" (read / write)
+; tokens:
+;-------------------------------------------------------------------------------
+; tokens are implementation-specific, opaque data types for differentiating
+; error/token numbers from regular bytes/words on the stack. tokens are never
+; directly exposed to Pling programs as the byte-values of tokens are not
+; guaranteed to be constant, or even exist, between systems/implementations 
+;
+.ENUMID 1
+.ENUMID TOKEN_STK       ; Stack under/overflow 
+.ENUMID TOKEN_EOD       ; "End Of Data" (read / write)
 
 ;-------------------------------------------------------------------------------
 .DEF    prev_term       $0000
@@ -45,10 +54,15 @@ pling_init:
         ldy # PL_STACK_SIZE-1
 -       lda # $00
         sta zp_stack, y
-        lda # TYPE_EOD
+        lda # TOKEN_EOD
         sta zp_type, y
         dey
         bpl -
+        ; put in place the stack error markers that exist at either end
+        ; of the stack to automatically catch under/overflow
+        lda # TOKEN_STK
+        sta zp_type_und
+        sta zp_type_ovr
 
         ; the last term to be defined:
         lda #< term_last_term
