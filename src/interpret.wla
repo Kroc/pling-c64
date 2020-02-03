@@ -4,6 +4,52 @@
 ;
 ; interpret.wla : string & number parsing
 ;===============================================================================
+; label:                    stack:              term-name:
+;-------------------------------------------------------------------------------
+; term_line_input:            --                "line-input"
+; term_interpret:           w --                "interpret"
+; term_read_term:           w -- w              "read-term"
+; term_find_term:             -- w | EOD        "find-term"
+; term_parse_number:          -- b | w          "parse-number"
+;
+
+; line-input ( -- )
+;===============================================================================
+; wait for the user to type a line of text:
+; the input is stored on the system's input line-buffer ($0200)
+;
+; TODO: this to be redone completely. the C64's KERNAL routine allows
+;       pressing the cursor keys during input
+;-------------------------------------------------------------------------------
+        .term   "line-input"
+
+term_line_input:
+        ;-----------------------------------------------------------------------
+        ldy # 0
+
+-       jsr KERNAL_CHRIN        ; read a character from the keyboard
+        cmp # $d                ; is the key RETURN?
+        beq +                   ; if yes, quit reading
+        
+        sta $0200, y            ; add the key-code to the buffer
+        iny                     ; move to the next character
+        cpy # 81                ; have we hit the end of the line?
+        bne -
+
++       jsr sys_emit            ; actually print the RETURN (go to next line)
+        
+        ; append a null-terminator
+.IFDEF  CPU_65C02
+        stz $0200, y
+.ELSE   ;6502
+        lda # 0
+        sta $0200, y
+.ENDIF
+        lda #< $0200
+        ldy #> $0200
+        jsr push_word
+        jmp term_interpret
+
 
 ; interpret ( w -- )
 ;===============================================================================
@@ -18,7 +64,7 @@
 ;-------------------------------------------------------------------------------
         .term   "interpret"
 
-interpret:
+term_interpret:
         ;-----------------------------------------------------------------------
         ; jump straight to the routine for reading a term from input,
         ; the same parameters apply
@@ -26,10 +72,14 @@ interpret:
         ; TODO: error handling
         ; find the term in the terminology
         jsr term_find_term
+        ; TODO: if not found, parse as a number
+
         ; TODO: error handling
         ; execute it!
-        jsr term_exec
+        ;;jsr term_exec
 
+-       inc VIC_BORDER
+        jmp -
         kil
         
         rts
@@ -65,10 +115,15 @@ term_read_term:
 
         ; skip initial delimiters:
         ;-----------------------------------------------------------------------
-        ldy # 0
--       lda [zp_addr], y        ; read character from the buffer
+        ; note that we must leave the index on a non-delimiter character,
+        ; rather than the next [unread] character. this requires incrementing
+        ; the index before testing, instead of after, which is why we begin
+        ; with an index of -1 before entering the loop
+        ;
+        ldy # -1
+-       iny                     ; pre-emptively move to the next character
+        lda [zp_addr], y        ; read character from the input string
         beq @eol                ; end-of-line, null-terminator?
-        iny                     ; pre-emptively move to the next character
         cmp zp_delimiter        ; was it a delimiter?
         beq -                   ; yes, keep reading
 
@@ -80,7 +135,8 @@ term_read_term:
         ; X will be used as the index into the term-name buffer
         ldx # 0
         stx zp_term_name
-        ; begins at 1 because the 0th byte is the string-length
+        ; writing characters begins at 1 because
+        ; the 0th byte is the string-length
         inx
 
 -       lda [zp_addr], y        ; read a character
@@ -140,12 +196,13 @@ term_read_term:
 .ENDIF
         rts
 
-; find-term ( -- w )
+; find-term ( -- w | EOD )
 ;===============================================================================
 ; searches the terminology for a term matching the name currently
 ; in the term-name buffer (use `read-term` to populate this)
 ;
 ; out:  word    execution address of the found term
+;  or/  EOD     if the term name is not found, an End Of Data token
 ;
 ; TODO: return an End Of Data token instead of $0000;
 ;       will rely on error-type checking / testing
@@ -154,8 +211,8 @@ term_read_term:
 
 term_find_term:
         ;-----------------------------------------------------------------------
-        ; start searching from the last defined word. this address points
-        ; to the term header, *not* the term's code
+        ; start searching from the last defined word. this address
+        ; points to the term header, *not* the term's code
         ;
         ; the first two bytes of a term header are the address of the previous
         ; term, allowing one to follow the chain back through terms
@@ -165,6 +222,8 @@ term_find_term:
         lda zp_last+HI
         sta zp_addr+HI
 
+        ; after this, follows the term's name, the first byte is the length.
+        ; read the length from the header: (third byte)
         ldy # 2
         jmp @len
 
@@ -183,8 +242,6 @@ term_find_term:
         beq @done
         iny                     ; Y=2
 
-        ; after this, follows the term's name, the first byte is the length.
-        ; read the length from the header: (third byte)
 @len:   lda [zp_addr], y
         ; TODO: error if length of term-name is 0
 
@@ -208,11 +265,25 @@ term_find_term:
         bne @next
 
         ;-----------------------------------------------------------------------
-        ; push the term's execution address;
-        ; this will be $0000 if the term was not found
-@done   lda zp_addr+LO
+        ; if the term was not found, the address will be $0000; we only need
+        ; to test the hi-byte as terms cannot exist within the first 256 bytes
+        ; of RAM
+        ;
+@done   cpy #> $0000
+        beq +
+
+        lda zp_addr+LO
         ldy zp_addr+HI
         jmp push_word
+
+        ;-----------------------------------------------------------------------
+        ; instead of pushing $0000, we push an End Of Data token to avoid
+        ; users accidentally trying to execute address $0000! attempting
+        ; to read the token as a byte or word will give a data-type error
+        ;
++       lda # 0                 ; the token's value is not important
+        ldy # TOKEN_EOD         ; make it a token, not a regular byte
+        jmp push_token
 
 ; parse-number ( -- b | w )
 ;===============================================================================
@@ -234,14 +305,12 @@ term_find_term:
 ; this routine was roughly adapted from DurexForth's number parser:
 ; https://github.com/jkotlinski/durexforth/blob/master/interpreter.asm
 ;-------------------------------------------------------------------------------
--       jmp err_parse
-
         .term   "parse-number"
 
 term_parse_number:
         ;-----------------------------------------------------------------------
         ldy zp_term_name        ; how many characters?
-        beq -                   ; sanity check should NOT be zero!
+        beq @err                ; sanity check should NOT be zero!
         dey                     ; 1-character only?
         beq @single             ; optimisation for single character
 

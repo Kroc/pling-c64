@@ -75,6 +75,44 @@ get_type_word:
         ; is a word, return
         rts
 
+
+get_type_token:
+;===============================================================================
+; get the data-type of the item atop the stack, but error if it is not a token.
+; (stack under/over-flow automatically raises an error)
+;
+; NOTE: tokens are intended to be opaque, implementation-specific values,
+;       and should *not* be exposed to Pling programs. that is, Pling programs
+;       can compare tokens, but cannot get at its date-type constant value
+;       (e.g. EOD might be 5 in one implementation, but 128 in another)
+;
+;-------------------------------------------------------------------------------
+        ; read the data-type without checking stack position;
+        ; error tokens exist at the bytes just outside the data-type stack
+        ; to easily tell us of stack under/overflow without checking the index
+        ;
+        ; TODO: what should the fast-path for this?
+        ;       if we are expecting a token, that should be fastest,
+        ;       but if we're doing error-checking for results that will 99%
+        ;       of the time be OK, we want the byte to be the fastest
+        ;
+        lda zp_stack, x
+        beq @type               ; a byte, unwanted
+        bmi @type               ; a word, unwanted
+
+        ; the stack markers are always an error,
+        ; even though we're looking for tokens!
+        cmp # TOKEN_STK
+        beq @stack
+        ; when you have eliminated the impossible, whatever remains,
+        ; however improbable, must be a token
+        rts
+
+@type:  jmp err_type
+        ; this handler will work out if the stack under- or over-flowed
+@stack: jmp err_stack
+
+
 ; lower the stack
 ;===============================================================================
 ; this lowers the stack, checking for overflow, but does not change any data.
@@ -194,8 +232,8 @@ set_type_word:
         ; this optimisation relies on `TYPE_WORD_HI` being `TYPE_WORD_LO` + 1;
         ; we sanity-check this assumption in case of unexpected change
         .IF TYPE_WORD_HI != TYPE_WORD_LO+1
-                !PRINT "TYPE_WORD_HI != TYPE_WORD_LO+1"
-                !FAIL
+                .PRINT "TYPE_WORD_HI != TYPE_WORD_LO+1"
+                .FAIL
         .ENDIF
 
         lda # TYPE_WORD_LO
@@ -209,6 +247,30 @@ set_type_word:
         sta zp_type+1, x
 .ENDIF
         rts
+
+push_token:
+;===============================================================================
+; pushes a token to the stack:
+;
+; in:   A       token's value (what goes on the data-stack)
+;       Y       the token type (what goes on the data-stack)
+;
+;-------------------------------------------------------------------------------
+        dex                     ; lower the stack
+        bmi +                   ; if underflow, error
+
+        ; define the token!
+.IFDEF  CPU_65C02
+        sta zp_stack, x
+        sty zp_type, x
+.ELSE   ;6502
+        sta zp_stack, x
+        tya
+        sta zp_type, x
+.ENDIF
+        rts
+
++       jmp err_stack_overflow
 
 peek_byte:
 ;===============================================================================

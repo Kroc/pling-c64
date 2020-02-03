@@ -11,26 +11,26 @@
 ;
 ;-------------------------------------------------------------------------------
 ; a temporary address available for indirect addressing
-.DEF    zp_addr         $03
+.DEF    zp_addr         $02
 ; a temporary value available for conversions
-.DEF    zp_temp         $05
-.DEF    zp_temp1        $05
-.DEF    zp_temp2        $06
+.DEF    zp_temp         $04
+.DEF    zp_temp1        $04
+.DEF    zp_temp2        $05
 ; likewise, but for the output value
-.DEF    zp_word         $07
+.DEF    zp_word         $06
 ; overflow for word*word calculations
-.DEF    zp_overflow     $09
+.DEF    zp_overflow     $08
 
 ; address of the last defined term
 ; (updated when new terms are added)
-.DEF    zp_last         $0b
+.DEF    zp_last         $0a
 
 ; the address of the next free byte of memory in user-space.
 ; this is where new terms are compiled
-.DEF    zp_here         $0d
+.DEF    zp_here         $0c
 
 ; number base (2, 10, 16) used during number parsing
-.DEF    zp_int_base     $0f
+.DEF    zp_int_base     $0e
 
 ;-------------------------------------------------------------------------------
 ; Pling's data stack works downwards; this direction was chosen specifically
@@ -51,17 +51,21 @@
 ; number of bytes in the data stack: note that this also implies
 ; the same number of bytes for the data-type stack to match
 .DEF    PL_STACK_SIZE   64
-.DEF    zp_stack        $10                                         ;=$10..$50
-.DEF    zp_type_und     $50
-.DEF    zp_type         $51                                         ;=$51..$91
-.DEF    zp_type_ovr     $91
+.DEF    zp_stack        $0f                                         ;=$0F..$4F
+.DEF    zp_type_und     $4f
+.DEF    zp_type         $50                                         ;=$50..$8F
+.DEF    zp_type_ovr     $90
 
+; WARNING: CANNOT USE $91!!!
+
+;-------------------------------------------------------------------------------
 ; current delimiter between terms
-.DEF    zp_delimiter    $033b
+.DEF    zp_delimiter    $033a
 
-; string buffer for term names
+; string buffer for parsing term names:
+; (the first byte is the length)
 .DEF    PL_TERM_LEN     31
-.DEF    zp_term_name    $033c
+.DEF    zp_term_name    $033b
 
 ; active device number (system-dependent);
 ; this is the same ZP byte used by the KERNAL

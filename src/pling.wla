@@ -105,10 +105,12 @@ pling_init:
         ;;jsr push_word
         ;;jsr term_disk_chain
 
-        lda #< $ffff
-        ldy #> $ffff
-        jsr push_word
-        jsr term_print_dec
+        ;;lda #< $ffff
+        ;;ldy #> $ffff
+        ;;jsr push_word
+        ;;jsr term_print_dec
+
+-       jsr term_line_input
 
         lda # 13
         jsr sys_print
@@ -120,10 +122,9 @@ pling_init:
         lda # '.'
         jsr sys_print
 
-        ; TODO!       
--       jmp -
+        jmp -
 
-@test:  .ASC    "test", 0
+;;@test:  .ASC    "test", 0
 
 ;===============================================================================
 .INC    "error.wla"             ; error handling
