@@ -4,6 +4,26 @@
 ;
 ; print.wla : screen output
 ;===============================================================================
+; label:                    stack:              term-name:
+;-------------------------------------------------------------------------------
+; term_print_newline:         --                ".n"
+; term_print:               b --                "."
+; term_print_dec:           i --                ".dec"
+; term_print_hex:           i --                ".hex"
+;
+
+; .n ( -- )
+;===============================================================================
+; print a newline (CR/LF) character:
+;
+;-------------------------------------------------------------------------------
+        .term   ".n"
+
+term_print_newline:
+        ;-----------------------------------------------------------------------
+        lda # 13
+        jmp sys_emit
+
 
 ; . ( b -- )
 ;===============================================================================
@@ -81,3 +101,47 @@ term_print_dec:
         bne -                   ; encountered
 
         rts
+
+
+; .hex ( i -- )
+;===============================================================================
+; print the integer atop the stack as a hexadecimal string:
+;
+; in:   int     integer (byte or word) to print as hexadecimal
+;
+;-------------------------------------------------------------------------------
+        .term   ".hex"
+
+term_print_hex:
+        ;-----------------------------------------------------------------------
+        jsr pop_int
+        bcs @word
+
+        jsr @print
+        rts
+
+@word:  pha
+        tya
+        jsr @print
+        pla
+
+        ;-----------------------------------------------------------------------
+@print: pha
+
+        lsr
+        lsr
+        lsr
+        lsr                     ; Move top nybble to bottom nybble
+        jsr @conv
+
+        pla
+        and # $f                ; Mask out original bottom nybble
+
+@conv:  sei
+        sed
+        clc
+        adc # $90               ; Produce &90-&99 or &00-&05
+        adc # $40               ; Produce &30-&39 or &41-&46
+        cld
+        cli
+        jmp sys_emit            ; Print it

@@ -70,19 +70,29 @@ term_interpret:
         ; the same parameters apply
         jsr term_read_term
         ; TODO: error handling
+
         ; find the term in the terminology
         jsr term_find_term
-        ; TODO: if not found, parse as a number
+        
+        jsr pop_token_EOD       ; did we find the term?
+        beq @eod                ; handle term not found...
 
-        ; TODO: error handling
         ; execute it!
         ;;jsr term_exec
 
 -       inc VIC_BORDER
         jmp -
         kil
-        
+        .ASC "execute token"
+
         rts
+
+        ; TODO: if not found, parse as a number
+@eod:   
+-       inc VIC_BORDER
+        jmp -
+        kil
+        .ASC "EOD"
 
 ; read-term ( w -- w )
 ;===============================================================================
@@ -134,7 +144,7 @@ term_read_term:
         ; the first byte of the term-name buffer is the string length.
         ; X will be used as the index into the term-name buffer
         ldx # 0
-        stx zp_term_name
+        stx pl_term_name
         ; writing characters begins at 1 because
         ; the 0th byte is the string-length
         inx
@@ -146,8 +156,8 @@ term_read_term:
         beq @done               ; if so, end term
       
         ; add the character to the term-name buffer
-        sta zp_term_name, x     ; write character to the term buffer
-        inc zp_term_name        ; increment its length
+        sta pl_term_name, x     ; write character to the term buffer
+        inc pl_term_name        ; increment its length
         inx                     ; move to the next available space
 
         ; go read next character        
@@ -159,10 +169,10 @@ term_read_term:
 @done:  ; the captured term name must be null-terminated
         ;
 .IFDEF  CPU_65C02
-        stz zp_term_name, x
+        stz pl_term_name, x
 .ELSE   ;6502
         lda # 0
-        sta zp_term_name, x
+        sta pl_term_name, x
 .ENDIF
         ; restore Pling's stack pointer
         .plx
@@ -204,8 +214,6 @@ term_read_term:
 ; out:  word    execution address of the found term
 ;  or/  EOD     if the term name is not found, an End Of Data token
 ;
-; TODO: return an End Of Data token instead of $0000;
-;       will rely on error-type checking / testing
 ;-------------------------------------------------------------------------------
         .term   "find-term"
 
@@ -218,9 +226,9 @@ term_find_term:
         ; term, allowing one to follow the chain back through terms
         ;
         lda zp_last+LO
+        ldy zp_last+HI
         sta zp_addr+LO
-        lda zp_last+HI
-        sta zp_addr+HI
+        sty zp_addr+HI
 
         ; after this, follows the term's name, the first byte is the length.
         ; read the length from the header: (third byte)
@@ -239,7 +247,7 @@ term_find_term:
         sta zp_addr+HI
         ; if back-link address is $0000, then we've reached the end
         ; of the chain -- the term has not been found
-        beq @done
+        beq @eod
         iny                     ; Y=2
 
 @len:   lda [zp_addr], y
@@ -248,7 +256,7 @@ term_find_term:
         ; a speed optimisation common with Forths is to simply
         ; compare string lengths first... (the first byte of
         ; the term-name buffer is its length)
-        cmp zp_term_name
+        cmp pl_term_name
         ; if not the same length, move to the next term
         bne @next
 
@@ -256,7 +264,7 @@ term_find_term:
         ;-----------------------------------------------------------------------
         ; walk along the bytes of the two strings and compare each letter:
 -       iny
-        lda zp_term_name-3, y   ; (the offsets differ, so compensate)
+        lda pl_term_name-3, y   ; (the offsets differ, so compensate)
         beq @done               ; end of the string, word matches!
         cmp [zp_addr], y        ; (this is so cool you can do this)   
         beq -                   ; letters, match, keep searching
@@ -265,12 +273,10 @@ term_find_term:
         bne @next
 
         ;-----------------------------------------------------------------------
-        ; if the term was not found, the address will be $0000; we only need
-        ; to test the hi-byte as terms cannot exist within the first 256 bytes
-        ; of RAM
-        ;
-@done   cpy #> $0000
-        beq +
+@done   kil
+        iny
+        tya
+        clc 
 
         lda zp_addr+LO
         ldy zp_addr+HI
@@ -281,7 +287,7 @@ term_find_term:
         ; users accidentally trying to execute address $0000! attempting
         ; to read the token as a byte or word will give a data-type error
         ;
-+       lda # 0                 ; the token's value is not important
+@eod:   lda # 0                 ; the token's value is not important
         ldy # TOKEN_EOD         ; make it a token, not a regular byte
         jmp push_token
 
@@ -309,7 +315,7 @@ term_find_term:
 
 term_parse_number:
         ;-----------------------------------------------------------------------
-        ldy zp_term_name        ; how many characters?
+        ldy pl_term_name        ; how many characters?
         beq @err                ; sanity check should NOT be zero!
         dey                     ; 1-character only?
         beq @single             ; optimisation for single character
@@ -318,7 +324,7 @@ term_parse_number:
         jsr term_00
 
         ; check the first character for hex `$` or `%` sigil
-        lda zp_term_name+1
+        lda pl_term_name+1
         cmp # '$'
         beq @hex
         cmp # '%'
@@ -335,7 +341,7 @@ term_parse_number:
         ;-----------------------------------------------------------------------
         ; a single character can only be a valid number if it's 0-9
         ;
-@single lda zp_term_name+1
+@single lda pl_term_name+1
         sec
         sbc # '0'               ; ASCI "0" or above?
         cmp # 10                ; no higher than 9?
@@ -366,7 +372,7 @@ term_parse_number:
         inc zp_stack+1, x
         ; are there more digits to process?
 +       iny                     ; move to next character
-        cpy zp_term_name        ; reached length of term?
+        cpy pl_term_name        ; reached length of term?
         bcs @done
 
         .phy
@@ -380,7 +386,7 @@ term_parse_number:
         .ply
         ;-----------------------------------------------------------------------
         ; get an ASCII character
-@loop:  lda zp_term_name+2, y
+@loop:  lda pl_term_name+2, y
 
         ; convert to upper-case: note that Pling operates with ASCII
         ; internally; in ASCII, the capital letters follow the numerals,

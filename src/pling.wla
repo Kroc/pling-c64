@@ -67,10 +67,10 @@ pling_init:
 
         ; the last term to be defined:
         lda #< term_last_term
+        ldy #> term_last_term
         sta zp_last+LO
-        lda #> term_last_term
-        sta zp_last+HI
-
+        sty zp_last+HI
+        
         ; set the user-space starting address,
         ; where new terms will be compiled
         lda #< begin_here
@@ -85,7 +85,7 @@ pling_init:
         ; clear the term-name buffer
         lda # $00
         ldy # PL_TERM_LEN-1
--       sta zp_term_name, y
+-       sta pl_term_name, y
         dey
         bpl -
 
@@ -105,10 +105,15 @@ pling_init:
         ;;jsr push_word
         ;;jsr term_disk_chain
 
-        ;;lda #< $ffff
-        ;;ldy #> $ffff
-        ;;jsr push_word
-        ;;jsr term_print_dec
+        lda #< $dead
+        ldy #> $dead
+        jsr push_word
+        jsr term_print_hex
+        lda #< $beef
+        ldy #> $beef
+        jsr push_word
+        jsr term_print_hex
+        jsr term_print_newline
 
 -       jsr term_line_input
 

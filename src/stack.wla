@@ -5,11 +5,76 @@
 ; stack.wla : shared stack routines
 ;===============================================================================
 
+; lower the stack
+;===============================================================================
+; this lowers the stack, checking for overflow, but does not change any data.
+; the direction the stack moves is implementation specific and never exposed
+; to Pling scripts
+;
+.MACRO  .lowerStack
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        dex
+        bpl @\.__\@
+        jmp err_stack_overflow
+
+@\.__\@:
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+.ENDM
+
+; lower the stack twice, using one
+; error check for efficiency
+;-------------------------------------------------------------------------------
+.MACRO  .lowerStack2
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        dex
+        dex
+        bpl @\.__\@
+        jmp err_stack_overflow
+
+@\.__\@:
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+.ENDM
+
+; raise the stack
+;===============================================================================
+; this raises the stack, checking for underflow, but does not change any data.
+; the direction the stack moves is implementation specific and never exposed
+; to Pling scripts
+;
+.MACRO  .raiseStack
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        inx
+        cpx # PL_STACK_SIZE+1
+        bcc @\.__\@
+        jmp err_stack_underflow
+
+@\.__\@:
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+.ENDM
+
+; raise the stack twice, using one error check for efficiency
+;-------------------------------------------------------------------------------
+.MACRO  .raiseStack2
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        inx
+        inx
+        cpx # PL_STACK_SIZE+1
+        bcc @\.__\@
+        jmp err_stack_underflow
+
+@\.__\@:
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+.ENDM
+
+
 get_type:
 ;===============================================================================
 ; get the data-type of the item atop the stack:
 ; this also serves as an automatic stack under/overflow check due to
-; the stack error markers placed at each end of the data-type stack
+; the stack error markers placed at each end of the data-type stack.
+;
+; if you have to check the data-type of a parameter, then this routine
+; combines that with the stack under/overflow check, saving cycles
 ;
 ; out:  A       data-type (including tokens)
 ;
@@ -83,7 +148,7 @@ get_type_token:
 ;
 ; NOTE: tokens are intended to be opaque, implementation-specific values,
 ;       and should *not* be exposed to Pling programs. that is, Pling programs
-;       can compare tokens, but cannot get at its date-type constant value
+;       can compare tokens, but cannot get at their date-type constant value
 ;       (e.g. EOD might be 5 in one implementation, but 128 in another)
 ;
 ;-------------------------------------------------------------------------------
@@ -112,67 +177,6 @@ get_type_token:
         ; this handler will work out if the stack under- or over-flowed
 @stack: jmp err_stack
 
-
-; lower the stack
-;===============================================================================
-; this lowers the stack, checking for overflow, but does not change any data.
-; the direction the stack moves is implementation specific and never exposed
-; to Pling scripts
-;
-.MACRO  .lowerStack
-        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        dex
-        bpl @\.__\@
-        jmp err_stack_overflow
-
-@\.__\@:
-        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-.ENDM
-
-; lower the stack twice, using one
-; error check for efficiency
-;-------------------------------------------------------------------------------
-.MACRO  .lowerStack2
-        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        dex
-        dex
-        bpl @\.__\@
-        jmp err_stack_overflow
-
-@\.__\@:
-        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-.ENDM
-
-; raise the stack
-;===============================================================================
-; this raises the stack, checking for underflow, but does not change any data.
-; the direction the stack moves is implementation specific and never exposed
-; to Pling scripts
-;
-.MACRO  .raiseStack
-        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        inx
-        cpx # PL_STACK_SIZE+1
-        bcc @\.__\@
-        jmp err_stack_underflow
-
-@\.__\@:
-        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-.ENDM
-
-; raise the stack twice, using one error check for efficiency
-;-------------------------------------------------------------------------------
-.MACRO  .raiseStack2
-        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        inx
-        inx
-        cpx # PL_STACK_SIZE+1
-        bcc @\.__\@
-        jmp err_stack_underflow
-
-@\.__\@:
-        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-.ENDM
 
 push_byte:
 ;===============================================================================
@@ -248,16 +252,17 @@ set_type_word:
 .ENDIF
         rts
 
+
 push_token:
 ;===============================================================================
 ; pushes a token to the stack:
 ;
 ; in:   A       token's value (what goes on the data-stack)
-;       Y       the token type (what goes on the data-stack)
+;       Y       the token type (what goes on the type-stack)
 ;
 ;-------------------------------------------------------------------------------
         dex                     ; lower the stack
-        bmi +                   ; if underflow, error
+        bmi @err                ; if underflow, error
 
         ; define the token!
 .IFDEF  CPU_65C02
@@ -270,7 +275,8 @@ push_token:
 .ENDIF
         rts
 
-+       jmp err_stack_overflow
+@err:   jmp err_stack_overflow
+
 
 peek_byte:
 ;===============================================================================
@@ -283,6 +289,7 @@ peek_byte:
         ; all valid, get the byte
         lda zp_stack, x
         rts
+
 
 peek_word:
 ;===============================================================================
@@ -302,6 +309,7 @@ peek_word:
         lda zp_stack+0, x
 .ENDIF
         rts
+
 
 pop_int:
 ;===============================================================================
@@ -335,18 +343,19 @@ pop_int:
 +       ; read a word:
         ;-----------------------------------------------------------------------
 .IFDEF  CPU_65C02
-        lda zp_stack+1, x
-        ldy zp_stack+0, x
+        lda zp_stack+0, x
+        ldy zp_stack+1, x
 .ELSE   ;6502
-        lda zp_stack+0, x       ; read the hi-byte first,
+        lda zp_stack+1, x       ; read the hi-byte first,
         tay                     ; to put it into Y
-        lda zp_stack+1, x       ; and then A for the lo-byte
+        lda zp_stack+0, x       ; and then A for the lo-byte
 .ENDIF  ; raise the stack twice
         inx
         inx
         rts
 
 -       jmp err_stack_underflow
+
 
 pop_byte:
 ;===============================================================================
@@ -356,9 +365,11 @@ pop_byte:
         ; is not a byte (this will do an optimised underflow check for us)
         jsr get_type_byte
 
-        lda zp_stack, x         ; read the byte
+        ;-----------------------------------------------------------------------
+@pop:   lda zp_stack, x         ; read the byte
         inx                     ; raise the stack
         rts
+
 
 pop_word:
 ;===============================================================================
@@ -380,36 +391,45 @@ pop_word:
         inx
         rts
 
-; byte2word ( b -- w )
+
+pop_if_token:
 ;===============================================================================
-; converts the integer on top of the stack to a word:
-; if the item is already a word, no change happens.
-; stack underflow occurs if the stack is empty
+; pop the top item on the stack, only if it's a token:
+; stack under/over-flow automatically raises an error,
+; no action is taken for other data-types
+;
+; out:  Y       token's data-type, zero for no-token
+;       A       the token's value, zero for no-token
 ;
 ;-------------------------------------------------------------------------------
--       jmp err_stack_underflow
-
-        .term   "byte2word"
-
-term_byte2word:
-        ;-----------------------------------------------------------------------
         ; get the data-type of the item atop the stack
         ; (this will do an optimised underflow check for us)
         jsr get_type
+        ; is it a token-type?
+        beq +                   ; it's a byte, ignore
+        bmi +                   ; it's a word, ignore
 
-        bpl +                   ; if not a word, continue testing
-
-        ; top-of-stack is already a word, exit
+        ; when you have eliminated the impossible, whatever remains,
+        ; however improbable, must be a token
+        ;
+        tay                     ; move the token's type to the Y register
+        lda zp_stack, x         ; read the token's value
         rts
 
-        ; TODO: if an error token, throw an unhandled exception error?
-+       .lowerStack             ; lower the stack by one
-        lda zp_stack+1, x       ; read the old byte
-        sta zp_stack+0, x       ; write it to the word lo-byte
-.IFDEF  CPU_65C02
-        stz zp_stack+1, x       ; set word hi-byte to zero
-.ELSE   ;6502
-        lda # 0
-        sta zp_stack+1, x       ; set word hi-byte to zero
-.ENDIF
-        jmp set_type_word
++       lda # 0                 ; return A = 0
+        tay                     ; return Y = 0
+        rts
+
+
+pop_token_EOD:
+;===============================================================================
+; 
+;-------------------------------------------------------------------------------
+        ; check the top item and remove it if it's a token
+        ; (this will do an optimised underflow check for us)
+        jsr pop_if_token
+        ; the return value will be non-zero if it is a token,
+        ; but we only care if it's specifically EOD; return
+        ; zero / non-zero accordingly
+        cmp # TOKEN_EOD
+        rts

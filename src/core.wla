@@ -82,3 +82,36 @@ term_exec:
         sta zp_addr+HI
         jmp [zp_addr]
 .ENDIF
+
+; byte2word ( b -- w )
+;===============================================================================
+; converts the integer on top of the stack to a word:
+; if the item is already a word, no change happens.
+; stack underflow occurs if the stack is empty
+;
+;-------------------------------------------------------------------------------
+        .term   "byte2word"
+
+term_byte2word:
+        ;-----------------------------------------------------------------------
+        ; get the data-type of the item atop the stack
+        ; (this will do an optimised underflow check for us)
+        jsr get_type
+
+        bpl +                   ; if not a word, continue testing
+
+        ; top-of-stack is already a word, exit
+        rts
+
+        ; TODO: if an error token, throw an unhandled exception error?
++       .lowerStack             ; lower the stack by one
+        lda zp_stack+1, x       ; read the old byte
+        sta zp_stack+0, x       ; write it to the word lo-byte
+.IFDEF  CPU_65C02
+        stz zp_stack+1, x       ; set word hi-byte to zero
+.ELSE   ;6502
+        lda # 0
+        sta zp_stack+1, x       ; set word hi-byte to zero
+.ENDIF
+        ; change the data-types for the top two bytes to word-lo/hi
+        jmp set_type_word
