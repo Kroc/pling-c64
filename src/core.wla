@@ -94,17 +94,20 @@ term_exec:
 
 term_byte2word:
         ;-----------------------------------------------------------------------
-        ; get the data-type of the item atop the stack
-        ; (this will do an optimised underflow check for us)
-        jsr get_type
-
-        bpl +                   ; if not a word, continue testing
+        ; read the data-type without checking stack position;
+        ; error tokens exist at the bytes just outside the data-type stack
+        ; to easily tell us of stack under/overflow without checking the index
+        ;
+        lda zp_type, x
+        bpl +                   ; handle byte or token...
 
         ; top-of-stack is already a word, exit
         rts
 
-        ; TODO: if an error token, throw an unhandled exception error?
-+       .lowerStack             ; lower the stack by one
+        ;-----------------------------------------------------------------------
++       bne @err
+
+        .lowerStack             ; lower the stack by one
         lda zp_stack+1, x       ; read the old byte
         sta zp_stack+0, x       ; write it to the word lo-byte
 .IFDEF  CPU_65C02
@@ -115,3 +118,11 @@ term_byte2word:
 .ENDIF
         ; change the data-types for the top two bytes to word-lo/hi
         jmp set_type_word
+
+        ;-----------------------------------------------------------------------
+        ; is it one of the stack error markers?
+@err:   cmp # TOKEN_STK
+        beq +
+        jmp err_type
+        ; this handler will work out if the stack under- or over-flowed
++       jmp err_stack

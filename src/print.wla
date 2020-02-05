@@ -22,16 +22,16 @@
 term_print_newline:
         ;-----------------------------------------------------------------------
         lda # 13
-        jmp sys_emit
+        jmp sys_emit            ; print, skipping character conversion
 
 
 ; . ( b -- )
 ;===============================================================================
 ; print the byte atop the stack as an ASCII character:
+; data-type error occurs if top of stack is not a byte
 ;
 ; in:   byte    ASCII code to print to screen
 ;
-; data-type error occurs if top of stack is not a byte
 ;-------------------------------------------------------------------------------
         .term   "."
 
@@ -43,6 +43,7 @@ term_print:
         ; conversion to the system's character encoding and handle
         ; writing to the screen
         jmp sys_print
+
 
 ; .dec ( i -- )
 ;===============================================================================
@@ -109,6 +110,7 @@ term_print_dec:
 ;
 ; in:   int     integer (byte or word) to print as hexadecimal
 ;
+; <http://beebwiki.mdfs.net/Number_output_in_6502_machine_code>
 ;-------------------------------------------------------------------------------
         .term   ".hex"
 
@@ -117,31 +119,56 @@ term_print_hex:
         jsr pop_int
         bcs @word
 
-        jsr @print
-        rts
+        jmp @print
 
+        ;-----------------------------------------------------------------------
 @word:  pha
         tya
         jsr @print
         pla
 
         ;-----------------------------------------------------------------------
-@print: pha
+@print: tay
 
+        ; move top nybble to bottom nybble
         lsr
         lsr
         lsr
-        lsr                     ; Move top nybble to bottom nybble
+        lsr
         jsr @conv
 
-        pla
-        and # $f                ; Mask out original bottom nybble
+        tya
+        and # $f                ; mask out original bottom nybble
 
-@conv:  sei
-        sed
+@conv:  ;-----------------------------------------------------------------------
+        ; NMOS 6502's (including the 6510) have a bug whereby the decimal flag
+        ; is not guaranteed to clear on system-startup or interrupt. this means
+        ; that `cld` *must* be used by the system during interrupts to avoid
+        ; decimal mode in your code leaking into the interrupt routine!
+        ;
+        ; (this bug is fixed on CMOS-based 6502's such as the 65C02 & 65C816)
+        ;
+        ; whilst the C64 KERNAL does clear the decimal mode on startup,
+        ; it does not clear it upon ROM-enabled interrupt, meaning that
+        ; we must disable interrupts any time we are using decimal mode!
+        ;
+        ; the time spent in decimal mode / interrupts-off must be kept to
+        ; a minimum as it may otherwise impact the C64's interrupt-driven
+        ; jiffy-clock -- this is why we don't do the character printing
+        ; with interrupts disabled: we don't know how long this will take
+        ; on any particular system, and some systems may pause for
+        ; user-input when scrolling
+        ;
+.IFDEF  CPU_6502
+        sei                     ; disable interrupts
+        sed                     ; turn decimal mode on
+.ENDIF
         clc
-        adc # $90               ; Produce &90-&99 or &00-&05
-        adc # $40               ; Produce &30-&39 or &41-&46
-        cld
-        cli
-        jmp sys_emit            ; Print it
+        adc # $90               ; produce $90-$99 or $00-$05
+        adc # $40               ; produce $30-$39 or $41-$46
+
+.IFDEF  CPU_6502
+        cld                     ; turn decimal mode off
+        cli                     ; re-enable interrupts
+.ENDIF
+        jmp sys_emit

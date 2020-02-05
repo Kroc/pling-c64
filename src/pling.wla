@@ -113,6 +113,9 @@ pling_init:
         ldy #> $beef
         jsr push_word
         jsr term_print_hex
+        lda # $ed
+        jsr push_byte
+        jsr term_print_hex
         jsr term_print_newline
 
 -       jsr term_line_input

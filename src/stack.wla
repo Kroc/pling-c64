@@ -67,117 +67,6 @@
 .ENDM
 
 
-get_type:
-;===============================================================================
-; get the data-type of the item atop the stack:
-; this also serves as an automatic stack under/overflow check due to
-; the stack error markers placed at each end of the data-type stack.
-;
-; if you have to check the data-type of a parameter, then this routine
-; combines that with the stack under/overflow check, saving cycles
-;
-; out:  A       data-type (including tokens)
-;
-;-------------------------------------------------------------------------------
-        ; read the data-type without checking stack position;
-        ; error tokens exist at the bytes just outside the data-type stack
-        ; to easily tell us of stack under/overflow without checking the index
-        ;
-        lda zp_stack, x
-
-        cmp # TOKEN_STK         ; is it one of the stack error markers?
-        beq +                   ; if yes, stack under/over-flow!
-        rts                     ; all other types, including tokens, are okay
-
-; NOTE: this label is for the benefit of the routines that follow,
-;       `get_type` does not call this label directly
-;
-get_type_err:
-        ;-----------------------------------------------------------------------
-        ; is it one of the stack error markers?
-        cmp # TOKEN_STK
-        beq +
-        jmp err_type
-        ; this handler will work out if the stack under- or over-flowed
-+       jmp err_stack
-
-
-get_type_byte:
-;===============================================================================
-; get the data-type of the item atop the stack, but error if it is not a byte.
-; (stack under/over-flow automatically raises an error)
-;
-; out:  A       data-type (byte)
-;
-;-------------------------------------------------------------------------------
-        ; read the data-type without checking stack position;
-        ; error tokens exist at the bytes just outside the data-type stack
-        ; to easily tell us of stack under/overflow without checking the index
-        ;
-        lda zp_stack, x
-        bne get_type_err        ; not a byte? (inc. tokens)
-        bmi get_type_err        ; is it a word?
-
-        ; is a byte, return
-        rts
-
-
-get_type_word:
-;===============================================================================
-; get the data-type of the item atop the stack, but error if it is not a word.
-; (stack under/over-flow automatically raises an error)
-;
-; out:  A       data-type (word)
-;
-;-------------------------------------------------------------------------------
-        ; read the data-type without checking stack position;
-        ; error tokens exist at the bytes just outside the data-type stack
-        ; to easily tell us of stack under/overflow without checking the index
-        ;
-        lda zp_stack, x
-        bpl get_type_err        ; not a word?
-
-        ; is a word, return
-        rts
-
-
-get_type_token:
-;===============================================================================
-; get the data-type of the item atop the stack, but error if it is not a token.
-; (stack under/over-flow automatically raises an error)
-;
-; NOTE: tokens are intended to be opaque, implementation-specific values,
-;       and should *not* be exposed to Pling programs. that is, Pling programs
-;       can compare tokens, but cannot get at their date-type constant value
-;       (e.g. EOD might be 5 in one implementation, but 128 in another)
-;
-;-------------------------------------------------------------------------------
-        ; read the data-type without checking stack position;
-        ; error tokens exist at the bytes just outside the data-type stack
-        ; to easily tell us of stack under/overflow without checking the index
-        ;
-        ; TODO: what should the fast-path for this?
-        ;       if we are expecting a token, that should be fastest,
-        ;       but if we're doing error-checking for results that will 99%
-        ;       of the time be OK, we want the byte to be the fastest
-        ;
-        lda zp_stack, x
-        beq @type               ; a byte, unwanted
-        bmi @type               ; a word, unwanted
-
-        ; the stack markers are always an error,
-        ; even though we're looking for tokens!
-        cmp # TOKEN_STK
-        beq @stack
-        ; when you have eliminated the impossible, whatever remains,
-        ; however improbable, must be a token
-        rts
-
-@type:  jmp err_type
-        ; this handler will work out if the stack under- or over-flowed
-@stack: jmp err_stack
-
-
 push_byte:
 ;===============================================================================
 ; push a byte onto the data stack,
@@ -186,7 +75,8 @@ push_byte:
 ; in:   A       value
 ;
 ;-------------------------------------------------------------------------------
-        .lowerStack             ; push stack down to check for overflow
+        dex                     ; push stack down,
+        bmi err_stack_overflow  ; check for overflow
         sta zp_stack, x         ; set the byte value
 
         ; set the data-type:
@@ -213,9 +103,12 @@ push_word:
 ;   Y = value, hi-byte
 ;
 ;-------------------------------------------------------------------------------
-        ; push the stack down twice first to check for overflow
-        .lowerStack2
-        ; write the lo-byte first at the new top-most position
+        dex                     ; push stack down,
+        dex                     ; twice
+        bmi err_stack_overflow  ; check for overflow
+
+        ; write the lo-byte first,
+        ; at the new top-most position
         sta zp_stack+0, x
         ; write the hi-byte underneath that
 .IFDEF  CPU_65C02
@@ -262,7 +155,7 @@ push_token:
 ;
 ;-------------------------------------------------------------------------------
         dex                     ; lower the stack
-        bmi @err                ; if underflow, error
+        bmi err_stack_underflow ; if underflow, error
 
         ; define the token!
 .IFDEF  CPU_65C02
@@ -275,7 +168,116 @@ push_token:
 .ENDIF
         rts
 
-@err:   jmp err_stack_overflow
+
+; a stack over/under-flow error:
+; (we detect which here)
+;
+err_stack:
+        ;-----------------------------------------------------------------------
+        ; transferring X (stack index) to A
+        ; gives us a bit-check for free (zero/sign)
+        txa
+        ; since the stack index works backwards (for this implementation),
+        ; the very bottom of the stack will be index 0. if the stack index
+        ; has gone negative, we have overflow
+        bmi err_stack_overflow
+
+        ; has the stack underflowed?
+        ; this is dependent on the stack's size
+        cpx # PL_STACK_SIZE+1
+        bcs err_stack_underflow
+
+        ; implementation error!
+        ;
+        ; a stack error has been initiated, but the stack
+        ; is neither under- nor over-flowed
+        kil
+
+err_stack_overflow:
+        ;-----------------------------------------------------------------------
+        lda # 1
+        jmp sys_error
+
+err_stack_underflow:
+        ;-----------------------------------------------------------------------
+        lda # 0
+        jmp sys_error
+
+err_type:
+        ;-----------------------------------------------------------------------
+        ;;lda zp_type, x
+        cmp # TOKEN_STK
+        beq err_stack
+
+        lda # 2
+        jmp sys_error
+
+
+get_type_byte:
+;===============================================================================
+; get the data-type of the item atop the stack, but error if it is not a byte.
+; (stack under/over-flow automatically raises an error)
+;
+; out:  A       data-type (byte)
+;
+;-------------------------------------------------------------------------------
+        ; read the data-type without checking stack position;
+        ; error tokens exist at the bytes just outside the data-type stack
+        ; to easily tell us of stack under/overflow without checking the index
+        ;
+        lda zp_type, x
+        bne err_type            ; error if not a byte
+        rts                     ; is a byte, return
+
+get_type_word:
+;===============================================================================
+; get the data-type of the item atop the stack, but error if it is not a word.
+; (stack under/over-flow automatically raises an error)
+;
+; out:  A       data-type (word)
+;
+;-------------------------------------------------------------------------------
+        ; read the data-type without checking stack position;
+        ; error tokens exist at the bytes just outside the data-type stack
+        ; to easily tell us of stack under/overflow without checking the index
+        ;
+        lda zp_type, x
+        bpl err_type            ; not a word?
+        rts                     ; is a word, return
+
+
+;;get_type_token:
+;;;=============================================================================
+;;; get the data-type of the item atop the stack, but error if it is not a token.
+;;; (stack under/over-flow automatically raises an error)
+;;;
+;;; NOTE: tokens are intended to be opaque, implementation-specific values,
+;;;       and should *not* be exposed to Pling programs. that is, Pling programs
+;;;       can compare tokens, but cannot get at their date-type constant value
+;;;       (e.g. EOD might be 5 in one implementation, but 128 in another)
+;;;
+;;;-----------------------------------------------------------------------------
+;;        ; read the data-type without checking stack position;
+;;        ; error tokens exist at the bytes just outside the data-type stack
+;;        ; to easily tell us of stack under/overflow without checking the index
+;;        ;
+;;        ; TODO: what should the fast-path for this?
+;;        ;       if we are expecting a token, that should be fastest,
+;;        ;       but if we're doing error-checking for results that will 99%
+;;        ;       of the time be OK, we want the byte to be the fastest
+;;        ;
+;;        lda zp_type, x
+;;        beq err_type            ; a byte, unwanted
+;;        bmi err_type            ; a word, unwanted
+;;
+;;        ; the stack markers are always an error,
+;;        ; even though we're looking for tokens!
+;;        cmp # TOKEN_STK
+;;        beq err_stack
+;;        ; when you have eliminated the impossible,
+;;        ; whatever remains, however improbable,
+;;        ; must be a token
+;;        rts
 
 
 peek_byte:
@@ -283,9 +285,11 @@ peek_byte:
 ; reads the byte value atop the stack, checking underflow and data-type
 ;
 ;-------------------------------------------------------------------------------
-        ; get the data-type of the item atop the stack, and error if it
-        ; is not a byte (this will do an optimised underflow check for us)
-        jsr get_type_byte
+        ; read the data-type without checking stack position;
+        ; error tokens exist at the bytes just outside the data-type stack
+        ; to easily tell us of stack under/overflow without checking the index
+        lda zp_type, x
+        bne err_type
         ; all valid, get the byte
         lda zp_stack, x
         rts
@@ -296,9 +300,8 @@ peek_word:
 ; reads the word value atop the stack, checking underflow and data-type
 ;
 ;-------------------------------------------------------------------------------
-        ; get the data-type of the item atop the stack, and error if it
-        ; is not a word (this will do an optimised underflow check for us)
-        jsr get_type_byte
+        lda zp_type, x
+        bpl err_type            ; not a word!
 
 .IFDEF  CPU_65C02
         lda zp_stack+0, x
@@ -316,31 +319,29 @@ pop_int:
 ; pops the top item from the stack, be it a byte or word. if a byte is popped,
 ; the Y register is set to zero, so as to automatically form a word, if desired
 ;
-; in:   A       word lo-byte, or single byte
+; out:  A       word lo-byte, or single byte
 ;       Y       word hi-byte, or zero if byte
 ;       c       0 for a byte, 1 for a word
 ;
-; out:  A       clobbered
-;       X, Y    preserved
-;
-; TODO: what to do with error tokens?
 ;-------------------------------------------------------------------------------
-        ; get the data-type of the item atop the stack
-        ; (this will do an optimised underflow check for us)
-        jsr get_type
-        ; is the top-most item a byte or a word?
-        cmp # 0                 ; return c=1 for word, and c=0 for byte!
-        bmi +
+        ; get the data-type from the current position in the stack:
+        ;
+        ; micro-optimisation: because any token will be considered an error
+        ; for the purposes of this routine, we do not need to check ahead of
+        ; time for stack under/over-flow -- the under/over-flowed positions
+        ; in the stack already contain a special token for this purpose
+        ;
+        lda zp_type, x
+        
+        ; we want bytes to be the fastest, so even though the branch-taken
+        ; comparison takes an extra cycle, it is faster than going through
+        ; the additional comparisons that follow, i.e. 3 cycles for one BEQ,
+        ; is faster than 4 cycles for skipping BEQ+BPL
+        ; 
+        beq @byte               ; pop a byte
+        bpl err_type            ; it's a token -- handle error
 
-        ; read a byte:
-        ;-----------------------------------------------------------------------
-        ; TODO: check for tokens
-        lda zp_stack, x         ; read the byte atop the stack
-        ldy # 0                 ; set Y to 0 to form a word
-        inx                     ; raise the stack level
-        rts
-
-+       ; read a word:
+@word:  ; read a word:
         ;-----------------------------------------------------------------------
 .IFDEF  CPU_65C02
         lda zp_stack+0, x
@@ -352,21 +353,30 @@ pop_int:
 .ENDIF  ; raise the stack twice
         inx
         inx
+        sec                     ; return c=1 for byte
         rts
 
--       jmp err_stack_underflow
+        ; read a byte:
+        ;-----------------------------------------------------------------------
+@byte:  lda zp_stack, x         ; read the byte atop the stack
+        ldy # 0                 ; set Y to 0 to form a word
+        inx                     ; raise the stack level
+        clc                     ; return c=0 for byte
+        rts
 
 
 pop_byte:
 ;===============================================================================
 ;
 ;-------------------------------------------------------------------------------
-        ; get the data-type of the item atop the stack, and error if it
-        ; is not a byte (this will do an optimised underflow check for us)
-        jsr get_type_byte
+        ; read the data-type without checking stack position;
+        ; error tokens exist at the bytes just outside the data-type stack
+        ; to easily tell us of stack under/overflow without checking the index
+        ;
+        lda zp_type, x
+        bne err_type            ; any non-byte type is an error!
 
-        ;-----------------------------------------------------------------------
-@pop:   lda zp_stack, x         ; read the byte
+        lda zp_stack, x         ; read the byte
         inx                     ; raise the stack
         rts
 
@@ -375,9 +385,12 @@ pop_word:
 ;===============================================================================
 ;
 ;-------------------------------------------------------------------------------
-        ; get the data-type of the item atop the stack, and error if it
-        ; is not a word (this will do an optimised underflow check for us)
-        jsr get_type_word
+        ; read the data-type without checking stack position;
+        ; error tokens exist at the bytes just outside the data-type stack
+        ; to easily tell us of stack under/overflow without checking the index
+        ;
+        lda zp_type, x
+        bpl err_type            ; any non-word type is an error!
 
 .IFDEF  CPU_65C02
         lda zp_stack+0, x       ; word lo-byte
@@ -402,21 +415,27 @@ pop_if_token:
 ;       A       the token's value, zero for no-token
 ;
 ;-------------------------------------------------------------------------------
-        ; get the data-type of the item atop the stack
-        ; (this will do an optimised underflow check for us)
-        jsr get_type
-        ; is it a token-type?
-        beq +                   ; it's a byte, ignore
-        bmi +                   ; it's a word, ignore
-
-        ; when you have eliminated the impossible, whatever remains,
-        ; however improbable, must be a token
+        ; read the data-type without checking stack position;
+        ; error tokens exist at the bytes just outside the data-type stack
+        ; to easily tell us of stack under/overflow without checking the index
         ;
+        lda zp_type, x
+        ; is it a token-type?
+        beq @skip               ; it's a byte, ignore
+        bmi @skip               ; it's a word, ignore
+
+        cmp # TOKEN_STK
+        beq err_stack
+
+        ; when you have eliminated the impossible,
+        ; whatever remains, however improbable,
+        ; must be a token
         tay                     ; move the token's type to the Y register
         lda zp_stack, x         ; read the token's value
         rts
 
-+       lda # 0                 ; return A = 0
+        ;-----------------------------------------------------------------------
+@skip:  lda # 0                 ; return A = 0
         tay                     ; return Y = 0
         rts
 

@@ -353,6 +353,7 @@ term_parse_number:
         ; ASCII code is not a number!
 +       jmp err_parse
 
+        ; TODO: hate this
         ;-----------------------------------------------------------------------
 @hex:   lda # 16
         sta zp_int_base
