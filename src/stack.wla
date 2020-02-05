@@ -450,5 +450,5 @@ pop_token_EOD:
         ; the return value will be non-zero if it is a token,
         ; but we only care if it's specifically EOD; return
         ; zero / non-zero accordingly
-        cmp # TOKEN_EOD
+        cpy # TOKEN_EOD
         rts

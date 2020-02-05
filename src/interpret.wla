@@ -2,7 +2,7 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; interpret.wla : string & number parsing
+; interpret.wla : code & number parsing
 ;===============================================================================
 ; label:                    stack:              term-name:
 ;-------------------------------------------------------------------------------
@@ -47,8 +47,7 @@ term_line_input:
 .ENDIF
         lda #< $0200
         ldy #> $0200
-        jsr push_word
-        jmp term_interpret
+        jmp push_word
 
 
 ; interpret ( w -- )
@@ -73,9 +72,11 @@ term_interpret:
 
         ; find the term in the terminology
         jsr term_find_term
-        
+
         jsr pop_token_EOD       ; did we find the term?
         beq @eod                ; handle term not found...
+
+        ;;jsr term_print_dec
 
         ; execute it!
         ;;jsr term_exec
@@ -88,11 +89,8 @@ term_interpret:
         rts
 
         ; TODO: if not found, parse as a number
-@eod:   
--       inc VIC_BORDER
-        jmp -
-        kil
-        .ASC "EOD"
+@eod:   jmp err_parse
+
 
 ; read-term ( w -- w )
 ;===============================================================================
@@ -206,6 +204,7 @@ term_read_term:
 .ENDIF
         rts
 
+
 ; find-term ( -- w | EOD )
 ;===============================================================================
 ; searches the terminology for a term matching the name currently
@@ -272,16 +271,26 @@ term_find_term:
         ; names do not match -- move to the next term in the chain
         bne @next
 
+        ; return execution address:
         ;-----------------------------------------------------------------------
-@done   kil
-        iny
-        tya
-        clc 
+        ; the term has been found, but now we need to find the point where
+        ; the machine code begins; this begins after the header, and since
+        ; the Y register should be positioned after the term's name string,
+        ; we can use Y to move the address forward to the code
+        ;
+@done:  iny                     ; step over the null-terminator
+        tya                     ; Y = length of name+null
+        clc                     ; begin math: 
+        adc zp_addr+LO          ; add to the term's base address
+        bcc +                   ; ripple?
+        inc zp_addr+HI          ; increase hi-byte
 
-        lda zp_addr+LO
-        ldy zp_addr+HI
+        ; note that A is already the address lo-byte,
+        ; now load the hi-byte in Y and push to the stack
++       ldy zp_addr+HI
         jmp push_word
 
+        ; not found -- return EOD
         ;-----------------------------------------------------------------------
         ; instead of pushing $0000, we push an End Of Data token to avoid
         ; users accidentally trying to execute address $0000! attempting
@@ -290,6 +299,7 @@ term_find_term:
 @eod:   lda # 0                 ; the token's value is not important
         ldy # TOKEN_EOD         ; make it a token, not a regular byte
         jmp push_token
+
 
 ; parse-number ( -- b | w )
 ;===============================================================================
@@ -417,6 +427,7 @@ term_parse_number:
 
         ;-----------------------------------------------------------------------
 @done:  rts
+
 
 ;;; new-term ( -- )
 ;;;=============================================================================

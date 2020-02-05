@@ -52,9 +52,15 @@ term_drop:
         ;-----------------------------------------------------------------------
         ; is the top-most item a byte or a word?
         lda zp_type, x
-        beq +
-        inx                     ; drop word
-+       inx                     ; drop byte
+        beq @byte
+        bmi @word
+
+        ; TODO: handle stack under/over-flow token
+        inc VIC_BORDER
+        jmp @byte
+
+@word   inx                     ; drop word
+@byte   inx                     ; drop byte
         rts
 
 ; exec ( w -- )

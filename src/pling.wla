@@ -117,8 +117,9 @@ pling_init:
         jsr push_byte
         jsr term_print_hex
         jsr term_print_newline
-
+        
 -       jsr term_line_input
+        jsr term_interpret
 
         lda # 13
         jsr sys_print
