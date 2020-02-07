@@ -282,7 +282,10 @@ get_type_word:
 
 peek_byte:
 ;===============================================================================
-; reads the byte value atop the stack, checking underflow and data-type
+; reads the byte value atop the stack, checking underflow and data-type.
+;
+; out:  A       byte value
+;       X, Y    (preserved)
 ;
 ;-------------------------------------------------------------------------------
         ; read the data-type without checking stack position;
@@ -298,6 +301,9 @@ peek_byte:
 peek_word:
 ;===============================================================================
 ; reads the word value atop the stack, checking underflow and data-type
+;
+; out:  A       byte value
+;       X, Y    (preserved)
 ;
 ;-------------------------------------------------------------------------------
         lda zp_type, x

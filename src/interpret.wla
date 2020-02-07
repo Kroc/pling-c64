@@ -68,7 +68,8 @@ term_interpret:
         ; jump straight to the routine for reading a term from input,
         ; the same parameters apply
         jsr term_read_term
-        ; TODO: error handling
+
+        ; TODO: error handling / end-of-data ends interpret
 
         ; find the term in the terminology
         jsr term_find_term
@@ -76,7 +77,7 @@ term_interpret:
         jsr pop_token_EOD       ; did we find the term?
         beq @eod                ; handle term not found...
 
-        ;;jsr term_print_dec
+        jsr term_print_dec
 
         ; execute it!
         ;;jsr term_exec
@@ -317,6 +318,7 @@ term_find_term:
 ; TODO: ASCII character parsing, e.g. " 'a' "
 ; TODO: implement negative numbers
 ; TODO: allow negative hexadecimal / binary?
+; TODO: only single decimals are output as bytes so far
 ;
 ; this routine was roughly adapted from DurexForth's number parser:
 ; https://github.com/jkotlinski/durexforth/blob/master/interpreter.asm
@@ -326,7 +328,7 @@ term_find_term:
 term_parse_number:
         ;-----------------------------------------------------------------------
         ldy pl_term_name        ; how many characters?
-        beq @err                ; sanity check should NOT be zero!
+        beq @err                ; sanity check, should NOT be zero!
         dey                     ; 1-character only?
         beq @single             ; optimisation for single character
 
@@ -399,11 +401,11 @@ term_parse_number:
         ; get an ASCII character
 @loop:  lda pl_term_name+2, y
 
-        ; convert to upper-case: note that Pling operates with ASCII
-        ; internally; in ASCII, the capital letters follow the numerals,
-        ; not the lower-case letters as is with PETSCII!
-        ; TODO: do this only for hexadecimal?
-        jsr term_asc2upper
+        ; convert to upper-case:
+        ; note that Pling operates with ASCII internally; in ASCII,
+        ; the capital letters follow the numerals, not the lower-case
+        ; letters as is with PETSCII!
+        jsr term_asc2upper      ; TODO: do this only for hexadecimal?
 
         ; check for ASCII "0"-"9"
         sec

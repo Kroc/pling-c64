@@ -18,7 +18,7 @@ SET VICE="bin\vice\x64.exe"
 
 IF ERRORLEVEL 1 EXIT /B 1
 
-%WLA_LINK% -v -t CBMPRG -i -S ^
+%WLA_LINK% -v -t CBMPRG -S ^
     -b "link_c64.ini" ^
        "build\pling_c64.prg"
 

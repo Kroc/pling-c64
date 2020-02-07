@@ -40,9 +40,9 @@
 
 .MACRO  .term   ARGS    str
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        .WORD   prev_term
-        .REDEF  prev_term       CADDR - 2
-        .BYTE   str.length, str
+__\.\@: .WORD   prev_term
+        .REDEF  prev_term       __\.\@
+        .BYTE   str.length, str, 0
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM
 
@@ -65,9 +65,10 @@ pling_init:
         sta zp_type_und
         sta zp_type_ovr
 
-        ; the last term to be defined:
-        lda #< term_last_term
-        ldy #> term_last_term
+        ; set the last term to have be defined:
+        ; (this is the address of the term's header, not its code)
+        lda #< _last
+        ldy #> _last
         sta zp_last+LO
         sty zp_last+HI
         
@@ -118,6 +119,22 @@ pling_init:
         jsr term_print_hex
         jsr term_print_newline
         
+        ;;lda # %10101010
+        ;;jsr push_byte
+        ;;jsr term_print_bin
+        ;;jsr term_print_newline
+        ;;
+        ;;lda # %01010101
+        ;;jsr push_byte
+        ;;jsr term_print_bin
+        ;;jsr term_print_newline
+
+        lda # %10001110
+        ldy # %11100011
+        jsr push_word
+        jsr term_print_bin
+        jsr term_print_newline
+
 -       jsr term_line_input
         jsr term_interpret
 
@@ -153,6 +170,7 @@ pling_init:
 ; used by the interpreter to begin the search for term names
 ;
 ;-------------------------------------------------------------------------------
+_last:
         .term   "last-term"
 
 term_last_term:

@@ -10,6 +10,7 @@
 ; term_print:               b --                "."
 ; term_print_dec:           i --                ".dec"
 ; term_print_hex:           i --                ".hex"
+; term_print_bin:           i --                ".bin"
 ;
 
 ; .n ( -- )
@@ -172,3 +173,77 @@ term_print_hex:
         cli                     ; re-enable interrupts
 .ENDIF
         jmp sys_emit
+
+
+; .bin ( i -- )
+;===============================================================================
+; print the integer atop the stack as a binary string:
+;
+; in:   int     integer (byte or word) to print as binary
+;
+;-------------------------------------------------------------------------------
+        .term   ".bin"
+
+term_print_bin:
+        ;-----------------------------------------------------------------------
+        ; check the data-type of the item atop the stack
+        lda zp_type, x
+        bmi @word
+        beq @byte
+
+        jmp err_type
+
+        ; print the hi-byte first by moving to the
+        ; 2nd byte in the stack and printing that
+        ; TODO: a more efficient way to do this?
+@word:  inx
+        jsr @byte
+        dex
+        dex
+
+@byte:  ldy # '0' >> 1
+        
+        asl zp_stack, x
+        tya
+        rol
+        jsr sys_emit            ; print bit 7
+        
+        asl zp_stack, x
+        tya
+        rol
+        jsr sys_emit            ; print bit 6
+
+        asl zp_stack, x
+        tya
+        rol
+        jsr sys_emit            ; print bit 5
+
+        asl zp_stack, x
+        tya
+        rol
+        jsr sys_emit            ; print bit 4
+
+        asl zp_stack, x
+        tya
+        rol
+        jsr sys_emit            ; print bit 3
+
+        asl zp_stack, x
+        tya
+        rol
+        jsr sys_emit            ; print bit 2
+
+        asl zp_stack, x
+        tya
+        rol
+        jsr sys_emit            ; print bit 1
+
+        asl zp_stack, x
+        tya
+        rol
+        jsr sys_emit            ; print bit 0
+
+        ; once the byte has been printed,
+        ; we discard it by raising the stack
+        inx
+        rts
