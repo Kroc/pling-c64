@@ -354,11 +354,13 @@ term_parse_number:
         beq @err                ; sanity check: should NOT be zero!
         dey                     ; 1-character only?
         beq @single             ; optimisation for single character
-
+        
         ; make room on top of the stack for our working number
         jsr term_00
 
         ; check the first character for hex `$` or `%` sigil
+        ;
+        ldy # 0                 ; begin with the first character
         lda pl_term_name
         cmp # '$'
         beq @hex
@@ -390,12 +392,12 @@ term_parse_number:
         ;-----------------------------------------------------------------------
 @hex:   lda # 16
         sta zp_int_base
-        iny
+        iny                     ; skip over the "$" sigil
         bne @loop
 
 @bin:   lda # 2
         sta zp_int_base
-        iny
+        iny                     ; skip over the "%" sigil
         bne @loop
 
         ;=======================================================================
@@ -423,12 +425,14 @@ term_parse_number:
         ;-----------------------------------------------------------------------
         ; get an ASCII character
 @loop:  lda pl_term_name, y
-
+        beq @done               ; null terminator? finish up
+        
         ; convert to upper-case:
+        ; TODO: do this only for hexadecimal?
         ; note that Pling operates with ASCII internally; in ASCII,
         ; the capital letters follow the numerals, not the lower-case
         ; letters as is with PETSCII!
-        jsr term_asc2upper      ; TODO: do this only for hexadecimal?
+        jsr asc2upper
 
         ; check for ASCII "0"-"9"
         sec
@@ -440,9 +444,9 @@ term_parse_number:
         ; established logically that the ASCII code is > "9")
         sbc # 7
         
-        ; digit is 0-9 and "A" (10), or above, including > "F".
-        ; check if the value is within the base range; if the base is 16
-        ; then ASCII codes that were > "F" will not pass
+        ; digit is 0-9 and "A" (10), or above, including > "F";
+        ; check if the value is within the base range: if the base
+        ; is 16 then ASCII codes that were > "F" will not pass
         ;
 +       cmp zp_int_base         ; is this within the intended base?
         bcc @next               ; if so, process the next digit
@@ -451,7 +455,8 @@ term_parse_number:
 @err:   jmp err_parse
 
         ;-----------------------------------------------------------------------
-@done:  rts
+@done:  kil
+        rts
 
 
 ;;; new-term ( -- )

@@ -22,29 +22,35 @@ term_asc2lower:
         ; no need to pop+push, we'll just rewrite the value atop the stack.
         ; first, peek the byte atop the stack, verifying data-type & underflow
         jsr peek_byte
+        ; the ASCII character code obtained, do the conversion:
+        jsr asc2lower
+        ; update the value already on the stack:
+        ; we've already error-checked with the peek,
+        ; so we don't need to use a routine for it
+        sta zp_stack, x
+        rts
 
-        sec
+; this is the non-stack functionality, which can be called
+; from elsewhere using only the CPU registers
+;
+asc2lower:
+        ;=======================================================================
+        pha                     ; put aside ASCII code before we math it
+        sec                     ; (begin math!)
         sbc # 'A'
         cmp # 26+1
         bcc +
-
-        ; character is not in upper-case range... return as-is.
-        ; the stack still holds the original ASCII value,
-        ; but for convenience we also return the value in A
-        lda zp_stack, x
+        ; character is not in upper-case range,
+        ; return the un-altered ASCII code
+        pla
         rts
-
+        
         ;-----------------------------------------------------------------------
         ; ASCII codes 65-90 ("A"-"Z"), having essentially been rebased
         ; to 0-25, can be converted to lower-case by rebasing again to
         ; ASCII code 97 ("a")
         ;
 +       adc # 'a'               ; (note that logically the carry is clear)
-
-        ; update the value already on the stack:
-        ; we've already error-checked with the peek,
-        ; so we don't need to use a routine for it
-        sta zp_stack, x
         rts
 
 
@@ -60,16 +66,27 @@ term_asc2upper:
         ; no need to pop+push, we'll just rewrite the value atop the stack.
         ; first, peek the byte atop the stack, verifying data-type & underflow
         jsr peek_byte
+        ; the ASCII character code obtained, do the conversion:
+        jsr asc2upper
+        ; update the value already on the stack:
+        ; we've already error-checked with the peek,
+        ; so we don't need to use a routine for it
+        sta zp_stack, x
+        rts
 
-        sec
+; this is the non-stack functionality, which can be called
+; from elsewhere using only the CPU registers
+;
+asc2upper:
+        ;=======================================================================
+        pha                     ; put aside ASCII code before we math it
+        sec                     ; (begin math!)
         sbc # 'a'
         cmp # 26+1
         bcc +
-
-        ; character is not in lower-case range... return as-is.
-        ; the stack still holds the original ASCII value,
-        ; but for convenience we also return the value in A
-        lda zp_stack, x
+        ; character is not in lower-case range,
+        ; return the un-altered ASCII code
+        pla
         rts
 
         ;-----------------------------------------------------------------------
@@ -78,9 +95,4 @@ term_asc2upper:
         ; ASCII code 65 ("A")
         ;
 +       adc # 'A'               ; (note that logically the carry is clear)
-        
-        ; update the value already on the stack:
-        ; we've already error-checked with the peek,
-        ; so we don't need to use a routine for it
-        sta zp_stack, x
         rts
