@@ -242,10 +242,6 @@ term_find_term:
         sta zp_addr+LO
         sty zp_addr+HI
 
-        ;;jsr push_word
-        ;;jsr term_print_hex
-        ;;jsr term_print_newline
-
         ; after this, follows the term's name, the first byte is the length.
         ; read the length from the header:
         ldy # 2                 ; third byte of term header
@@ -257,28 +253,21 @@ term_find_term:
         ; read the back-link address from the term-header
         ;
 @next:  ldy # 0                 ; back-link is the first word of the header,
-        lda [zp_addr], y        ; read lo-byte
-        pha                     ; (put aside)
-        iny                     ; Y=1
         lda [zp_addr], y        ; read hi-byte
 
         ; if back-link address is $0000, then we've reached the end
         ; of the chain -- the term has not been found
         beq @eod
 
+        pha                     ; (put lo-byte aside)
+        iny                     ; Y=1
+        lda [zp_addr], y        ; read hi-byte
+        
         sta zp_addr+HI          ; change the pointer, hi-byte
         pla                     ; (retrieve lo-byte)
         sta zp_addr+LO          ; change the pointer, lo-byte
 
         iny                     ; Y=2
-
-        ;;lda zp_addr+LO
-        ;;ldy zp_addr+HI
-        ;;jsr push_word
-        ;;jsr term_print_hex
-        ;;jsr term_print_newline
-        ;;ldy # 2
-
 
 @len:   lda [zp_addr], y
         ; TODO: error if length of term-name is 0
@@ -327,9 +316,7 @@ term_find_term:
         ; users accidentally trying to execute address $0000! attempting
         ; to read the token as a byte or word will give a data-type error
         ;
-@eod:   pla                     ; even the return stack
-
-        lda # 0                 ; the token's value is not important
+@eod:   lda # 0                 ; the token's value is not important
         ldy # TOKEN_EOD         ; make it a token, not a regular byte
         jmp push_token
 
