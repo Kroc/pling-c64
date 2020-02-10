@@ -418,10 +418,11 @@ term_parse_number:
         ; to effectively move up the digits
         ; TODO: use specific optimisation for decimal:
         ;       <http://6502.org/source/integers/fastx10.htm>
+        .phy
         lda zp_int_base
         jsr push_byte
         jsr term_multiply       ; NOTE: must preserve Y!
-        kil
+        .ply
 
         ;-----------------------------------------------------------------------
 @loop:  lda pl_term_name, y     ; get an ASCII character
@@ -455,8 +456,7 @@ term_parse_number:
 @err:   jmp err_parse
 
         ;-----------------------------------------------------------------------
-@done:  kil
-        rts
+@done:  rts
 
 
 ;;; new-term ( -- )

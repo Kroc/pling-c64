@@ -50,6 +50,7 @@ term_multiply:
         lda # $00
         sta zp_overflow+LO
         sta zp_overflow+HI
+
         ; set binary count to 16 digits
         ldy # 16
 
