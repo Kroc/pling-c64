@@ -106,35 +106,6 @@ pling_init:
         ;;jsr push_word
         ;;jsr term_disk_chain
 
-        lda #< $dead
-        ldy #> $dead
-        jsr push_word
-        jsr term_print_hex
-        lda #< $beef
-        ldy #> $beef
-        jsr push_word
-        jsr term_print_hex
-        lda # $ed
-        jsr push_byte
-        jsr term_print_hex
-        jsr term_print_newline
-        
-        ;;lda # %10101010
-        ;;jsr push_byte
-        ;;jsr term_print_bin
-        ;;jsr term_print_newline
-        ;;
-        ;;lda # %01010101
-        ;;jsr push_byte
-        ;;jsr term_print_bin
-        ;;jsr term_print_newline
-
-        lda # %10001110
-        ldy # %11100011
-        jsr push_word
-        jsr term_print_bin
-        jsr term_print_newline
-
 -       jsr term_line_input
         jsr term_interpret
 
@@ -147,6 +118,7 @@ pling_init:
         jsr sys_print
         lda # '.'
         jsr sys_print
+        jsr term_print_newline
 
         jmp -
 

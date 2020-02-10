@@ -433,8 +433,11 @@ pop_if_token:
 ; stack under/over-flow automatically raises an error,
 ; no action is taken for other data-types
 ;
+; in:   X       stack index
+;
 ; out:  Y       token's data-type, zero for no-token
 ;       A       the token's value, zero for no-token
+;       X       stack-index, updated if token
 ;
 ;-------------------------------------------------------------------------------
         ; read the data-type without checking stack position;
@@ -454,6 +457,7 @@ pop_if_token:
         ; must be a token
         tay                     ; move the token's type to the Y register
         lda zp_stack, x         ; read the token's value
+        inx                     ; raise the stack level
         rts
 
         ;-----------------------------------------------------------------------

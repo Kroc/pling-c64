@@ -27,6 +27,7 @@ term_line_input:
         ;-----------------------------------------------------------------------
         ldy # 0
 
+        ; TODO: move into system-specific code
 -       jsr KERNAL_CHRIN        ; read a character from the keyboard
         cmp # $d                ; is the key RETURN?
         beq +                   ; if yes, quit reading
@@ -37,14 +38,18 @@ term_line_input:
         bne -
 
 +       jsr sys_emit            ; actually print the RETURN (go to next line)
-        
-        ; append a null-terminator
-.IFDEF  CPU_65C02
-        stz $0200, y
-.ELSE   ;6502
-        lda # 0
-        sta $0200, y
-.ENDIF
+
+        ; append a null-terminator:
+        ; (the C64's `KERNAL_CHRIN` does this automatically)
+.IFNDEF SYSTEM_C64
+        ;///////////////////////////////////////////////////////////////////////
+        .IFDEF  CPU_65C02
+                stz $0200, y
+        .ELSE   ;6502
+                lda # 0
+                sta $0200, y
+        .ENDIF
+.ENDIF  ;///////////////////////////////////////////////////////////////////////
         lda #< $0200
         ldy #> $0200
         jmp push_word
@@ -71,12 +76,9 @@ term_interpret:
         ; TODO: error handling / End-Of-Data token ends interpret
         jsr term_drop
         
-        ; find the term in the terminology
+        ; search for the term in the terminology
         jsr term_find_term
-
--       inc VIC_BORDER
-        jmp -
-
+        
         jsr pop_token_EOD       ; did we find the term?
         beq @eod                ; handle term not found...
 
@@ -92,8 +94,12 @@ term_interpret:
 
         rts
 
-        ; TODO: if not found, parse as a number
-@eod:   jmp err_parse
+        ; existing term not found, attempt to parse as a number:
+        ;-----------------------------------------------------------------------
+@eod:   jsr term_parse_number
+        kil
+
+        jmp err_parse
 
 
 ; read-term ( w -- w )
@@ -157,8 +163,8 @@ term_read_term:
         ;-----------------------------------------------------------------------
         ; TODO: limit to 31 characters!
         
-        ; the first byte of the term-name buffer
-        ; is the string length; initialise this
+        ; initialise the string-length we'll be using
+        ; to track the length of the read term-name
 +       ldy # 0
         sty pl_term_len
 
@@ -321,10 +327,10 @@ term_find_term:
         jmp push_token
 
 
-; parse-number ( -- b | w )
+; parse-number ( -- i )
 ;===============================================================================
-; parses the term-name buffer for a number.
-; numbers can be in the format:
+; parses the term-name buffer for a number and pushes a byte or word
+; (as appropriate) to the stack. numbers can be in the format:
 ;
 ;        128    : decimal integers. <256 = byte, >255 = word
 ;         -1    : (negatives allowed)
@@ -346,8 +352,8 @@ term_find_term:
 
 term_parse_number:
         ;-----------------------------------------------------------------------
-        ldy pl_term_name        ; how many characters?
-        beq @err                ; sanity check, should NOT be zero!
+        ldy pl_term_len         ; how many characters?
+        beq @err                ; sanity check: should NOT be zero!
         dey                     ; 1-character only?
         beq @single             ; optimisation for single character
 
@@ -355,14 +361,13 @@ term_parse_number:
         jsr term_00
 
         ; check the first character for hex `$` or `%` sigil
-        lda pl_term_name+1
+        lda pl_term_name
         cmp # '$'
         beq @hex
         cmp # '%'
         beq @bin
 
-        ; parse decimal string
-        ;-----------------------------------------------------------------------
+        ; parse decimal string:
         lda # 10                ; set base 10
         sta zp_int_base
         bne @loop               ; (always branches)
@@ -371,7 +376,7 @@ term_parse_number:
         ;-----------------------------------------------------------------------
         ; a single character can only be a valid number if it's 0-9
         ;
-@single lda pl_term_name+1
+@single lda pl_term_name
         sec
         sbc # '0'               ; ASCI "0" or above?
         cmp # 10                ; no higher than 9?
@@ -403,7 +408,7 @@ term_parse_number:
         inc zp_stack+1, x
         ; are there more digits to process?
 +       iny                     ; move to next character
-        cpy pl_term_name        ; reached length of term?
+        cpy pl_term_len         ; reached length of term?
         bcs @done
 
         .phy
@@ -419,7 +424,7 @@ term_parse_number:
         .ply
         ;-----------------------------------------------------------------------
         ; get an ASCII character
-@loop:  lda pl_term_name+2, y
+@loop:  lda pl_term_name, y
 
         ; convert to upper-case:
         ; note that Pling operates with ASCII internally; in ASCII,

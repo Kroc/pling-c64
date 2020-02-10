@@ -11,18 +11,18 @@
 ; all items are consumed
 ;
 ;-------------------------------------------------------------------------------
-        .term   "!"
-
-term_set:
-        ;-----------------------------------------------------------------------
-        lda zp_stack+2, x       ; get value to store (3rd byte)
-        sta [zp_stack, x]       ; store via the address on the stack
-
-        inx                     ; consume...
-        inx                     ; three...
-        inx                     ; bytes
-
-        rts
+;;        .term   "!"
+;;
+;;term_set:
+;;        ;---------------------------------------------------------------------
+;;        lda zp_stack+2, x       ; get value to store (3rd byte)
+;;        sta [zp_stack, x]       ; store via the address on the stack
+;;
+;;        inx                     ; consume...
+;;        inx                     ; three...
+;;        inx                     ; bytes
+;;
+;;        rts
 
 ; @ ( w -- b )
 ;===============================================================================
@@ -30,15 +30,15 @@ term_set:
 ; and pushes the value to the stack
 ;
 ;-------------------------------------------------------------------------------
-        .term   "@"
-
-term_get:
-        ;-----------------------------------------------------------------------
-        lda [zp_stack, x]
-        inx
-        sta zp_stack, x
-
-        rts
+;;        .term   "@"
+;;
+;;term_get:
+;;        ;---------------------------------------------------------------------
+;;        lda [zp_stack, x]
+;;        inx
+;;        sta zp_stack, x
+;;
+;;        rts
 
 ; drop ( x -- )
 ;===============================================================================
@@ -59,8 +59,8 @@ term_drop:
         inc VIC_BORDER
         jmp @byte
 
-@word   inx                     ; drop word
-@byte   inx                     ; drop byte
+@word:  inx                     ; drop word
+@byte:  inx                     ; drop byte
         rts
 
 ; exec ( w -- )
