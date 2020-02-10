@@ -73,7 +73,7 @@ term_interpret:
         
         ; find the term in the terminology
         jsr term_find_term
-        
+
 -       inc VIC_BORDER
         jmp -
 
@@ -247,8 +247,8 @@ term_find_term:
         ;;jsr term_print_newline
 
         ; after this, follows the term's name, the first byte is the length.
-        ; read the length from the header: (third byte)
-        ldy # 2
+        ; read the length from the header:
+        ldy # 2                 ; third byte of term header
         bne @len                ; (always branches)
 
         ; (this is a post-loop fall-through)
@@ -278,6 +278,7 @@ term_find_term:
         ;;jsr term_print_hex
         ;;jsr term_print_newline
         ;;ldy # 2
+
 
 @len:   lda [zp_addr], y
         ; TODO: error if length of term-name is 0
@@ -326,7 +327,9 @@ term_find_term:
         ; users accidentally trying to execute address $0000! attempting
         ; to read the token as a byte or word will give a data-type error
         ;
-@eod:   lda # 0                 ; the token's value is not important
+@eod:   pla                     ; even the return stack
+
+        lda # 0                 ; the token's value is not important
         ldy # TOKEN_EOD         ; make it a token, not a regular byte
         jmp push_token
 
