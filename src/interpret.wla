@@ -40,16 +40,12 @@ term_line_input:
 +       jsr sys_emit            ; actually print the RETURN (go to next line)
 
         ; append a null-terminator:
-        ; (the C64's `KERNAL_CHRIN` does this automatically)
-.IFNDEF SYSTEM_C64
-        ;///////////////////////////////////////////////////////////////////////
-        .IFDEF  CPU_65C02
-                stz $0200, y
-        .ELSE   ;6502
-                lda # 0
-                sta $0200, y
-        .ENDIF
-.ENDIF  ;///////////////////////////////////////////////////////////////////////
+.IFDEF  CPU_65C02
+        stz $0200, y
+.ELSE   ;6502
+        lda # 0
+        sta $0200, y
+.ENDIF
         lda #< $0200
         ldy #> $0200
         jmp push_word
@@ -451,7 +447,7 @@ term_parse_number:
         ;
 +       cmp zp_int_base         ; is this within the intended base?
         bcc @next               ; if so, process the next digit
-
+        
         ; fall through if base was incorrect for the size of the digit
 @err:   jmp err_parse
 
