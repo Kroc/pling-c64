@@ -97,9 +97,7 @@ term_interpret:
         ; existing term not found, attempt to parse as a number:
         ;-----------------------------------------------------------------------
 @eod:   jsr term_parse_number
-        kil
-
-        jmp err_parse
+        jmp term_print_dec
 
 
 ; read-term ( w -- w )
@@ -289,7 +287,7 @@ term_find_term:
         ;-----------------------------------------------------------------------
         ; walk along the bytes of the two strings and compare each letter:
 -       iny
-        lda pl_term_name, y
+        lda pl_term_name-3, y   ; (offsets are different, so adjust)
         beq @done               ; end of the string, word matches!
         cmp [zp_addr], y        ; (this is so cool you can do this)   
         beq -                   ; letters, match, keep searching
