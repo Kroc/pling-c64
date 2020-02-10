@@ -74,17 +74,18 @@ term_exec:
         ;-----------------------------------------------------------------------
         ; we must reduce the stack by 2 bytes *before* we jump!
         ; (check for stack underflow before jumping)
+        ; TODO: data-type check!
         .raiseStack2
 
 .IFDEF  CPU_65C02
         ; 65C02: do a jump directly from the data stack,
-        ; with +2 to compensate for already having popped the stack
-        jmp [zp_stack+2, x]
+        ; with -2 to compensate for already having popped the stack
+        jmp [zp_stack-2, x]
 
 .ELSE   ; 6502:
-        lda zp_stack+2, x
+        lda zp_stack-2, x
         sta zp_addr+LO
-        lda zp_stack+3, x
+        lda zp_stack-1, x
         sta zp_addr+HI
         jmp [zp_addr]
 .ENDIF

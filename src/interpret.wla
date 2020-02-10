@@ -13,6 +13,7 @@
 ; term_parse_number:          -- b | w          "parse-number"
 ;
 
+
 ; line-input ( -- )
 ;===============================================================================
 ; wait for the user to type a line of text:
@@ -74,26 +75,16 @@ term_interpret:
         
         ; search for the term in the terminology
         jsr term_find_term
-        
+
         jsr pop_token_EOD       ; did we find the term?
         beq @eod                ; handle term not found...
 
-        jsr term_print_dec
-
         ; execute it!
-        ;;jsr term_exec
-
--       inc VIC_BORDER
-        jmp -
-        kil
-        .ASC "execute token"
-
-        rts
+        jmp term_exec
 
         ; existing term not found, attempt to parse as a number:
         ;-----------------------------------------------------------------------
-@eod:   jsr term_parse_number
-        jmp term_print_dec
+@eod:   jmp term_parse_number
 
 
 ; read-term ( w -- w )
@@ -254,7 +245,7 @@ term_find_term:
         ;
 @next:  ldy # 0                 ; back-link is the first word of the header,
         lda [zp_addr], y        ; read hi-byte
-
+        
         ; if back-link address is $0000, then we've reached the end
         ; of the chain -- the term has not been found
         beq @eod
@@ -287,7 +278,7 @@ term_find_term:
         beq @done               ; end of the string, word matches!
         cmp [zp_addr], y        ; (this is so cool you can do this)   
         beq -                   ; letters, match, keep searching
-
+        
         ; names do not match -- move to the next term in the chain
         bne @next
 

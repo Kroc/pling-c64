@@ -18,3 +18,23 @@ sys_print:
         ; TODO: convert ASCII to pet
 sys_emit:
         jmp KERNAL_CHROUT
+
+
+; this is the routine that prints "OK" when the interpretter has processed
+; and executed its input
+;
+; TODO: should this be a part of the console/IDE, and not the runtime?
+;===============================================================================
+sys_ok:
+        ;-----------------------------------------------------------------------
+        ; TODO: C64 shared print-string routine
+        ldy # 0
+-       lda @ok, y
+        beq +
+        jsr KERNAL_CHROUT
+        iny
+        bne -
+
++       rts
+
+@ok:    .ASC    13, $9e, $12, "ok.", $92, $05, 13, 0

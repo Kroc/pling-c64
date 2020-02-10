@@ -16,9 +16,9 @@ sys_init:
         sta VIC_BACKGROUND
 
 .DEF    @str    $0e, $93, $9e
-.REDEF  @str    @str, 13, ">!< Pling! by Kroc Camen"
-.REDEF  @str    @str, 13,"    <github.com/Kroc/pling>"
-.REDEF  @str    @str, 13, "    built: ", WLA_TIME
+.REDEF  @str    @str, 13, ">!< Pling! C64 v0.0"
+.REDEF  @str    @str, 13, "    Kroc Camen <github.com/Kroc/pling>"
+.REDEF  @str    @str, 13, "    built: ", WLA_TIME, $05
 .REDEF  @str    @str, 13, 13
 
         ldy # 0

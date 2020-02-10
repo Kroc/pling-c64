@@ -42,7 +42,8 @@
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 __\.\@: .WORD   prev_term
         .REDEF  prev_term       __\.\@
-        .BYTE   str.length, str, 0
+        ; TODO: should term names be stored as ASCII or PETSCII?
+        .ASC    str.length, str, 0
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM
 
@@ -99,28 +100,13 @@ pling_init:
         ; unless backed up / restored by a routine
         ldx # PL_STACK_SIZE
 
-        ;;lda # 4
-        ;;jsr push_byte
-        ;;lda #< @test
-        ;;ldy #> @test
-        ;;jsr push_word
-        ;;jsr term_disk_chain
-
--       jsr term_line_input
+        ; main Read, Exceute, Print Loop:
+        ;=======================================================================
+@repl   jsr term_line_input
         jsr term_interpret
+        jsr sys_ok
 
-        lda # 13
-        jsr sys_print
-        jsr sys_print
-        lda # 'O'
-        jsr sys_print
-        lda # 'K'
-        jsr sys_print
-        lda # '.'
-        jsr sys_print
-        jsr term_print_newline
-
-        jmp -
+        jmp @repl
 
 ;;@test:  .ASC    "test", 0
 
