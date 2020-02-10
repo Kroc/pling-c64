@@ -2,14 +2,30 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; c64_zp.wla : Pling zero-page layout for C64
+; c64_mem.wla : memory layout for C64
 ;===============================================================================
+
+; Pling! memory map:
+; (C64 disk version)
+;
+;  $0 $0800    ?        $4000           $8000            $C000    $E000    $FFFF
+;  +--+--------+------------------------+--------------------+----+--------+
+;  |  | PLING! | USER CODE              | USER HEAP          | IO | DSKBUF |
+;  +--+--------+------------------------+--------------------+----+--------+
+;       ^        ^ compiled               ^ program heap            ^ disk
+;       runtime    pling code               (moveable)                buffer
+;
+.DEF    pl_screen       $0400   ; screen-RAM
+.DEF    pl_code         $0800   ; user-space starting address
+.DEF    pl_heap         $8000   ; user-heap starting address
+.DEF    pl_disk         $e000   ; disk-buffer space
+
+;-------------------------------------------------------------------------------
 ; if we want to make use of the built in functions of the KERNAL, we have
 ; to pick our zero-page locations very, very carefully. finding enough
 ; contiguous space for the stacks is the most difficult, so we do not
 ; rely upon any auto-numbering to pick zero-page addresses for us
 ;
-;-------------------------------------------------------------------------------
 ; a temporary address available for indirect addressing
 .DEF    zp_addr         $02
 ; a temporary value available for conversions

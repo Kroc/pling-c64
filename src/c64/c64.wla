@@ -7,23 +7,7 @@
 .INC    "c64/hardware/c64.wla"
 .INC    "c64/c64_pet.wla"
 
-; memory map:
-; (disk version)
-;
-;  $0 $0800    ?        $4000           $8000            $C000    $E000    $FFFF
-;  +--+--------+------------------------+--------------------+----+--------+
-;  |  | PLING! | USER CODE              | USER HEAP          | IO | DSKBUF |
-;  +--+--------+------------------------+--------------------+----+--------+
-;       ^        ^ compiled               ^ program heap            ^ disk
-;       runtime    pling code               (moveable)                buffer
-;
-
-.INC    "c64/c64_zp.wla"
-
-.DEF    pl_screen       $0400
-.DEF    pl_code         $0800
-.DEF    pl_heap         $8000
-.DEF    pl_disk         $e000
+.INC    "c64/c64_mem.wla"
 
 .INC    "c64/c64_init.wla"
 .INC    "c64/c64_err.wla"
