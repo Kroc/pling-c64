@@ -2414,7 +2414,9 @@ Note that
 
    .DEFINE AAA = 10   ; the same as ".DEFINE AAA 10".
 
-works as well.
+works as well. And this works also
+
+   AAA = 10
 
 This is not a compulsory directive.
 
@@ -5011,29 +5013,49 @@ SYNOPSIS
 OPTIONS
 =======
 
--v
+-b
 
-Display information about ROM file after a succesful linking
-
--s
-
-Produce NO$GMB symbol file
-
--S
-
-Produce WLA symbol file
+Program file output
 
 -d
 
-Discard all unreferenced "FREE" and "SEMIFREE" sections
+Discard unreferenced sections
 
 -i
 
 Write list files (Note: WLA needs "-i" as wel)
 
+-r
+
+ROM file output (default)
+
+-s
+
+Write also a NO$GMB/NO$SNES symbol file
+
+-S
+
+Write also a WLA symbol file
+
+-A
+
+Add address-to-line mapping data to WLA symbol file
+
+-v
+
+Verbose messages
+
 -L LIBDIR
 
 Look in LIBDIR for libaries before looking in CWD
+
+-t TYPE
+
+Output type (supported types: ‘CBMPRG’)
+
+-a ADDR
+
+Load address for CBM PRG
 
 Choose one:
 
@@ -5139,11 +5161,16 @@ Manpage: WLA-CPU
 SYNOPSIS
 ========
 
-   "wla-gb" ["OPTIONS"] "SRC_FILE"
-   "wla-65c02" ["OPTIONS"] "SRC_FILE"
    "wla-6502" ["OPTIONS"] "SRC_FILE"
    "wla-6510" ["OPTIONS"] "SRC_FILE"
    "wla-65816" ["OPTIONS"] "SRC_FILE"
+   "wla-65c02" ["OPTIONS"] "SRC_FILE"
+   "wla-6800" ["OPTIONS"] "SRC_FILE"
+   "wla-6801" ["OPTIONS"] "SRC_FILE"
+   "wla-6809" ["OPTIONS"] "SRC_FILE"
+   "wla-8008" ["OPTIONS"] "SRC_FILE"
+   "wla-8080" ["OPTIONS"] "SRC_FILE"
+   "wla-gb" ["OPTIONS"] "SRC_FILE"
    "wla-huc6280" ["OPTIONS"] "SRC_FILE"
    "wla-spc700" ["OPTIONS"] "SRC_FILE"
    "wla-z80" ["OPTIONS"] "SRC_FILE"

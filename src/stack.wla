@@ -73,6 +73,11 @@ push_byte:
 ; setting the data-type too
 ;
 ; in:   A       value
+;       X       stack index
+;
+; out:  X       stack index, updated
+;       Y       (preserved)
+;       A       (clobbered)
 ;
 ;-------------------------------------------------------------------------------
         dex                     ; push stack down,
@@ -99,8 +104,12 @@ push_word:
 ; push a word onto the data stack,
 ; setting the data type too
 ;
-;   A = value, lo-byte
-;   Y = value, hi-byte
+; in:   A       value, lo-byte
+;       Y       value, hi-byte
+;       X       stack index
+;
+; out:  X       stack index, updated
+;       A, Y    (clobbered)
 ;
 ;-------------------------------------------------------------------------------
         dex                     ; push stack down,
@@ -120,7 +129,7 @@ push_word:
         ; note the fall-through to the next routine...
 
 set_type_word:
-;===============================================================================
+;-------------------------------------------------------------------------------
 ; sets the data-type for the top two bytes on the stack to a word.
 ; this is an internal tail-call, no validation is done at all
 ;
@@ -150,8 +159,12 @@ push_token:
 ;===============================================================================
 ; pushes a token to the stack:
 ;
-; in:   A       token's value (what goes on the data-stack)
+; in:   X       stack index
+;       A       token's value (what goes on the data-stack)
 ;       Y       the token type (what goes on the type-stack)
+;
+; out:  X       stack index, updated
+;       A, Y    (clobbered)
 ;
 ;-------------------------------------------------------------------------------
         dex                     ; lower the stack
@@ -167,7 +180,6 @@ push_token:
         sta zp_type, x
 .ENDIF
         rts
-
 
 ; a stack over/under-flow error:
 ; (we detect which here)
@@ -284,6 +296,8 @@ peek_byte:
 ;===============================================================================
 ; reads the byte value atop the stack, checking underflow and data-type.
 ;
+; in:   X       stack index
+;
 ; out:  A       byte value
 ;       X, Y    (preserved)
 ;
@@ -301,6 +315,8 @@ peek_byte:
 peek_word:
 ;===============================================================================
 ; reads the word value atop the stack, checking underflow and data-type
+;
+; in:   X       stack index
 ;
 ; out:  A       byte value
 ;       X, Y    (preserved)

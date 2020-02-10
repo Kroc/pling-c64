@@ -68,11 +68,14 @@ term_interpret:
         ; jump straight to the routine for reading a term from input,
         ; the same parameters apply
         jsr term_read_term
-
-        ; TODO: error handling / end-of-data ends interpret
-
+        ; TODO: error handling / End-Of-Data token ends interpret
+        jsr term_drop
+        
         ; find the term in the terminology
         jsr term_find_term
+        
+-       inc VIC_BORDER
+        jmp -
 
         jsr pop_token_EOD       ; did we find the term?
         beq @eod                ; handle term not found...
@@ -104,8 +107,9 @@ term_interpret:
 ;               that there cannot be more than 256-31 characters of delimiters
 ;               before the term-name begins
 ;
-; out:  word    address of the new position of the input buffer,
-;               the address having been moved forward over the new term
+; out:  word    address of the new position of the input buffer, the address
+;               having been moved forward over the new term. you can use this
+;               to continue reading terms from where you left off
 ;
 ;-------------------------------------------------------------------------------
         .term   "read-term"
@@ -118,6 +122,7 @@ term_read_term:
         ; indexed addressing
         ;
         ; this routine will check stack underflow & data-type
+        ; TODO: inline this a little to optimise
         jsr peek_word
         sta zp_addr+LO
         sty zp_addr+HI
@@ -133,34 +138,43 @@ term_read_term:
 -       iny                     ; pre-emptively move to the next character
         lda [zp_addr], y        ; read character from the input string
         beq @eol                ; end-of-line, null-terminator?
-        cmp zp_delimiter        ; was it a delimiter?
+        cmp pl_delimiter        ; was it a delimiter?
         beq -                   ; yes, keep reading
+
+        ; if we use Y to move forward the pointer in the input buffer, then the
+        ; index for both the input buffer and the term-name (output) buffer can
+        ; be the same, and we can use Y for both, forgoing the need to use
+        ; another index register
+        ;
+        tya                     ; now represents the start of the term-name
+        clc                     ; (it's math time!)
+        adc zp_addr+LO          ; add to the original address
+        sta zp_addr+LO          ; and write-back
+        bcc +                   ; overflow?
+        inc zp_addr+HI          ; ripple the carry
 
         ; start reading characters:
         ;-----------------------------------------------------------------------
-        ; backup Pling's stack pointer
-        .phx
-        ; the first byte of the term-name buffer is the string length.
-        ; X will be used as the index into the term-name buffer
-        ldx # 0
-        stx pl_term_name
-        ; writing characters begins at 1 because
-        ; the 0th byte is the string-length
-        inx
+        ; TODO: limit to 31 characters!
+        
+        ; the first byte of the term-name buffer
+        ; is the string length; initialise this
++       ldy # 0
+        sty pl_term_len
 
 -       lda [zp_addr], y        ; read a character
         beq @done               ; null terminator?
-        iny                     ; pre-emptively move to the next character
-        cmp zp_delimiter        ; was it a delimiter?
+        cmp pl_delimiter        ; was it a delimiter?
         beq @done               ; if so, end term
       
-        ; add the character to the term-name buffer
-        sta pl_term_name, x     ; write character to the term buffer
-        inc pl_term_name        ; increment its length
-        inx                     ; move to the next available space
+        ; add the character to the term-name (output) buffer:
+        ;
+        sta pl_term_name, y     ; write character to the term-name buffer
+        inc pl_term_len         ; increment its length
 
-        ; go read next character        
-        bne -
+        ; go read next character
+        iny                     ; move to the next character
+        bne -                   ; always branches, assuming string len < 256
         kil
 
         ;-----------------------------------------------------------------------
@@ -168,20 +182,17 @@ term_read_term:
 @done:  ; the captured term name must be null-terminated
         ;
 .IFDEF  CPU_65C02
-        stz pl_term_name, x
+        stz pl_term_name, y
 .ELSE   ;6502
         lda # 0
-        sta pl_term_name, x
+        sta pl_term_name, y
 .ENDIF
-        ; restore Pling's stack pointer
-        .plx
-
         ; move the input buffer's address forward
         ; by the number of characters we read
         ;
-        tya                     ; number of characters read (inc. delimiters)
+        tya                     ; number of characters read
         clc                     ; (it's math time!)
-        adc zp_addr+LO          ; add to the original address
+        adc zp_addr+LO          ; add to the base address
         sta zp_stack+0, x       ; return the lo-byte
         lda zp_addr+HI          ; ripple the carry...
         adc # 0                 ; to the address hi-byte
@@ -192,6 +203,7 @@ term_read_term:
         ; end-of-line:
         ;-----------------------------------------------------------------------
 @eol:   ; put $0000 on the stack to indicate no term found:
+        ; TODO: use EOD token instead
         ;
 .IFDEF  CPU_65C02
         ; (this is not actually faster, just clearer intent)
@@ -220,7 +232,7 @@ term_read_term:
 term_find_term:
         ;-----------------------------------------------------------------------
         ; start searching from the last defined word. this address
-        ; points to the term header, *not* the term's code
+        ; points to the term header, *not* the term's code (which follows)
         ;
         ; the first two bytes of a term header are the address of the previous
         ; term, allowing one to follow the chain back through terms
@@ -230,25 +242,42 @@ term_find_term:
         sta zp_addr+LO
         sty zp_addr+HI
 
+        ;;jsr push_word
+        ;;jsr term_print_hex
+        ;;jsr term_print_newline
+
         ; after this, follows the term's name, the first byte is the length.
         ; read the length from the header: (third byte)
         ldy # 2
-        jmp @len
+        bne @len                ; (always branches)
 
         ; (this is a post-loop fall-through)
         ;-----------------------------------------------------------------------
         ; not same length! move to the next term in the chain:
         ; read the back-link address from the term-header
-@next:  ldy # 0
-        lda [zp_addr], y
-        sta zp_addr+LO
+        ;
+@next:  ldy # 0                 ; back-link is the first word of the header,
+        lda [zp_addr], y        ; read lo-byte
+        pha                     ; (put aside)
         iny                     ; Y=1
-        lda [zp_addr], y
-        sta zp_addr+HI
+        lda [zp_addr], y        ; read hi-byte
+
         ; if back-link address is $0000, then we've reached the end
         ; of the chain -- the term has not been found
         beq @eod
+
+        sta zp_addr+HI          ; change the pointer, hi-byte
+        pla                     ; (retrieve lo-byte)
+        sta zp_addr+LO          ; change the pointer, lo-byte
+
         iny                     ; Y=2
+
+        ;;lda zp_addr+LO
+        ;;ldy zp_addr+HI
+        ;;jsr push_word
+        ;;jsr term_print_hex
+        ;;jsr term_print_newline
+        ;;ldy # 2
 
 @len:   lda [zp_addr], y
         ; TODO: error if length of term-name is 0
@@ -256,7 +285,7 @@ term_find_term:
         ; a speed optimisation common with Forths is to simply
         ; compare string lengths first... (the first byte of
         ; the term-name buffer is its length)
-        cmp pl_term_name
+        cmp pl_term_len
         ; if not the same length, move to the next term
         bne @next
 
@@ -264,7 +293,7 @@ term_find_term:
         ;-----------------------------------------------------------------------
         ; walk along the bytes of the two strings and compare each letter:
 -       iny
-        lda pl_term_name-3, y   ; (the offsets differ, so compensate)
+        lda pl_term_name, y
         beq @done               ; end of the string, word matches!
         cmp [zp_addr], y        ; (this is so cool you can do this)   
         beq -                   ; letters, match, keep searching
@@ -275,21 +304,21 @@ term_find_term:
         ; return execution address:
         ;-----------------------------------------------------------------------
         ; the term has been found, but now we need to find the point where
-        ; the machine code begins; this begins after the header, and since
-        ; the Y register should be positioned after the term's name string,
+        ; the machine code begins; this is after the header, and since the
+        ; Y register should be positioned after the term's name string,
         ; we can use Y to move the address forward to the code
         ;
-@done:  iny                     ; step over the null-terminator
-        tya                     ; Y = length of name+null
-        clc                     ; begin math: 
+@done:  tya                     ; A = length of name
+        ldy zp_addr+HI          ; Y will now be used as the hi-byte
+
+        sec                     ; include +1, to step over the null-terminator 
         adc zp_addr+LO          ; add to the term's base address
         bcc +                   ; ripple?
-        inc zp_addr+HI          ; increase hi-byte
+        iny                     ; increase hi-byte
 
-        ; note that A is already the address lo-byte,
-        ; now load the hi-byte in Y and push to the stack
-+       ldy zp_addr+HI
-        jmp push_word
+        ; A = address lo-byte,
+        ; Y = address hi-byte; push to the stack
++       jmp push_word
 
         ; not found -- return EOD
         ;-----------------------------------------------------------------------
@@ -346,8 +375,7 @@ term_parse_number:
         ;-----------------------------------------------------------------------
         lda # 10                ; set base 10
         sta zp_int_base
-        bne @loop
-        kil
+        bne @loop               ; (always branches)
 
         ; optimisation for a single character:
         ;-----------------------------------------------------------------------
@@ -392,6 +420,8 @@ term_parse_number:
 
         ; multiply working number by the base
         ; to effectively move up the digits
+        ; TODO: use specific optimisation for decimal:
+        ;       <http://6502.org/source/integers/fastx10.htm>
         lda zp_int_base
         jsr push_byte
         jsr term_multiply

@@ -81,7 +81,7 @@ pling_init:
 
         ; set the default delimiter for the interpreter (ASCII)
         lda # ' '
-        sta zp_delimiter
+        sta pl_delimiter
 
         ; clear the term-name buffer
         lda # $00

@@ -60,12 +60,13 @@
 
 ;-------------------------------------------------------------------------------
 ; current delimiter between terms
-.DEF    zp_delimiter    $033a
+.DEF    pl_delimiter    $033a
 
 ; string buffer for parsing term names:
 ; (the first byte is the length)
 .DEF    PL_TERM_LEN     31
-.DEF    pl_term_name    $033b
+.DEF    pl_term_len     $033b
+.DEF    pl_term_name    $033c
 
 ; active device number (system-dependent);
 ; this is the same ZP byte used by the KERNAL

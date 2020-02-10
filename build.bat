@@ -4,7 +4,7 @@ CD %~dp0
 
 SET WLA_6510="bin\wla-dx\wla-6510.exe" -i -x -I "src"
 SET WLA_65C02="bin\wla-dx\wla-65c02.exe" -i -x -I "src"
-SET WLA_LINK="bin\wla-dx\wlalink.exe" -i
+SET WLA_LINK="bin\wla-dx\wlalink.exe" -i -A -S
 
 SET C1541="bin\vice\c1541.exe"
 
@@ -18,7 +18,7 @@ SET VICE="bin\vice\x64.exe"
 
 IF ERRORLEVEL 1 EXIT /B 1
 
-%WLA_LINK% -v -t CBMPRG -S ^
+%WLA_LINK% -v -t CBMPRG ^
     -b "link_c64.ini" ^
        "build\pling_c64.prg"
 
