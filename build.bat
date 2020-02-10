@@ -6,14 +6,15 @@ SET WLA_6510="bin\wla-dx\wla-6510.exe" -i -x -I "src"
 SET WLA_65C02="bin\wla-dx\wla-65c02.exe" -i -x -I "src"
 SET WLA_LINK="bin\wla-dx\wlalink.exe" -i -A -S
 
+REM # combine the CPU assembler and system symbols for a C64
+SET WLA_C64=%WLA_6510% -D SYSTEM_C64=1
+REM # utility to pack C64 binaries onto a C64 disk-image
 SET C1541="bin\vice\c1541.exe"
-
-SET X16EMU="bin\x16emu\x16emu.exe"
+REM # C64 emulator
 SET VICE="bin\vice\x64.exe"
 
-%WLA_6510% -v ^
+%WLA_C64% -v ^
     -o "build\pling_c64.o" ^
-    -D SYSTEM_C64=1 ^
        "pling.wla"
 
 IF ERRORLEVEL 1 EXIT /B 1
