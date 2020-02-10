@@ -8,13 +8,11 @@
 
 ; * ( i i -- w )
 ;===============================================================================
-; multiply one data item by another:
+; multiply one integer by another:
 ;
-; both items can be either bytes or words, any combination can be used.
-; the output is always a word.
-;
-; TODO: in the case of word*word overflow, store this elsewhere
-;       for optional recovery by another term
+; both integers can be either bytes or words, any combination can be used.
+; the output is always a word. in the case of word*word overflow, the extra
+; word is kept off the stack and can be retrieved with the `overflow` term
 ;
 ; in:   int     starting number, the "multiplicand"
 ;       int     the amount to multiply by, the "multiplier"
@@ -26,47 +24,60 @@
 
 term_multiply:
         ;-----------------------------------------------------------------------
-        ; pop the top item off the stack, be it a byte or word:
+        ; pop the top integer off the stack, be it a byte or word:
         ; this routine will return A = lo, Y = hi, where Y = 0 if the
-        ; item was a byte (i.e. automatically forming a word)
+        ; integer was a byte (i.e. automatically forming a word)
         jsr pop_int
-        ; this word is our multipler -- the amount we're multiplying by
+        ; this word is our "multipler"
+        ; -- the amount we're multiplying *by*
         sta zp_temp+LO
         sty zp_temp+HI
-        
-        ; the top of the stack is now the multiplicand, the starting number
-        ; to multiply, so we can just work directly off the stack
+
+        ; the top of the stack is now the "multiplicand", the starting number
+        ; to multiply. result will be a word so we extend the top integer to
+        ; fill a word; if it's already a word, no change will occur
         jsr term_byte2word
 
-        ; clear the overflow word
-.IFDEF  CPU_65C02
-        stz zp_overflow+LO
-        stz zp_overflow+HI
-.ELSE   ;6502
+        ; copy the multiplicand, we'll reuse the top
+        ; of the stack for the result named the "product"
+        lda zp_stack+0, x
+        sta zp_word+LO
+        lda zp_stack+1, x
+        sta zp_word+HI
+
+        ; clear the overflow word:
+        ; NB: A=$00 is required below, do not use `stz` on 65C02!
         lda # $00
         sta zp_overflow+LO
         sta zp_overflow+HI
-.ENDIF
-        ; set binary count to 16
+        ; set binary count to 16 digits
         ldy # 16
 
-        ; divide multiplier by 2
+        ; downshift the multipler:
+        ;-----------------------------------------------------------------------
 @lsr:   lsr zp_temp+HI
         ror zp_temp+LO
+        ; if the bit was zero, downshift the result without any addition
         bcc @ror
-        lda zp_overflow+LO      ; get upper half of product and add multiplicand
+
+        ; the bit was 1, indicating a required addition
         clc
-        adc zp_stack+0, x       ; multiplicand
+        lda zp_overflow+LO      ; get upper half of product
+        adc zp_word+LO          ; add multiplicand
         sta zp_overflow+LO
         lda zp_overflow+HI
-        adc zp_stack+1, x       ; multiplicand+1
+        adc zp_word+HI
 
-@ror:   ror                     ; rotate partial product
+        ; downshift the result:
+        ;-----------------------------------------------------------------------
+@ror:   ror
         sta zp_overflow+HI
         ror zp_overflow+LO
         ror zp_stack+1, x
         ror zp_stack+0, x
+
+        ; move to next binary digit
         dey
         bne @lsr
-        
+
         rts
