@@ -10,7 +10,7 @@
 ; term_interpret:           w --                "interpret"
 ; term_read_term:           w -- w              "read-term"
 ; term_find_term:             -- w | EOD        "find-term"
-; term_parse_number:          -- b | w          "parse-number"
+; term_parse_number:          -- i              "parse-number"
 ;
 
 

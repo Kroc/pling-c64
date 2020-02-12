@@ -104,13 +104,14 @@ __\.\@: .WORD   prev_term
 .ENDIF
 
 ;-------------------------------------------------------------------------------
-.INC    "core.wla"              ; core native primitives
-.INC    "math.wla"              ; core number & math routines
-.INC    "print.wla"             ; printing text/data to screen
-.INC    "string.wla"            ; core string routines
-.INC    "interpret.wla"         ; parser, interpreter & compiler
-.INC    "stream.wla"            ; I/O streams
-.INC    "disk.wla"              ; disk I/O
+.INC    "term_core.wla"         ; core native primitives
+.INC    "term_math.wla"         ; core number & math routines
+.INC    "term_string.wla"       ; core string routines
+.INC    "term_stream.wla"       ; I/O streams
+.INC    "term_disk.wla"         ; disk I/O
+
+.INC    "term_print.wla"        ; printing text/data to screen
+.INC    "term_interpret.wla"    ; parser, interpreter & compiler
 
 
 ; last-term ( -- w )

@@ -64,6 +64,28 @@ term_00:
         jmp set_type_word
 
 
+; + ( i i -- i )
+;===============================================================================
+; add the top two integers on the stack together, returning a single integer:
+; the size of the return integer will be:
+;
+;       byte + byte     = byte
+;       byte + word     = word
+;       word + byte     = word
+;       word + word     = word
+;
+; in all instances, any overflow will go into the `overflow` term
+;-------------------------------------------------------------------------------
+        .term   "+"
+
+term_add:
+        ;-----------------------------------------------------------------------
+        ; pop the top integer, regardless of type
+        jsr pop_int
+
+        kil
+
+
 ; +1 ( i -- i )
 ;===============================================================================
 ; add one to the integer atop the stack:
@@ -146,4 +168,4 @@ term_neg:
 
 
 ;===============================================================================
-.INC    "math_muldiv.wla"
+.INC    "term_muldiv.wla"
