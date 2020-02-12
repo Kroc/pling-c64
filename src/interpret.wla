@@ -326,9 +326,8 @@ term_find_term:
 ;  %01010101    : binary. 8 digits = byte, 16 digits = word
 ;
 ; TODO: ASCII character parsing, e.g. " 'a' "
-; TODO: implement negative numbers
-; TODO: allow negative hexadecimal / binary?
 ; TODO: only single decimals are output as bytes so far
+; TOOD: data-type detection (byte/word by length)
 ;
 ; this routine was roughly adapted from DurexForth's number parser:
 ; https://github.com/jkotlinski/durexforth/blob/master/interpreter.asm
@@ -345,10 +344,20 @@ term_parse_number:
         ; make room on top of the stack for our working number
         jsr term_00
 
-        ; check the first character for hex `$` or `%` sigil
-        ;
-        ldy # 0                 ; begin with the first character
-        lda pl_term_name
+        ; begin with the first character
+        ldy # 0
+
+        ; is the number negative?
+        lda pl_term_name        ; check first character
+        cmp # '-'               ; is it minus?
+        bne +                   ; no, skip over
+        iny                     ; skip over the minus sign
+        
+        ; put aside the sign-bit for later
++       ror zp_temp1
+
+        ; check for hex `$` or `%` sigil
+        lda pl_term_name, y
         cmp # '$'
         beq @hex
         cmp # '%'
@@ -443,7 +452,11 @@ term_parse_number:
 @err:   jmp err_parse
 
         ;-----------------------------------------------------------------------
-@done:  rts
+@done:  asl zp_temp1            ; retrieve the negative-bit
+        bcs @neg                ; was it a negative number?
+        rts
+        ;-----------------------------------------------------------------------
+@neg:   jmp term_neg            ; flip the number to make it negative
 
 
 ;;; new-term ( -- )

@@ -5,7 +5,7 @@
 ; math.wla : core number & math routines
 ;===============================================================================
 
-; 0 ( -- b)
+; 0 ( -- b )
 ;===============================================================================
 ; pushes zero (as a byte) on to the stack;
 ; an optimisation to avoid the number-parser
@@ -39,7 +39,7 @@ term_0:
 .ENDIF
         rts
 
-; 00 ( -- w)
+; 00 ( -- w )
 ;===============================================================================
 ; pushes zero (as a word) on to the stack;
 ; an optimisation to avoid the number-parser
@@ -62,6 +62,88 @@ term_00:
 .ENDIF
         ; set the word data-type
         jmp set_type_word
+
+
+; +1 ( i -- i )
+;===============================================================================
+; add one to the integer atop the stack:
+; TODO: also capture overflow
+;-------------------------------------------------------------------------------
+        .term   "+1"
+
+term_add1:
+        ;-----------------------------------------------------------------------
+        lda zp_type, x
+        bmi @word
+        beq @byte
+
+        ; a token type, including a stack underflow
+        jmp err_type
+
+        ;-----------------------------------------------------------------------
+@word:  inc zp_stack, x
+        bne +
+        inc zp_stack+1, x
++       rts
+
+@byte:  inc zp_stack, x
+        rts
+
+
+; not ( i -- i )
+;===============================================================================
+; flips all the bits of the integer atop the stack:
+;
+;-------------------------------------------------------------------------------
+        .term   "not"
+
+term_not:
+        ;-----------------------------------------------------------------------
+        ; read the data-type of the item atop the stack
+        lda zp_type, x
+        bmi @word
+        beq @byte
+
+        ; a token type, including a stack underflow
+        jmp err_type
+
+        ;-----------------------------------------------------------------------
+@word:  lda zp_stack+1, x
+        eor # %11111111         ; flip the hi-byte,
+        sta zp_stack+1, x       ; and drop through to...
+
+@byte:  lda zp_stack, x
+        eor # %11111111         ; flip the lo-byte
+        sta zp_stack, x
+        
+        rts
+
+
+; neg ( i -- i )
+;===============================================================================
+; negates the integer atop the stack:
+;
+;-------------------------------------------------------------------------------
+        .term   "neg"
+
+term_neg:
+        ;-----------------------------------------------------------------------
+        ; read the data-type of the item atop the stack
+        lda zp_type, x
+        bmi @word
+        beq @byte
+
+        ; a token type, including a stack underflow
+        jmp err_type
+
+        ; as an optimisation, don't redo the data-type checks:
+        ;-----------------------------------------------------------------------
+@word:  jsr term_not@word
+        jmp term_add1@word
+        ;-----------------------------------------------------------------------
+@byte:  jsr term_not@byte
+        jmp term_add1@byte
+
 
 ;===============================================================================
 .INC    "math_muldiv.wla"

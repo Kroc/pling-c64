@@ -46,16 +46,16 @@ term_print:
         jmp sys_print
 
 
-; .dec ( i -- )
+; .int ( i -- )
 ;===============================================================================
 ; print the integer atop the stack as a decimal string:
 ;
 ; in:   int     integer (byte or word) to print as decimal
 ;
 ;-------------------------------------------------------------------------------
-        .term   ".dec"
+        .term   ".int"
 
-term_print_dec:
+term_print_int:
         ;-----------------------------------------------------------------------
         ; pop the integer (byte or word), checking for underflow
         ; TODO: optimised routine for printing a byte

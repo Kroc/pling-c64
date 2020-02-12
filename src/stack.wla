@@ -14,7 +14,7 @@
 ;-------------------------------------------------------------------------------
 ; tokens are implementation-specific, opaque data types for differentiating
 ; error/token numbers from regular bytes/words on the stack. tokens are never
-; directly exposed to Pling programs as the byte-values of tokens are not
+; directly exposed to Pling programs as the type-values of tokens are not
 ; guaranteed to be constant, or even exist, between systems/implementations 
 ;
 .ENUMID 1
