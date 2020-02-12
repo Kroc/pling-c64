@@ -48,20 +48,6 @@ sys_emit:
         jmp KERNAL_CHROUT
 
 
-sys_ok:
-;===============================================================================
-; this is the routine that prints "OK" when the interpretter
-; has processed and executed its input
-;
-; TODO: should this be a part of the console/IDE, and not the runtime?
-;-------------------------------------------------------------------------------
-        lda #< @ok
-        ldy #> @ok
-        jmp sys_printstr
-
-@ok:    .BYTE    13, $9e, $12, "ok.", $92, $05, 13, 0
-
-
 asc2pet:    ; for now, these are the same thing (swap cases)
 pet2asc:                                                                ;cycles
 ;===============================================================================

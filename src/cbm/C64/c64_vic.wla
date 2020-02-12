@@ -15,7 +15,7 @@
 .DEF    VIC_YELLOW              $07     ; %0111
 .DEF    VIC_ORANGE              $08     ; %1000
 .DEF    VIC_BROWN               $09     ; %1001
-.DEF    VIC_LTRED               $0a     ; %1010
+.DEF    VIC_PINK                $0a     ; %1010
 .DEF    VIC_DKGREY              $0b     ; %1011
 .DEF    VIC_GREY                $0c     ; %1100
 .DEF    VIC_LTGREEN             $0d     ; %1101

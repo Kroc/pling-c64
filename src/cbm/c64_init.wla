@@ -22,8 +22,8 @@ sys_init:
         jmp pling_init
 
         ;-----------------------------------------------------------------------
-@ver:   .BYTE   $0e, $93, $9e
-        .BYTE   13, ">!< Pling! C64 v0.0"
-        .BYTE   13, "    Kroc Camen <github.com/Kroc/pling>"
-        .BYTE   13, "    built: ", WLA_TIME, $05
-        .BYTE   13, 13, 0
+@ver:   .BYTE   PET_CASE_LO, PET_CLEAR, PET_YELLOW, PET_RETURN
+        .BYTE   ">!< Pling! C64 v0.0", PET_RETURN
+        .BYTE   "    Kroc Camen <github.com/Kroc/pling>", PET_RETURN
+        .BYTE   "    built: ", WLA_TIME, PET_RETURN
+        .BYTE   PET_RETURN, PET_WHITE, NUL

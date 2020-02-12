@@ -9,3 +9,56 @@
         MAP "a" TO "z"  = 65
         MAP "A" TO "Z"  = 97
 .ENDA
+
+; PETSCII constants:
+;===============================================================================
+; colours: (in canonical order)
+;-------------------------------------------------------------------------------
+.DEF    PET_BLACK       $90     ; switch to black colour
+.DEF    PET_WHITE       $05     ; switch to white colour
+.DEF    PET_RED         $1c     ; switch to red colour
+.DEF    PET_CYAN        $9f     ; switch to cyan colour
+.DEF    PET_PURPLE      $9c     ; switch to purple colour
+.DEF    PET_GREEN       $1e     ; switch to green colour
+.DEF    PET_BLUE        $1f     ; switch to blue colour
+.DEF    PET_YELLOW      $9e     ; switch to yellow colour
+.DEF    PET_ORANGE      $81     ; switch to orange colour
+.DEF    PET_BROWN       $95     ; switch to brown colour
+.DEF    PET_PINK        $96     ; switch to pink colour
+.DEF    PET_DKGREY      $97     ; switch to dark-grey colour
+.DEF    PET_GREY        $98     ; switch to medium-grey colour
+.DEF    PET_LTGREEN     $99     ; switch to light-green colour
+.DEF    PET_LTBLUE      $9a     ; switch to light-blue colour
+.DEF    PET_LTGREY      $9b     ; switch to light-grey colour
+;-------------------------------------------------------------------------------
+; keys:
+;-------------------------------------------------------------------------------
+.DEF    PET_RUN         $83     ; RUN key
+.DEF    PET_STOP        $03     ; STOP key
+.DEF    PET_RETURN      $0d     ; RETURN key
+.DEF    PET_SHFT_RETURN $8d     ; SHIFT-RETURN
+.DEF    PET_INS         $94     ; INSERT key
+.DEF    PET_DEL         $14     ; DELETE key
+.DEF    PET_F1          $85     ; F1 key
+.DEF    PET_F2          $89     ; F2 key
+.DEF    PET_F3          $86     ; F3 key
+.DEF    PET_F4          $8a     ; F4 key
+.DEF    PET_F5          $87     ; F5 key
+.DEF    PET_F6          $8b     ; F6 key
+.DEF    PET_F7          $88     ; F7 key
+.DEF    PET_F8          $8c     ; F8 key
+;-------------------------------------------------------------------------------
+; screen control:
+;-------------------------------------------------------------------------------
+.DEF    PET_CASE_LOCK   $08     ; disable case-switching (C=+SHIFT)
+.DEF    PET_CASE_UNLOCK $09     ; enable case-switching (C=+SHIFT)
+.DEF    PET_CASE_LO     $0e     ; switch to lower-case
+.DEF    PET_CASE_UP     $8e     ; switch to upper-case
+.DEF    PET_RVRS_ON     $12     ; turn reverse-printing on
+.DEF    PET_RVRS_OFF    $92     ; turn reverse-printing off
+.DEF    PET_HOME        $13     ; home the cursor (top-left row/col)
+.DEF    PET_CLEAR       $93     ; clear the screen
+.DEF    PET_CRSR_UP     $91     ; cursor-up
+.DEF    PET_CRSR_DN     $11     ; cursor-down
+.DEF    PET_CRSR_LT     $9d     ; cursor-left
+.DEF    PET_CRSR_RT     $1d     ; cursor-right

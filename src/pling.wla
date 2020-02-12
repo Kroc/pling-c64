@@ -5,6 +5,7 @@
 ;===============================================================================
 ; import machine-specific headers:
 ;-------------------------------------------------------------------------------
+.DEF    NUL             0
 .DEF    LO              0
 .DEF    HI              1
 
@@ -95,7 +96,7 @@ pling_init:
 __\.\@: .WORD   prev_term
         .REDEF  prev_term       __\.\@
         ; TODO: should term names be stored as ASCII or PETSCII?
-        .ASC    str.length, str, 0
+        .ASC    str.length, str, NUL
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM
 

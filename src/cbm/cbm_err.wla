@@ -5,11 +5,30 @@
 ; cbm_err.wla : Commodore-specific error handling
 ;===============================================================================
 
+
+sys_ok:
+;===============================================================================
+; this is the routine that prints "OK" when the interpretter
+; has processed and executed its input
+;
+; TODO: should this be a part of the console/IDE, and not the runtime?
+;-------------------------------------------------------------------------------
+        lda #< @ok
+        ldy #> @ok
+        jmp sys_printstr
+
+        ;-----------------------------------------------------------------------
+@ok:    .BYTE   PET_RETURN, PET_YELLOW
+        .BYTE   PET_RVRS_ON, "ok.", PET_RVRS_OFF
+        .BYTE   PET_WHITE, PET_RETURN, NUL
+
+
+sys_error:
+;===============================================================================
 ; an error has occurred, allow the machine to print it
 ; in its own particular... demeanour?
 ;
-sys_error:
-        ;-----------------------------------------------------------------------
+;-------------------------------------------------------------------------------
         pha                     ; put aside error number momentarily
 
         lda #< @clear
@@ -28,5 +47,5 @@ sys_error:
 -       inc VIC_BORDER
         jmp -
 
-@clear:
-        .BYTE   13, 13, $92, $9e, $0e, 0
+        ;-----------------------------------------------------------------------
+@clear: .BYTE   PET_RETURN, PET_RVRS_OFF, PET_YELLOW, PET_CASE_LO, NUL

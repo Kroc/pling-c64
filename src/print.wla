@@ -22,7 +22,7 @@
 
 term_print_newline:
         ;-----------------------------------------------------------------------
-        lda # 13
+        lda # PET_RETURN
         jmp sys_emit            ; print, skipping character conversion
 
 
@@ -139,7 +139,7 @@ term_print_hex:
         jsr @conv
 
         tya
-        and # $f                ; mask out original bottom nybble
+        and # %00001111         ; mask out original bottom nybble
 
 @conv:  ;-----------------------------------------------------------------------
         ; NMOS 6502's (including the 6510) have a bug whereby the decimal flag

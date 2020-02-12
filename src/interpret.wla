@@ -30,7 +30,7 @@ term_line_input:
 
         ; TODO: move into system-specific code
 -       jsr KERNAL_CHRIN        ; read a character from the keyboard
-        cmp # $d                ; is the key RETURN?
+        cmp # PET_RETURN        ; is the key RETURN?
         beq +                   ; if yes, quit reading
         
         sta $0200, y            ; add the key-code to the buffer
