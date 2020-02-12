@@ -28,7 +28,7 @@ term_asc2lower:
         ; we've already error-checked with the peek,
         ; so we don't need to use a routine for it
         sta zp_stack, x
--       rts
+        rts
 
 ; this is the non-stack functionality, which can be called
 ; from elsewhere using only the CPU registers
@@ -38,11 +38,11 @@ asc2lower:
         ; is the character within the upper-case letters?
         ;
         cmp # 'A'               ; "A" or above?
-        bcc -                   ; no -- exit
+        bcc +                   ; no -- exit
         cmp # 'Z'+1             ; "Z" and below?
-        bcs -                   ; no -- exit
+        bcs +                   ; no -- exit
         ora # %00100000         ; switch to lower-case
-        rts
++       rts
 
 
 ; asc2upper ( b -- b )
@@ -63,7 +63,7 @@ term_asc2upper:
         ; we've already error-checked with the peek,
         ; so we don't need to use a routine for it
         sta zp_stack, x
--       rts
+        rts
 
 ; this is the non-stack functionality, which can be called
 ; from elsewhere using only the CPU registers
@@ -73,8 +73,8 @@ asc2upper:
         ; is the character within the lower-case letters?
         ;
         cmp # 'a'               ; "a" or above?
-        bcc -                   ; no -- exit
+        bcc +                   ; no -- exit
         cmp # 'z'+1             ; "z" and below?
-        bcs -                   ; no -- exit
+        bcs +                   ; no -- exit
         and # %11011111         ; switch to lower-case
-        rts
++       rts

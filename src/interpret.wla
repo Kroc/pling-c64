@@ -324,6 +324,7 @@ term_find_term:
 ;        -01    : (also for negatives)
 ;        $FF    : hexadecimal, 2 digits = byte
 ;      $0000    : 4 digits = word, even if value is <256
+;     -$FFFF    : (negatives allowed)
 ;  %01010101    : binary. 8 digits = byte, 16 digits = word
 ;
 ; TODO: ASCII character parsing, e.g. " 'a' "
@@ -354,10 +355,8 @@ term_parse_number:
         bne +                   ; no, skip over
         iny                     ; skip over the minus sign
         
-        ; put aside the sign-bit for later:
-        ; (this shifts the carry, from the "-"
-        ;  comparison, into a temporary bit 7)
-+       ror zp_temp1
+        ; put aside the sign-bit for later
++       .phy
 
         ; check for `$` (hexadecimal) or `%` (binary) sigil:
         lda pl_term_name, y
@@ -453,12 +452,15 @@ term_parse_number:
 +       cmp zp_int_base         ; is this within the intended base?
         bcc @next               ; if so, process the next digit
         
-        ; fall through if base was incorrect for the size of the digit
-@err:   jmp err_parse
+        ; fall through if base was incorrect
+        ; for the size of the digit
+        ;
+        pla                     ; eject the negative-bit to balance the stack
+@err:   jmp err_parse           ; raise an error
 
         ;-----------------------------------------------------------------------
-@done:  asl zp_temp1            ; retrieve the negative-bit
-        bcs @neg                ; was it a negative number?
+@done:  pla                     ; retrieve the negative-bit
+        bne @neg                ; was it a negative number?
         rts
         ;-----------------------------------------------------------------------
 @neg:   jmp term_neg            ; flip the number to make it negative
