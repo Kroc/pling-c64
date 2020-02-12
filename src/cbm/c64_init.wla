@@ -15,20 +15,15 @@ sys_init:
         sta VIC_BORDER
         sta VIC_BACKGROUND
 
-.DEF    @str    $0e, $93, $9e
-.REDEF  @str    @str, 13, ">!< Pling! C64 v0.0"
-.REDEF  @str    @str, 13, "    Kroc Camen <github.com/Kroc/pling>"
-.REDEF  @str    @str, 13, "    built: ", WLA_TIME, $05
-.REDEF  @str    @str, 13, 13
+        lda #< @ver
+        ldy #> @ver
+        jsr sys_printstr
 
-        ldy # 0
--       lda @ver.w, y
-        jsr KERNAL_CHROUT
-        iny
-        cpy # @str.length
-        bne -
-
-        ;-----------------------------------------------------------------------
         jmp pling_init
 
-@ver:   .ASC    @str
+        ;-----------------------------------------------------------------------
+@ver:   .BYTE   $0e, $93, $9e
+        .BYTE   13, ">!< Pling! C64 v0.0"
+        .BYTE   13, "    Kroc Camen <github.com/Kroc/pling>"
+        .BYTE   13, "    built: ", WLA_TIME, $05
+        .BYTE   13, 13, 0

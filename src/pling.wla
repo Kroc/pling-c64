@@ -111,7 +111,6 @@ __\.\@: .WORD   prev_term
 .INC    "interpret.wla"         ; parser, interpreter & compiler
 .INC    "stream.wla"            ; I/O streams
 .INC    "disk.wla"              ; disk I/O
-;;.INC    "console.wla"
 
 
 ; last-term ( -- w )

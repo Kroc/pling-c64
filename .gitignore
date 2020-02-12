@@ -11,3 +11,6 @@ build/**
 
 # VICE snapshot files
 *.vsf
+
+# WLA-DX crash files
+.wla*

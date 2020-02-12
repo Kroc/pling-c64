@@ -5,37 +5,66 @@
 ; cbm_terms.wla : Commodore-specific terms
 ;===============================================================================
 
+sys_printstr:
+;===============================================================================
+; system specific routine for printing an *ASCII*, null-terminated string:
+;
+; in:   A       string address, lo-byte
+;       Y       string address, hi-byte
+;
+; out:  A, Y    (clobbered)
+;       X       (preserved)
+;
+;-------------------------------------------------------------------------------
+        sta zp_addr+LO          ; load the string address into our indexer
+        sty zp_addr+HI
+        
+        ldy # 0
+-       lda [zp_addr], y        ; read a character
+        beq +                   ; null-terminator? exit
+        jsr sys_print           ; convert to ASCII and output
+        iny                     ; move to the next character
+        bne -                   ; loop (but also end at 255 characters)
+
++       rts
+
+
 sys_print:
-        ;-----------------------------------------------------------------------
-        ; TODO: convert ASCII to pet
+;===============================================================================
+; system-specific routine for printing a single *ASCII* character:
+;
+; in:   A       ASCII-code
+;
+; out:  A       (clobbered)
+;       X, Y    (preserved)
+;
+;-------------------------------------------------------------------------------
+        sty zp_temp1            ; backup Y
+        jsr asc2pet             ; convert ASCII code to PETSCII
+        ldy zp_temp1            ; restore Y
+
 sys_emit:
+        ;-----------------------------------------------------------------------
         jmp KERNAL_CHROUT
 
 
+sys_ok:
+;===============================================================================
 ; this is the routine that prints "OK" when the interpretter
 ; has processed and executed its input
 ;
 ; TODO: should this be a part of the console/IDE, and not the runtime?
-;===============================================================================
-sys_ok:
-        ;-----------------------------------------------------------------------
-        ; TODO: C64 shared print-string routine
-        ldy # 0
--       lda @ok, y
-        beq +
-        jsr KERNAL_CHROUT
-        iny
-        bne -
+;-------------------------------------------------------------------------------
+        lda #< @ok
+        ldy #> @ok
+        jmp sys_printstr
 
-+       rts
-
-@ok:    .ASC    13, $9e, $12, "ok.", $92, $05, 13, 0
+@ok:    .BYTE    13, $9e, $12, "ok.", $92, $05, 13, 0
 
 
-;===============================================================================
 asc2pet:    ; for now, these are the same thing (swap cases)
 pet2asc:                                                                ;cycles
-        ;-----------------------------------------------------------------------
+;===============================================================================
         tay                     ; backup PETSCII code                   ;+2=8
 
         ; PETSCII codes 65-90 are lower-case characters (in lower-case ROM)

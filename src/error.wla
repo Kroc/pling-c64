@@ -9,3 +9,29 @@ err_parse:
         ;-----------------------------------------------------------------------
         lda # 3
         jmp sys_error
+
+
+; error messages:
+;-------------------------------------------------------------------------------
+err_msglo:
+        .BYTE   <err_msg_stack_underflow
+        .BYTE   <err_msg_stack_overflow
+        .BYTE   <err_msg_type
+        .BYTE   <err_msg_parse
+err_msghi:
+        .BYTE   >err_msg_stack_underflow
+        .BYTE   >err_msg_stack_overflow
+        .BYTE   >err_msg_type
+        .BYTE   >err_msg_parse
+
+; error messages are stored in ASCII so that the same messages can be used
+; across different systems (which will convert to their encoding)
+;
+err_msg_stack_underflow:
+        .BYTE   "Stack underflow!", 0
+err_msg_stack_overflow:
+        .BYTE   "Stack overflow!", 0
+err_msg_type:
+        .BYTE   "Unexpected data type!", 0
+err_msg_parse:
+        .BYTE   "Not a known term or valid number!", 0

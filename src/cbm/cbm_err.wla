@@ -7,54 +7,26 @@
 
 ; an error has occurred, allow the machine to print it
 ; in its own particular... demeanour?
-;===============================================================================
+;
 sys_error:
         ;-----------------------------------------------------------------------
-        pha
+        pha                     ; put aside error number momentarily
 
-        ldy # 0
--       lda @clear, y
-        beq +
-        jsr KERNAL_CHROUT
-        iny
-        bne -
+        lda #< @clear
+        ldy #> @clear
+        jsr sys_printstr
+        
+        pla                     ; retrieve error number again
+        tay                     ; use it as an index
+        lda err_msglo, y        ; get error message address, lo-byte
+        pha                     ; (hold it, we need to use A again)
+        lda err_msghi, y        ; get error message address, hi-byte
+        tay                     ; hi-byte goes into Y for printing routine
+        pla                     ; lo-byte goes into A for printing routine
+        jsr sys_printstr        ; put it on-screen!
 
-+       pla
-        tay
-        lda @errmsg_lo, y
-        sta zp_addr+LO
-        lda @errmsg_hi, y
-        sta zp_addr+HI
-
-        ldy # 0
--       lda [zp_addr], y
-        beq +
-        jsr KERNAL_CHROUT
-        iny
-        bne -
-
-+
 -       inc VIC_BORDER
         jmp -
 
 @clear:
         .BYTE   13, 13, $92, $9e, $0e, 0
-@errmsg_lo:
-        .BYTE   <@errmsg_stack_underflow
-        .BYTE   <@errmsg_stack_overflow
-        .BYTE   <@errmsg_type
-        .BYTE   <@errmsg_parse
-@errmsg_hi:
-        .BYTE   >@errmsg_stack_underflow
-        .BYTE   >@errmsg_stack_overflow
-        .BYTE   >@errmsg_type
-        .BYTE   >@errmsg_parse
-
-@errmsg_stack_underflow:
-        .ASC    "Stack underflow!", 0
-@errmsg_stack_overflow:
-        .ASC    "Stack overflow!", 0
-@errmsg_type:
-        .ASC    "Unexpected data type!", 0
-@errmsg_parse:
-        .ASC    "Not a known term or valid number!", 0
