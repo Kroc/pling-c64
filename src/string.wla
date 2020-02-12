@@ -28,29 +28,20 @@ term_asc2lower:
         ; we've already error-checked with the peek,
         ; so we don't need to use a routine for it
         sta zp_stack, x
-        rts
+-       rts
 
 ; this is the non-stack functionality, which can be called
 ; from elsewhere using only the CPU registers
 ;
 asc2lower:
         ;=======================================================================
-        pha                     ; put aside ASCII code before we math it
-        sec                     ; (begin math!)
-        sbc # 'A'
-        cmp # 26+1
-        bcc +
-        ; character is not in upper-case range,
-        ; return the un-altered ASCII code
-        pla
-        rts
-        
-        ;-----------------------------------------------------------------------
-        ; ASCII codes 65-90 ("A"-"Z"), having essentially been rebased
-        ; to 0-25, can be converted to lower-case by rebasing again to
-        ; ASCII code 97 ("a")
+        ; is the character within the upper-case letters?
         ;
-+       adc # 'a'               ; (note that logically the carry is clear)
+        cmp # 'A'+1             ; "A" or above?
+        bcs -                   ; no -- exit
+        cmp # 'Z'+1             ; "Z" and below?
+        bcc -                   ; no -- exit
+        and %11011111           ; unset the upper-case bit
         rts
 
 
@@ -72,27 +63,18 @@ term_asc2upper:
         ; we've already error-checked with the peek,
         ; so we don't need to use a routine for it
         sta zp_stack, x
-        rts
+-       rts
 
 ; this is the non-stack functionality, which can be called
 ; from elsewhere using only the CPU registers
 ;
 asc2upper:
         ;=======================================================================
-        pha                     ; put aside ASCII code before we math it
-        sec                     ; (begin math!)
-        sbc # 'a'
-        cmp # 26+1
-        bcc +
-        ; character is not in lower-case range,
-        ; return the un-altered ASCII code
-        pla
-        rts
-
-        ;-----------------------------------------------------------------------
-        ; ASCII codes 97-122 ("a"-"z"), having essentially been rebased
-        ; to 0-25, can be converted to upper-case by rebasing again to
-        ; ASCII code 65 ("A")
+        ; is the character within the lower-case letters?
         ;
-+       adc # 'A'               ; (note that logically the carry is clear)
+        cmp # 'a'+1             ; "a" or above?
+        bcs -                   ; no -- exit
+        cmp # 'z'+1             ; "z" and below?
+        bcc -                   ; no -- exit
+        ora %00100000           ; set the upper-case bit
         rts

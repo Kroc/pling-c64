@@ -39,55 +39,87 @@ sys_print:
 ;       X, Y    (preserved)
 ;
 ;-------------------------------------------------------------------------------
-        sty zp_temp1            ; backup Y
         jsr asc2pet             ; convert ASCII code to PETSCII
-        ldy zp_temp1            ; restore Y
 
 sys_emit:
         ;-----------------------------------------------------------------------
         jmp KERNAL_CHROUT
 
 
-asc2pet:    ; for now, these are the same thing (swap cases)
-pet2asc:                                                                ;cycles
+pet2asc:
 ;===============================================================================
-        tay                     ; backup PETSCII code                   ;+2=8
-
-        ; PETSCII codes 65-90 are lower-case characters (in lower-case ROM)
-        ; and map to ASCII codes 97-122 accordingly:
-        sec                                                             ;+2=10
-        sbc # 65                                                        ;+2=12
-        cmp # 26+1                                                      ;+2=14
-        bcs +                                                           ;+2/3
-                                                                        ;+2=16
-        adc # 97                                                        ;+2=18
-        rts                                                             ;+6=24
-
-        ; PETSCII codes 97-122 are upper-case characters (in lower-case ROM)
-        ; and map to ASCII codes 65-90 accordingly                      ;+3=17
-+       tya                                                             ;+2=19
-        sbc # 97                                                        ;+2=21
-        cmp # 26+1                                                      ;+2=23
-        bcs +                                                           ;+2/3
-                                                                        ;+2=25
-        adc # 65                                                        ;+2=27
-        rts                                                             ;+6=33
-
-                                                                        ;+3=26
-+       tya                                                             ;+2=28
-        rts                                                             ;+6=34
-
-        ; TODO: use lookup tables for ROM versions?
-        ; <https://sites.google.com/site/h2obsession/CBM/petscii>
+; convert a PETSCII character code to ASCII:
+;
+; TODO: use a lookup-table for ROM-version?
+;       (would require preserving Y)
+;
+; in:   A       character code
+;
+; out:  A       character code, converted  
+;       X, Y    (preserved)
+;                                                                       ;cycles
+;-------------------------------------------------------------------------------
+        ; is the character in the PETSCII upper-case range?
+        ; note that the "case bit" in PETSCII is %10000000,
+        ; not %00100000 as in ASCII
         ;
-        ;     ; ASC | note:       PET | note: 
-        ;-----------¦-----------------¦-----------------------------------------
-;;@table: .BYTE   $00 ; NULL      ; $00 : no function
-;;        .BYTE   $01 ; SOH       ; $01 = no function
-;;        .BYTE   $02 ; STX       ; $02 = no function
-;;        .BYTE   $03 ; ETX       ; $03 = STOP key
-;;        .BYTE   $04 ; EOT       ; $04 = no function
-;;        .BYTE   $05 ; EOQ       ; $05 = WHITE colour
-;;        .BYTE   $06 ; ACK       ; $06 = no function
-;;        .BYTE   $07 ; BEL       ; $07 = no function
-;;        .BYTE   $08 ;           ; $08 
+        cmp # PET_A_UP          ; "A" and above?
+        bcc +                   ; no -- skip ahead
+        cmp # PET_Z_UP+1        ; "Z" and below?
+        bcs +                   ; no -- skip ahead
+
+        ; adjust PETSCII upper-case $C1..$DA down to ASCII upper-case $41..$5A
+        ; NOTE: carry is clear, so this subtracts an additional 1 for us!
+        sbc # $80-1
+        rts
+        
+        ; is the character in the PETSCII lower-case range?
+        ;
++       cmp # PET_A_LO          ; "a" and above?
+        bcc +                   ; no -- exit
+        cmp # PET_Z_LO+1        ; "z" and below?
+        bcs +                   ; no -- exit
+
+        ; adjust PETSCII lower-case $41..$5A
+        ; up to ASCII lower-case $61..$7A
+        adc # $20
+
++       rts
+
+asc2pet:
+;===============================================================================
+; convert an ASCII character code to PETSCII:
+;
+; TODO: use a lookup-table for ROM-version?
+;       (would require preserving Y)
+;
+; in:   A       character code
+;
+; out:  A       character code, converted  
+;       X, Y    (preserved)
+;                                                                       ;cycles
+;-------------------------------------------------------------------------------
+        ; is the character in the ASCII lower-case range?
+        ;
+        cmp # $61               ; "a" and above?
+        bcc +                   ; no -- skip ahead
+        cmp # $7a+1             ; "z" and below?
+        bcs +                   ; no -- skip ahead
+
+        ; adjust ASCII lower-case $61..$7A down to PETSCII lower-case $41..$5A
+        ; NOTE: carry is clear, so this subtracts an additional 1 for us!
+        sbc # $20-1
+        rts
+        
+        ; is the character in the ASCII upper-case range?
+        ;
++       cmp # $41               ; "A" and above?
+        bcc +                   ; no -- exit
+        cmp # $5a+1             ; "z" and below?
+        bcs +                   ; no -- exit
+
+        ; adjust ASCII upper-case $41..$5A
+        ; up to PETSCII upper-case $C1..$DA
+        adc # $80
+
++       rts

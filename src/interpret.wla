@@ -33,6 +33,7 @@ term_line_input:
         cmp # PET_RETURN        ; is the key RETURN?
         beq +                   ; if yes, quit reading
         
+        jsr pet2asc             ; convert from PETSCII to ASCII
         sta $0200, y            ; add the key-code to the buffer
         iny                     ; move to the next character
         cpy # 81                ; have we hit the end of the line?
@@ -327,7 +328,7 @@ term_find_term:
 ;
 ; TODO: ASCII character parsing, e.g. " 'a' "
 ; TODO: only single decimals are output as bytes so far
-; TOOD: data-type detection (byte/word by length)
+; TODO: data-type detection (byte/word by length)
 ;
 ; this routine was roughly adapted from DurexForth's number parser:
 ; https://github.com/jkotlinski/durexforth/blob/master/interpreter.asm
@@ -353,10 +354,12 @@ term_parse_number:
         bne +                   ; no, skip over
         iny                     ; skip over the minus sign
         
-        ; put aside the sign-bit for later
+        ; put aside the sign-bit for later:
+        ; (this shifts the carry, from the "-"
+        ;  comparison, into a temporary bit 7)
 +       ror zp_temp1
 
-        ; check for hex `$` or `%` sigil
+        ; check for `$` (hexadecimal) or `%` (binary) sigil:
         lda pl_term_name, y
         cmp # '$'
         beq @hex
@@ -384,17 +387,16 @@ term_parse_number:
         ; ASCII code is not a number!
 +       jmp err_parse
 
-        ; TODO: hate this
         ;-----------------------------------------------------------------------
 @hex:   lda # 16
         sta zp_int_base
         iny                     ; skip over the "$" sigil
-        bne @loop
+        bne @loop               ; (always branches)
 
 @bin:   lda # 2
         sta zp_int_base
         iny                     ; skip over the "%" sigil
-        bne @loop
+        bne @loop               ; (always branches)
 
         ;=======================================================================
         ; one digit converted! add to our running total:
@@ -423,12 +425,14 @@ term_parse_number:
         ;-----------------------------------------------------------------------
 @loop:  lda pl_term_name, y     ; get an ASCII character
         beq @done               ; null terminator? finish up
-        
+
         ; convert to upper-case:
+        ;
+        ; NOTE: Pling operates with ASCII internally; in ASCII, the capital
+        ;       letters follow the numerals, not the lower-case letters as
+        ;       is with PETSCII!
+        ;
         ; TODO: do this only for hexadecimal?
-        ; note that Pling operates with ASCII internally; in ASCII,
-        ; the capital letters follow the numerals, not the lower-case
-        ; letters as is with PETSCII!
         jsr asc2upper
 
         ; check for ASCII "0"-"9"
@@ -436,6 +440,7 @@ term_parse_number:
         sbc # '0'       ; ASCI "0" or above?
         cmp # 10        ; no higher than 9?
         bcc +
+
         ; there are 7 ASCII characters between "9" & "A", so if we subtract 7
         ; then "A" becomes 10, "B" = 11, ... "F" = 15 (since we've already
         ; established logically that the ASCII code is > "9")

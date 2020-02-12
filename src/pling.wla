@@ -95,8 +95,7 @@ pling_init:
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 __\.\@: .WORD   prev_term
         .REDEF  prev_term       __\.\@
-        ; TODO: should term names be stored as ASCII or PETSCII?
-        .ASC    str.length, str, NUL
+        .BYTE   str.length, str, NUL
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM
 
