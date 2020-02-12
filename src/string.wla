@@ -37,11 +37,11 @@ asc2lower:
         ;=======================================================================
         ; is the character within the upper-case letters?
         ;
-        cmp # 'A'+1             ; "A" or above?
-        bcs -                   ; no -- exit
-        cmp # 'Z'+1             ; "Z" and below?
+        cmp # 'A'               ; "A" or above?
         bcc -                   ; no -- exit
-        and %11011111           ; unset the upper-case bit
+        cmp # 'Z'+1             ; "Z" and below?
+        bcs -                   ; no -- exit
+        ora # %00100000         ; switch to lower-case
         rts
 
 
@@ -72,9 +72,9 @@ asc2upper:
         ;=======================================================================
         ; is the character within the lower-case letters?
         ;
-        cmp # 'a'+1             ; "a" or above?
-        bcs -                   ; no -- exit
-        cmp # 'z'+1             ; "z" and below?
+        cmp # 'a'               ; "a" or above?
         bcc -                   ; no -- exit
-        ora %00100000           ; set the upper-case bit
+        cmp # 'z'+1             ; "z" and below?
+        bcs -                   ; no -- exit
+        and # %11011111         ; switch to lower-case
         rts
