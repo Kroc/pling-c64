@@ -4,7 +4,7 @@
 ;
 ; c64_init.wla : machine-specific intialisation for the Commodore 64
 ;===============================================================================
-.INC    "sys_cbmbasic.wla"
+.INC    "cbm/cbm_basic.wla"
 
 ;===============================================================================
 sys_init:

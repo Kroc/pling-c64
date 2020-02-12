@@ -2,7 +2,7 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; c64_terms.wla : C64-specific terms
+; cbm_terms.wla : Commodore-specific terms
 ;===============================================================================
 
 sys_print:

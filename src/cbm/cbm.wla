@@ -1,0 +1,19 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; cbm.wla : shared Commodore (C64/128/16/+4/PET*) definitions
+;===============================================================================
+.INC    "cbm/cbm_petscii.wla"   ; the CBM PETSCII character mapping
+
+.IFDEF  SYSTEM_C64
+    ;///////////////////////////////////////////////////////////////////////////
+    .INC    "cbm/c64/c64.wla"   ; generalised C64 hardware / ROM constants
+    .INC    "cbm/c64_mem.wla"   ; Pling-specific C64 memory layout
+
+    .INC    "cbm/C64_init.wla"  ; C64-specific initialisation
+.ELSE
+    .FAIL
+.ENDIF
+
+.INC    "cbm/cbm_err.wla"

@@ -2,10 +2,10 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; c64_err.wla : C64-specific error handling
+; cbm_err.wla : Commodore-specific error handling
 ;===============================================================================
 
-; an error has occurred, allow the C64 to print it
+; an error has occurred, allow the machine to print it
 ; in its own particular... demeanour?
 ;===============================================================================
 sys_error:

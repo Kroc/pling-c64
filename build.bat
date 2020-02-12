@@ -7,7 +7,7 @@ SET WLA_65C02="bin\wla-dx\wla-65c02.exe" -i -x -I "src"
 SET WLA_LINK="bin\wla-dx\wlalink.exe" -i -A -S
 
 REM # combine the CPU assembler and system symbols for a C64
-SET WLA_C64=%WLA_6510% -D SYSTEM_C64=1
+SET WLA_C64=%WLA_6510% -D SYSTEM_CBM=1 -D SYSTEM_C64=1
 REM # utility to pack C64 binaries onto a C64 disk-image
 SET C1541="bin\vice\c1541.exe"
 REM # C64 emulator

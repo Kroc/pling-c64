@@ -40,9 +40,9 @@
 .ROMBANKSIZE            $FDFA
 .ROMBANKS               1
 
-.INC    "c64/hardware/c64_cia.wla"
-.INC    "c64/hardware/c64_vic.wla"
-.INC    "c64/hardware/c64_kernal.wla"
+.INC    "cbm/c64/c64_cia.wla"
+.INC    "cbm/c64/c64_vic.wla"
+.INC    "cbm/c64/c64_kernal.wla"
 
 
 ; CPU port: memory layout & Datasette
