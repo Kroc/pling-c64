@@ -17,35 +17,10 @@
         .INC    "sys_65xx.wla"
 .ENDIF
 
-; data-types:
-;===============================================================================
-.DEF    TYPE_BYTE       %00000000       ; a data byte, but not a token!
-.DEF    TYPE_WORD_LO    %10000000       ; the lo-byte of a word
-.DEF    TYPE_WORD_HI    %10000001       ; the hi-byte of a word
-
-; tokens:
 ;-------------------------------------------------------------------------------
-; tokens are implementation-specific, opaque data types for differentiating
-; error/token numbers from regular bytes/words on the stack. tokens are never
-; directly exposed to Pling programs as the byte-values of tokens are not
-; guaranteed to be constant, or even exist, between systems/implementations 
-;
-.ENUMID 1
-.ENUMID TOKEN_STK       ; Stack under/overflow 
-.ENUMID TOKEN_TYP       ; data-type error 
-.ENUMID TOKEN_EOD       ; "End Of Data" (read / write)
+.INC    "stack.wla"             ; Pling's data/type stack routines
+.INC    "error.wla"             ; error handling
 
-;-------------------------------------------------------------------------------
-.DEF    prev_term       $0000
-
-.MACRO  .term   ARGS    str
-        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-__\.\@: .WORD   prev_term
-        .REDEF  prev_term       __\.\@
-        ; TODO: should term names be stored as ASCII or PETSCII?
-        .ASC    str.length, str, 0
-        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-.ENDM
 
 ; shared Pling initialisation:
 ;===============================================================================
@@ -102,17 +77,33 @@ pling_init:
 
         ; main Read, Exceute, Print Loop:
         ;=======================================================================
-@repl   jsr term_line_input
+@repl:  jsr term_line_input
         jsr term_interpret
         jsr sys_ok
 
         jmp @repl
 
-;;@test:  .ASC    "test", 0
 
+; built-in terminology:
 ;===============================================================================
-.INC    "error.wla"             ; error handling
-.INC    "stack.wla"             ; Pling's data/type stack routines
+; here begins the built-in "terms" (Pling functions)
+
+.DEF    prev_term       $0000
+
+.MACRO  .term   ARGS    str
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+__\.\@: .WORD   prev_term
+        .REDEF  prev_term       __\.\@
+        ; TODO: should term names be stored as ASCII or PETSCII?
+        .ASC    str.length, str, 0
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+.ENDM
+
+.IFDEF  SYSTEM_C64
+        .INC    "c64/c64_terms.wla"
+.ENDIF
+
+;-------------------------------------------------------------------------------
 .INC    "core.wla"              ; core native primitives
 .INC    "math.wla"              ; core number & math routines
 .INC    "print.wla"             ; printing text/data to screen
@@ -121,6 +112,7 @@ pling_init:
 .INC    "stream.wla"            ; I/O streams
 .INC    "disk.wla"              ; disk I/O
 ;;.INC    "console.wla"
+
 
 ; last-term ( -- w )
 ;===============================================================================

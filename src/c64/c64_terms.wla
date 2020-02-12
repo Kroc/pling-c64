@@ -1,0 +1,78 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; c64_terms.wla : C64-specific terms
+;===============================================================================
+
+sys_print:
+        ;-----------------------------------------------------------------------
+        ; TODO: convert ASCII to pet
+sys_emit:
+        jmp KERNAL_CHROUT
+
+
+; this is the routine that prints "OK" when the interpretter
+; has processed and executed its input
+;
+; TODO: should this be a part of the console/IDE, and not the runtime?
+;===============================================================================
+sys_ok:
+        ;-----------------------------------------------------------------------
+        ; TODO: C64 shared print-string routine
+        ldy # 0
+-       lda @ok, y
+        beq +
+        jsr KERNAL_CHROUT
+        iny
+        bne -
+
++       rts
+
+@ok:    .ASC    13, $9e, $12, "ok.", $92, $05, 13, 0
+
+
+;===============================================================================
+asc2pet:    ; for now, these are the same thing (swap cases)
+pet2asc:                                                                ;cycles
+        ;-----------------------------------------------------------------------
+        tay                     ; backup PETSCII code                   ;+2=8
+
+        ; PETSCII codes 65-90 are lower-case characters (in lower-case ROM)
+        ; and map to ASCII codes 97-122 accordingly:
+        sec                                                             ;+2=10
+        sbc # 65                                                        ;+2=12
+        cmp # 26+1                                                      ;+2=14
+        bcs +                                                           ;+2/3
+                                                                        ;+2=16
+        adc # 97                                                        ;+2=18
+        rts                                                             ;+6=24
+
+        ; PETSCII codes 97-122 are upper-case characters (in lower-case ROM)
+        ; and map to ASCII codes 65-90 accordingly                      ;+3=17
++       tya                                                             ;+2=19
+        sbc # 97                                                        ;+2=21
+        cmp # 26+1                                                      ;+2=23
+        bcs +                                                           ;+2/3
+                                                                        ;+2=25
+        adc # 65                                                        ;+2=27
+        rts                                                             ;+6=33
+
+                                                                        ;+3=26
++       tya                                                             ;+2=28
+        rts                                                             ;+6=34
+
+        ; TODO: use lookup tables for ROM versions?
+        ; <https://sites.google.com/site/h2obsession/CBM/petscii>
+        ;
+        ;     ; ASC | note:       PET | note: 
+        ;-----------¦-----------------¦-----------------------------------------
+;;@table: .BYTE   $00 ; NULL      ; $00 : no function
+;;        .BYTE   $01 ; SOH       ; $01 = no function
+;;        .BYTE   $02 ; STX       ; $02 = no function
+;;        .BYTE   $03 ; ETX       ; $03 = STOP key
+;;        .BYTE   $04 ; EOT       ; $04 = no function
+;;        .BYTE   $05 ; EOQ       ; $05 = WHITE colour
+;;        .BYTE   $06 ; ACK       ; $06 = no function
+;;        .BYTE   $07 ; BEL       ; $07 = no function
+;;        .BYTE   $08 ;           ; $08 
