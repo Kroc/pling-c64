@@ -20,7 +20,8 @@ sys_ok:
         ;-----------------------------------------------------------------------
 @ok:    .BYTE   PET_RETURN, PET_YELLOW
         .BYTE   PET_RVRS_ON, "ok.", PET_RVRS_OFF
-        .BYTE   PET_WHITE, PET_RETURN, NUL
+        .BYTE   PET_WHITE, PET_RETURN
+        .BYTE   NUL
 
 
 sys_error:
@@ -31,8 +32,8 @@ sys_error:
 ;-------------------------------------------------------------------------------
         pha                     ; put aside error number momentarily
 
-        lda #< @clear
-        ldy #> @clear
+        lda #< @err
+        ldy #> @err
         jsr sys_printstr
         
         pla                     ; retrieve error number again
@@ -44,8 +45,14 @@ sys_error:
         pla                     ; lo-byte goes into A for printing routine
         jsr sys_printstr        ; put it on-screen!
 
--       inc VIC_BORDER
-        jmp -
+        lda #< @ok
+        ldy #> @ok
+        jmp sys_printstr
 
         ;-----------------------------------------------------------------------
-@clear: .BYTE   PET_RETURN, PET_RVRS_OFF, PET_YELLOW, PET_CASE_LO, NUL
+@err:   .BYTE   PET_RETURN, PET_YELLOW
+        .BYTE   PET_RVRS_ON, "err:", PET_RVRS_OFF, " "
+        .BYTE   NUL
+        ;-----------------------------------------------------------------------
+@ok:    .BYTE   PET_RETURN, PET_WHITE
+        .BYTE   NUL

@@ -63,6 +63,7 @@ term_drop:
 @byte:  inx                     ; drop byte
         rts
 
+
 ; exec ( w -- )
 ;===============================================================================
 ; execute the address on top of the stack
@@ -89,6 +90,7 @@ term_exec:
         sta zp_addr+HI
         jmp [zp_addr]
 .ENDIF
+
 
 ; byte2word ( b -- w )
 ;===============================================================================
