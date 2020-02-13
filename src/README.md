@@ -4,6 +4,10 @@
 
 This is the main 'starting' file for the source code, begin reading here if you want to follow source code /program initialisation and flow.
 
+* __ascii.wla__
+
+  Constants and routines for handling ASCII. Pling uses ASCII internally for portability between systems, particularly for reading plain text files that originated on a modern PC
+
 * __error.wla__
 
   Centralised error-handling
@@ -11,6 +15,10 @@ This is the main 'starting' file for the source code, begin reading here if you 
 * __stack.wla__
 
   Native code, that manages the software-defined data stack that makes _Pling_ (or any _Forth_) what it is. For terms for manipulating the stack from _Pling_ scripts, see "term_core.wla"
+
+* __sys_65xx.wla__
+
+  Macros, constants and code specific to 6502-based machines, including the 6502, 6510 (C64) & 65C02
 
 * __term_core.wla__
 
@@ -43,7 +51,3 @@ This is the main 'starting' file for the source code, begin reading here if you 
 * __term_string.wla__
 
   String-handling terms
-
-* __sys_65xx.wla__
-
-  Macros, constants and code specific to 6502-based machines, including the 6502, 6510 (C64) & 65C02

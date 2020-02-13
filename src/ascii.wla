@@ -1,0 +1,48 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; ascii.wla : ASCII stuff
+;===============================================================================
+; Pling uses ASCII internally for portability between systems, particularly
+; for reading plain text files that originated on a modern PC
+;
+
+asc2lower:
+;===============================================================================
+; convert an ASCII character to lower-case
+;
+; in:   A       ASCII code
+;
+; out:  A       ASCII code
+;       X, Y    (preserved)
+;
+;-------------------------------------------------------------------------------
+        ; is the character within the upper-case letters?
+        ;
+        cmp # 'A'               ; "A" or above?
+        bcc +                   ; no -- exit
+        cmp # 'Z'+1             ; "Z" and below?
+        bcs +                   ; no -- exit
+        ora # %00100000         ; switch to lower-case
++       rts
+
+
+asc2upper:
+;===============================================================================
+; convert an ASCII character to upper-case
+;
+; in:   A       ASCII code
+;
+; out:  A       ASCII code
+;       X, Y    (preserved)
+;
+;-------------------------------------------------------------------------------
+        ; is the character within the lower-case letters?
+        ;
+        cmp # 'a'               ; "a" or above?
+        bcc +                   ; no -- exit
+        cmp # 'z'+1             ; "z" and below?
+        bcs +                   ; no -- exit
+        and # %11011111         ; switch to upper-case
++       rts

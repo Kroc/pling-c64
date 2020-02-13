@@ -82,6 +82,7 @@ pling_init:
 ;-------------------------------------------------------------------------------
 .INC    "stack.wla"             ; Pling's data/type stack routines
 .INC    "error.wla"             ; error handling
+.INC    "ascii.wla"             ; ASCII constants / routines
 
 
 ; built-in terminology:
