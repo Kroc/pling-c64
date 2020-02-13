@@ -62,7 +62,7 @@
 .MACRO  .raiseStack
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         inx
-        cpx # PL_STACK_SIZE+1
+        cpx # PL_STACK_SIZE
         bcc @\.__\@
         jmp err_stack_underflow
 
@@ -76,7 +76,7 @@
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         inx
         inx
-        cpx # PL_STACK_SIZE+1
+        cpx # PL_STACK_SIZE
         bcc @\.__\@
         jmp err_stack_underflow
 
@@ -139,18 +139,16 @@ push_word:
         ; at the new top-most position
         sta zp_stack+0, x
         ; write the hi-byte underneath that
-.IFDEF  CPU_65C02
         sty zp_stack+1, x
-.ELSE   ;6502:
-        tya
-        sta zp_stack+1, x
-.ENDIF
         ; note the fall-through to the next routine...
 
 set_type_word:
 ;-------------------------------------------------------------------------------
 ; sets the data-type for the top two bytes on the stack to a word.
 ; this is an internal tail-call, no validation is done at all
+;
+; out:  A       (clobbered)
+;       X, Y    (preserved)
 ;
 ;-------------------------------------------------------------------------------
 .IFDEF  CPU_65C02
@@ -190,14 +188,8 @@ push_token:
         bmi err_stack_underflow ; if underflow, error
 
         ; define the token!
-.IFDEF  CPU_65C02
         sta zp_stack, x
         sty zp_type, x
-.ELSE   ;6502
-        sta zp_stack, x
-        tya
-        sta zp_type, x
-.ENDIF
         rts
 
 ; a stack over/under-flow error:
@@ -215,7 +207,7 @@ err_stack:
 
         ; has the stack underflowed?
         ; this is dependent on the stack's size
-        cpx # PL_STACK_SIZE+1
+        cpx # PL_STACK_SIZE
         bcs err_stack_underflow
 
         ; implementation error!
@@ -344,14 +336,9 @@ peek_word:
         lda zp_type, x
         bpl err_type            ; not a word!
 
-.IFDEF  CPU_65C02
         lda zp_stack+0, x
         ldy zp_stack+1, x
-.ELSE
-        lda zp_stack+1, x
-        tay
-        lda zp_stack+0, x
-.ENDIF
+
         rts
 
 
@@ -384,17 +371,12 @@ pop_int:
 
 @word:  ; read a word:
         ;-----------------------------------------------------------------------
-.IFDEF  CPU_65C02
         lda zp_stack+0, x
         ldy zp_stack+1, x
-.ELSE   ;6502
-        lda zp_stack+1, x       ; read the hi-byte first,
-        tay                     ; to put it into Y
-        lda zp_stack+0, x       ; and then A for the lo-byte
-.ENDIF  ; raise the stack twice
-        inx
-        inx
-        sec                     ; return c=1 for byte
+        
+        inx                     ; raise the stack...
+        inx                     ; ...twice
+        sec                     ; return c=1 for word
         rts
 
         ; read a byte:
@@ -433,14 +415,10 @@ pop_word:
         lda zp_type, x
         bpl err_type            ; any non-word type is an error!
 
-.IFDEF  CPU_65C02
         lda zp_stack+0, x       ; word lo-byte
         ldy zp_stack+1, x       ; word hi-byte
-.ELSE   ;6502
-        lda zp_stack+1, x       ; read the hi-byte first,
-        tay                     ; to put it into Y
-        lda zp_stack+0, x       ; then A for the lo-byte
-.ENDIF  ; raise the stack twice
+        
+        ; raise the stack twice
         inx
         inx
         rts
@@ -449,7 +427,6 @@ pop_word:
 pop_if_token:
 ;===============================================================================
 ; pop the top item on the stack, only if it's a token:
-; stack under/over-flow automatically raises an error,
 ; no action is taken for other data-types
 ;
 ; in:   X       stack index
@@ -468,8 +445,9 @@ pop_if_token:
         beq @skip               ; it's a byte, ignore
         bmi @skip               ; it's a word, ignore
 
+        ; if the stack is empty, ignore
         cmp # TOKEN_STK
-        beq err_stack
+        beq @skip
 
         ; when you have eliminated the impossible,
         ; whatever remains, however improbable,

@@ -2,8 +2,17 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; math.wla : core number & math routines
+; term_math.wla : core number & math routines
 ;===============================================================================
+; label:                    stack:              term-name:
+;-------------------------------------------------------------------------------
+; term_0                      -- b              "0"
+; term_00                     -- w              "00"
+; term_add                i i -- i              "+"
+; term_add1                 i -- i              "+1"
+; term_neg                  i -- i              "neg"
+; term_neg                  i -- i              "not"
+;
 
 ; 0 ( -- b )
 ;===============================================================================
@@ -74,16 +83,67 @@ term_00:
 ;       word + byte     = word
 ;       word + word     = word
 ;
-; in all instances, any overflow will go into the `overflow` term
+; in all instances, any overflow will go into the `overflow` variable
 ;-------------------------------------------------------------------------------
         .term   "+"
 
 term_add:
         ;-----------------------------------------------------------------------
-        ; pop the top integer, regardless of type
-        jsr pop_int
+        jsr pop_int             ; pop the top integer, regardless of type
+        pha                     ; keep a hold of the byte/lo-byte
+        bcs @word               ; the carry will be 0 = byte, 1 = word
 
-        kil
+        ;-----------------------------------------------------------------------
+        ; if the first integer was a byte, then check the type of the second
+        ; (we won't pop it, rather just rewrite the top of the stack)
+        ;
+@byte:  lda zp_type, x
+        ; if either parameter is a word,
+        ; then the output is always a word
+        bne @word
+
+        ; byte + byte:
+        ;-----------------------------------------------------------------------
+        ; the top of the stack is already
+        ; a byte, so no need to push or extend
+        ;
+        pla                     ; restore the first integer
+        adc zp_stack, x         ; add the second
+        
+        ; handle the carry:
+        ;
+        ; even adding two words can only overflow 1-bit at most,
+        ; so the hi-byte of the overflow word will always be zero
+        lda # 0
+        sta zp_overflow+HI
+        rol                     ; add the carry to zero for the lo-byte;
+        sta zp_overflow+LO      ; the overflow word will be $0000 or $0001
+        rts
+
+        ; word for either:
+        ;-----------------------------------------------------------------------
+        ; if the first integer was a word, the result will always be a word.
+        ; if the 2nd integer is a byte, extend it to a word to hold the result
+        ; (if the top of the stack is already a word, no change will happen)
+        ;
+@word:  jsr term_extend
+
+        pla                     ; retrieve our first integer's lo-byte
+        clc                     
+        adc zp_stack, x         ; add lo-bytes together
+        tay                     ; Y still holds the hi-byte from the pop
+        adc zp_stack+1, x       ; add-with-carry the hi-bytes
+
+        ; handle the carry:
+        ; (duplicate of above, for speed)
+        ;
+        ; even adding two words can only overflow 1-bit at most,
+        ; so the hi-byte of the overflow word will always be zero
+        lda # 0
+        sta zp_overflow+HI
+        rol                     ; add the carry to zero for the lo-byte;
+        sta zp_overflow+LO      ; the overflow word will be $0000 or $0001
+        rts
 
 
 ; +1 ( i -- i )
@@ -109,35 +169,6 @@ term_add1:
 +       rts
 
 @byte:  inc zp_stack, x
-        rts
-
-
-; not ( i -- i )
-;===============================================================================
-; flips all the bits of the integer atop the stack:
-;
-;-------------------------------------------------------------------------------
-        .term   "not"
-
-term_not:
-        ;-----------------------------------------------------------------------
-        ; read the data-type of the item atop the stack
-        lda zp_type, x
-        bmi @word
-        beq @byte
-
-        ; a token type, including a stack underflow
-        jmp err_type
-
-        ;-----------------------------------------------------------------------
-@word:  lda zp_stack+1, x
-        eor # %11111111         ; flip the hi-byte,
-        sta zp_stack+1, x       ; and drop through to...
-
-@byte:  lda zp_stack, x
-        eor # %11111111         ; flip the lo-byte
-        sta zp_stack, x
-        
         rts
 
 
@@ -167,5 +198,30 @@ term_neg:
         jmp term_add1@byte
 
 
+; not ( i -- i )
 ;===============================================================================
-.INC    "term_muldiv.wla"
+; flips all the bits of the integer atop the stack:
+;
+;-------------------------------------------------------------------------------
+        .term   "not"
+
+term_not:
+        ;-----------------------------------------------------------------------
+        ; read the data-type of the item atop the stack
+        lda zp_type, x
+        bmi @word
+        beq @byte
+
+        ; a token type, including a stack underflow
+        jmp err_type
+
+        ;-----------------------------------------------------------------------
+@word:  lda zp_stack+1, x
+        eor # %11111111         ; flip the hi-byte,
+        sta zp_stack+1, x       ; and drop through to...
+
+@byte:  lda zp_stack, x
+        eor # %11111111         ; flip the lo-byte
+        sta zp_stack, x
+        
+        rts

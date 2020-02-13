@@ -3,12 +3,12 @@
 ; how you please as long as you retain the copyright notice
 ;
 ;===============================================================================
-; import machine-specific headers:
-;-------------------------------------------------------------------------------
 .DEF    NUL             0
 .DEF    LO              0
 .DEF    HI              1
 
+; import machine-specific headers:
+;-------------------------------------------------------------------------------
 .IFDEF  SYSTEM_CBM
         .INC    "cbm/cbm.wla"
 .ENDIF
@@ -17,11 +17,6 @@
         ; to polyfill differences in instruction sets
         .INC    "sys_65xx.wla"
 .ENDIF
-
-;-------------------------------------------------------------------------------
-.INC    "stack.wla"             ; Pling's data/type stack routines
-.INC    "error.wla"             ; error handling
-
 
 ; shared Pling initialisation:
 ;===============================================================================
@@ -84,6 +79,10 @@ pling_init:
 
         jmp @repl
 
+;-------------------------------------------------------------------------------
+.INC    "stack.wla"             ; Pling's data/type stack routines
+.INC    "error.wla"             ; error handling
+
 
 ; built-in terminology:
 ;===============================================================================
@@ -99,13 +98,14 @@ __\.\@: .WORD   prev_term
         ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM
 
-.IFDEF  SYSTEM_CBM
-        .INC    "cbm/cbm_terms.wla"
-.ENDIF
+; TODO:
+; the system-specific terms go first so that the code layout is weighted
+; toward criticality nearest to the start, so that more and more of the
+; non-system terms can be ejected, if desired, leaving a minimal runtime
 
-;-------------------------------------------------------------------------------
 .INC    "term_core.wla"         ; core native primitives
 .INC    "term_math.wla"         ; core number & math routines
+.INC    "term_muldiv.wla"       ; multiply & divide math
 .INC    "term_string.wla"       ; core string routines
 .INC    "term_stream.wla"       ; I/O streams
 .INC    "term_disk.wla"         ; disk I/O

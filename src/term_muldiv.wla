@@ -2,7 +2,7 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; math_mudiv.wla : math multiply & divide routines
+; term_mudiv.wla : math multiply & divide routines
 ;===============================================================================
 ; multipling and dividing on 8-bit systems is a complicated process
 
@@ -36,7 +36,7 @@ term_multiply:
         ; the top of the stack is now the "multiplicand", the starting number
         ; to multiply. result will be a word so we extend the top integer to
         ; fill a word; if it's already a word, no change will occur
-        jsr term_byte2word
+        jsr term_extend
 
         ; copy the multiplicand, we'll reuse the top
         ; of the stack for the result named the "product"

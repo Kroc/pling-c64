@@ -2,7 +2,7 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; core.wla
+; term_core.wla : stack routines available to Pling scripts
 ;===============================================================================
 
 ; ! ( b w -- )
@@ -92,16 +92,16 @@ term_exec:
 .ENDIF
 
 
-; byte2word ( b -- w )
+; extend ( b -- w )
 ;===============================================================================
 ; converts the integer on top of the stack to a word:
-; if the item is already a word, no change happens.
+; if the integer is already a word, no change happens.
 ; stack underflow occurs if the stack is empty
 ;
 ;-------------------------------------------------------------------------------
-        .term   "byte2word"
+        .term   "extend"
 
-term_byte2word:
+term_extend:
         ;-----------------------------------------------------------------------
         ; read the data-type without checking stack position;
         ; error tokens exist at the bytes just outside the data-type stack

@@ -40,6 +40,7 @@
 ;-------------------------------------------------------------------------------
 ; keys:
 ;-------------------------------------------------------------------------------
+.DEF    PET_SPC         $20     ; SPACE bar
 .DEF    PET_RUN         $83     ; RUN key
 .DEF    PET_STOP        $03     ; STOP key
 .DEF    PET_RETURN      $0d     ; RETURN key
@@ -47,13 +48,13 @@
 .DEF    PET_INS         $94     ; INSERT key
 .DEF    PET_DEL         $14     ; DELETE key
 .DEF    PET_F1          $85     ; F1 key
-.DEF    PET_F2          $89     ; F2 key
+.DEF    PET_F2          $89     ; F2 key (SHIFT+F1)
 .DEF    PET_F3          $86     ; F3 key
-.DEF    PET_F4          $8a     ; F4 key
+.DEF    PET_F4          $8a     ; F4 key (SHIFT+F3)
 .DEF    PET_F5          $87     ; F5 key
-.DEF    PET_F6          $8b     ; F6 key
+.DEF    PET_F6          $8b     ; F6 key (SHIFT+F5)
 .DEF    PET_F7          $88     ; F7 key
-.DEF    PET_F8          $8c     ; F8 key
+.DEF    PET_F8          $8c     ; F8 key (SHIFT+F7)
 ;-------------------------------------------------------------------------------
 ; screen control:
 ;-------------------------------------------------------------------------------

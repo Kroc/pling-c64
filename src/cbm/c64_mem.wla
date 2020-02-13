@@ -47,6 +47,9 @@
 
 ; number base (2, 10, 16) used during number parsing
 .DEF    zp_int_base     $0e
+.DEF    zp_index        $0e
+
+.DEF    zp_input        $9b
 
 ;-------------------------------------------------------------------------------
 ; Pling's data stack works downwards; this direction was chosen specifically

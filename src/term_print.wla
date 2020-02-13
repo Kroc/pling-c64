@@ -2,15 +2,16 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; print.wla : screen output
+; term_print.wla : screen output
 ;===============================================================================
 ; label:                    stack:              term-name:
 ;-------------------------------------------------------------------------------
 ; term_print_newline:         --                ".n"
 ; term_print:               b --                "."
-; term_print_dec:           i --                ".dec"
+; term_print_int:           i --                ".int"
 ; term_print_hex:           i --                ".hex"
 ; term_print_bin:           i --                ".bin"
+; term_print_stack            --                ".stack"
 ;
 
 ; .n ( -- )
@@ -23,7 +24,7 @@
 term_print_newline:
         ;-----------------------------------------------------------------------
         lda # PET_RETURN
-        jmp sys_emit            ; print, skipping character conversion
+        jmp sys_chrout          ; print, skipping character conversion
 
 
 ; . ( b -- )
@@ -60,16 +61,14 @@ term_print_int:
         ; pop the integer (byte or word), checking for underflow
         ; TODO: optimised routine for printing a byte
         jsr pop_int
-        ; A = lo, Y = hi is always returned,
-        ; even if the item was a byte
-        sta zp_word+LO
+
+@word:  sta zp_word+LO
         sty zp_word+HI
 
 ; adapted from:
 ; <http://forum.6502.org/viewtopic.php?p=55800#p55800>
 ;
-@print:
-        lda # 0                 ; null delimiter for print
+@print: lda # 0                 ; null delimiter for print
         pha
 @div10: ; divide value by 10
         lda # 0
@@ -98,7 +97,7 @@ term_print_int:
         bne @div10              ; } until value is 0
         pla
 
--       jsr sys_emit            ; print digits in descending
+-       jsr sys_chrout          ; print digits in descending
         pla                     ; order until delimiter is
         bne -                   ; encountered
 
@@ -118,18 +117,15 @@ term_print_int:
 term_print_hex:
         ;-----------------------------------------------------------------------
         jsr pop_int
-        bcs @word
-
-        jmp @print
+        bcc @byte
 
         ;-----------------------------------------------------------------------
-@word:  pha
-        tya
-        jsr @print
-        pla
+@word:  sty zp_temp2
+        jsr @byte
+        lda zp_temp2
 
         ;-----------------------------------------------------------------------
-@print: tay
+@byte:  tay
 
         ; move top nybble to bottom nybble
         lsr
@@ -172,7 +168,7 @@ term_print_hex:
         cld                     ; turn decimal mode off
         cli                     ; re-enable interrupts
 .ENDIF
-        jmp sys_emit
+        jmp sys_chrout
 
 
 ; .bin ( i -- )
@@ -186,64 +182,273 @@ term_print_hex:
 
 term_print_bin:
         ;-----------------------------------------------------------------------
-        ; check the data-type of the item atop the stack
-        lda zp_type, x
-        bmi @word
-        beq @byte
+        jsr pop_int
+        sta zp_temp1
+        bcc @byte
 
-        jmp err_type
-
-        ; print the hi-byte first by moving to the
-        ; 2nd byte in the stack and printing that
-        ; TODO: a more efficient way to do this?
-@word:  inx
+@word:  pha
+        sty zp_temp1
         jsr @byte
-        dex
-        dex
+        pla
+        sta zp_temp1
 
 @byte:  ldy # '0' >> 1
+        lda # 0
+        pha
         
-        asl zp_stack, x
+        asl zp_temp1
         tya
         rol
-        jsr sys_emit            ; print bit 7
+        pha
         
-        asl zp_stack, x
+        asl zp_temp1
         tya
         rol
-        jsr sys_emit            ; print bit 6
+        pha
 
-        asl zp_stack, x
+        asl zp_temp1
         tya
         rol
-        jsr sys_emit            ; print bit 5
+        pha
 
-        asl zp_stack, x
+        asl zp_temp1
         tya
         rol
-        jsr sys_emit            ; print bit 4
+        pha
 
-        asl zp_stack, x
+        asl zp_temp1
         tya
         rol
-        jsr sys_emit            ; print bit 3
+        pha
 
-        asl zp_stack, x
+        asl zp_temp1
         tya
         rol
-        jsr sys_emit            ; print bit 2
+        pha
 
-        asl zp_stack, x
+        asl zp_temp1
         tya
         rol
-        jsr sys_emit            ; print bit 1
+        pha
 
-        asl zp_stack, x
+        asl zp_temp1
         tya
         rol
-        jsr sys_emit            ; print bit 0
 
-        ; once the byte has been printed,
-        ; we discard it by raising the stack
-        inx
+-       jsr sys_print
+        pla
+        bne -
         rts
+
+
+; .stack ( -- )
+;===============================================================================
+; pretty-prints the contents of the entire stack, for debugging purposes:
+; stack contents are not modified. produces output of this style:
+;
+;       item type   hex            binary dec   
+;       ---------------------------------------- 
+;        1st byte $..00 %........00000000     0
+;        2nd word $FFFF %1111111111111111 65535
+;        3rd tokn END OF DATA
+;
+; TODO: this will be easier to produce when we have number-formatting routines
+; TODO: this should be part of the console and not the core 
+;-------------------------------------------------------------------------------
+        .term   ".stack"
+
+term_print_stack:
+        ;-----------------------------------------------------------------------
+        ; is the stack empty?
+        cpx # PL_STACK_SIZE
+        bcc +
+
+        ; print the "empty" message:
+        ;-----------------------------------------------------------------------
+        lda #< @empty
+        ldy #> @empty
+        jmp sys_printstr
+
+@empty: .BYTE   "empty"
+        .BYTE   NUL
+
+        ;-----------------------------------------------------------------------
+@done:  .plx                    ; restore original stack index
+        rts
+
+        ; print the header:
+        ;-----------------------------------------------------------------------
++       lda #< @head
+        ldy #> @head
+        jsr sys_printstr
+
+        ; the stack index measures hardware bytes, not "items" on the stack,
+        ; as items can be bytes or words, so we need a counter for items
+        lda # 1
+        sta zp_index
+
+        ; backup the current stack index; we'll walk down
+        ; the stack, as if we were popping every item
+        .phx
+
+        ; walk the stack:
+        ;=======================================================================
+@item:  lda zp_type, x          ; read the data-type of the current item
+        cmp # TOKEN_STK         ; is it the bottom of the stack?
+        beq @done               ; yes? finish printing
+        
+        pha                     ; put aside the data type;
+        lda zp_index            ; begin printing the line-item
+        
+        ; print the item number:
+        ;-----------------------------------------------------------------------
+        ; this routine for converting a byte to decimal digits is adapted from:
+        ; <https://codebase64.org/doku.php?id=base:tiny_.a_to_ascii_routine>
+        ;
+        ; we happen to know that this cannot be in the hundreds, at least on
+        ; the 6502, as Pling's stack is not > 99 bytes; the data-type stack
+        ; doubles the space required and there's only 256 bytes in zero-page!
+        ;
+        ; hundreds:
+        ;-----------------------------------------------------------------------
+        sec
+        ldy # '0'-1             ; increment using an ASCII digit!
+-       iny                     ; increment hundreds-digit,
+        sbc # 100               ; for each 100 decimal subtracted
+        bcs -                   ; keep going?
+        ;;pha                     ; (put aside the remainder)
+
+        ;;tya                     ; get hundreds-digit:
+        ;;cmp # '0'               ; is it a zero?
+        ;;bne +                   ; if not, print the digit as-is
+        ;;lda # PET_SPC           ; (print a space instead of a leading "0")
++       ;;jsr sys_chrout          ; print the digit
+        ;;clc                     ; (carry state unknown)
+
+        ; tens & ones:
+        ;-----------------------------------------------------------------------
+        ;;pla                     ; retrieve the working remainder
+        ldy # '9'+1             ; decrement using an ASCII digit!
+-       dey                     ; decrement the tens-digit,
+        adc # 10                ; for each 10 decimal subtracted
+        bmi -                   ; keep going?
+
+        adc # '0'-1             ; make it an ASCII numeral
+        pha                     ; (put aside the remainder!)
+
+        tya                     ; get tens-digit:
+        cmp # '0'               ; is the digit a zero?
+        bne +                   ; if not, print the digit as-is
+        lda # ' '               ; (print a space instead of a leading "0")
++       jsr sys_print           ; print the digit
+        clc                     ; (carry state unknown)
+
+        pla                     ; retrieve the 1s-digit
+        tay
+        jsr sys_print           ; print the digit
+
+        cpy # '5'
+        bne +
+        ldy # '4'
++       lda @ord1-'0', y
+        jsr sys_print
+        lda @ord2-'0', y
+        jsr sys_print
+
+        ; data-type:
+        ;-----------------------------------------------------------------------
+        pla
+        bmi @word               ; it's a word...
+        beq @byte               ; it's a byte...
+
+        ; when you have eliminated the impossible,
+        ; whatever remains, however improbable,
+        ; must be a token
+@token: lda #< @typet
+        ldy #> @typet
+        jsr sys_printstr
+        
+        lda # PET_RETURN
+        jsr sys_print
+        
+        .plx
+        rts
+
+        ;-----------------------------------------------------------------------
+@word:  lda #< @typew
+        ldy #> @typew
+        jsr sys_printstr
+
+        lda zp_stack+0, x
+        ldy zp_stack+1, x
+        jsr term_print_hex@word
+
+        lda #< @binw
+        ldy #> @binw
+        jsr sys_printstr
+
+        lda zp_stack+0, x
+        ldy zp_stack+1, x
+        jsr term_print_bin@word
+
+        lda # ' '
+        jsr sys_print
+
+        lda zp_stack+0, x
+        ldy zp_stack+1, x
+        jsr term_print_int@word
+
+        lda # PET_RETURN
+        jsr sys_print
+
+        inx
+        inx
+        inc zp_index
+        jmp @item
+
+        ;-----------------------------------------------------------------------
+@byte:  lda #< @typeb
+        ldy #> @typeb
+        jsr sys_printstr
+
+        lda zp_stack, x
+        jsr term_print_hex@byte
+
+        lda #< @binb
+        ldy #> @binb
+        jsr sys_printstr
+
+        lda zp_stack+0, x
+        ldy zp_stack+1, x
+        jsr term_print_bin@byte
+
+        lda # ' '
+        jsr sys_print
+
+        lda zp_stack+0, x
+        ldy # 0
+        jsr term_print_int@word
+
+        lda # PET_RETURN
+        jsr sys_print
+
+        inx
+        inc zp_index
+        jmp @item
+
+        ;=======================================================================
+@head:  .BYTE   PET_YELLOW, PET_RVRS_ON
+        .BYTE   "item type   hex            binary dec   "
+        .BYTE   PET_WHITE, PET_RVRS_OFF
+        .BYTE   NUL
+        ;-----------------------------------------------------------------------
+        ;        0    1    2    3    4...
+@ord1:  .BYTE   "t", "s", "n", "r", "t"
+@ord2:  .BYTE   "h", "t", "d", "d", "h"
+        ;-----------------------------------------------------------------------
+@typet: .BYTE   " tokn ", NUL
+@typew: .BYTE   " word $", NUL
+@typeb: .BYTE   " byte $..", NUL
+        ;-----------------------------------------------------------------------
+@binb:  .BYTE   " %........", NUL
+@binw:  .BYTE   " %", NUL

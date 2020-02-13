@@ -2,13 +2,13 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; interpret.wla : code & number parsing
+; term_interpret.wla : code & number parsing
 ;===============================================================================
 ; label:                    stack:              term-name:
 ;-------------------------------------------------------------------------------
 ; term_line_input:            --                "line-input"
-; term_interpret:           w --                "interpret"
-; term_read_term:           w -- w              "read-term"
+; term_interpret:             --                "interpret"
+; term_read_term:             -- [EOD]          "read-term"
 ; term_find_term:             -- w | EOD        "find-term"
 ; term_parse_number:          -- i              "parse-number"
 ;
@@ -39,7 +39,7 @@ term_line_input:
         cpy # 81                ; have we hit the end of the line?
         bne -
 
-+       jsr sys_emit            ; actually print the RETURN (go to next line)
++       jsr sys_chrout          ; actually print the RETURN (go to next line)
 
         ; append a null-terminator:
 .IFDEF  CPU_65C02
@@ -50,14 +50,14 @@ term_line_input:
 .ENDIF
         lda #< $0200
         ldy #> $0200
-        jmp push_word
+        sta zp_input+LO
+        sty zp_input+HI
+        rts
 
 
-; interpret ( w -- )
+; interpret ( -- )
 ;===============================================================================
 ; read source code input and execute
-;
-; in:   word    address of null-terminated ASCII text to interpret
 ;
 ; TODO: for now this merely reads a string already in memory, but with the
 ;       introduction of stream I/O we'll want this to be able to read from
@@ -68,57 +68,41 @@ term_line_input:
 
 term_interpret:
         ;-----------------------------------------------------------------------
-        ; jump straight to the routine for reading a term from input,
-        ; the same parameters apply
-        jsr term_read_term
-        ; TODO: error handling / End-Of-Data token ends interpret
-        jsr term_drop
-        
-        ; search for the term in the terminology
-        jsr term_find_term
+-       jsr term_read_term      ; check the input buffer
+        jsr pop_token_EOD       ; did we reach the end of the buffer?
+        beq @rts                ; if yes, all work is done
 
+        jsr term_find_term      ; search for the term in the terminology
         jsr pop_token_EOD       ; did we find the term?
-        beq @eod                ; handle term not found...
+        beq +                   ; not found; could it be a number?
 
-        ; execute it!
-        jmp term_exec
+        jsr term_exec           ; execute it!
+        jmp -                   ; check for any further terms
 
-        ; existing term not found, attempt to parse as a number:
-        ;-----------------------------------------------------------------------
-@eod:   jmp term_parse_number
+        ; TODO: handle parse-number error
++       jsr term_parse_number   ; attempt to parse as a number
+        jmp -                   ; check for any further terms
+
+@rts:   rts
 
 
-; read-term ( w -- w )
+; read-term ( -- [EOD] )
 ;===============================================================================
-; read a term name from input
+; read a term name from the input buffer
 ;
-; in:   word    address of null-terminated ASCII text to read
+; NOTE: since a term-name is limited to 31 characters, the string will be
+;       indexed with 8-bits, placing an arbitrary limitation that there
+;       cannot be more than 256-31 characters of delimiters before the
+;       term-name begins
 ;
-;               since a term-name is limited to 31 characters, the string
-;               will be indexed with 8-bits, placing an arbitrary limitation
-;               that there cannot be more than 256-31 characters of delimiters
-;               before the term-name begins
-;
-; out:  word    address of the new position of the input buffer, the address
-;               having been moved forward over the new term. you can use this
-;               to continue reading terms from where you left off
+; out:  [EOD]   if the input string reaches the end without reading a term,
+;               an End Of Data token is returned
 ;
 ;-------------------------------------------------------------------------------
         .term   "read-term"
 
 term_read_term:
         ;-----------------------------------------------------------------------
-        ; since the top of the stack is a word, and we're going to return
-        ; a word, we're going to just overwrite it instead of popping/pushing.
-        ; we do need to move the value to the zero-page, though, for 6502
-        ; indexed addressing
-        ;
-        ; this routine will check stack underflow & data-type
-        ; TODO: inline this a little to optimise
-        jsr peek_word
-        sta zp_addr+LO
-        sty zp_addr+HI
-
         ; skip initial delimiters:
         ;-----------------------------------------------------------------------
         ; note that we must leave the index on a non-delimiter character,
@@ -128,8 +112,8 @@ term_read_term:
         ;
         ldy # -1
 -       iny                     ; pre-emptively move to the next character
-        lda [zp_addr], y        ; read character from the input string
-        beq @eol                ; end-of-line, null-terminator?
+        lda [zp_input], y       ; read character from the input buffer
+        beq @eod                ; null-terminator?
         cmp pl_delimiter        ; was it a delimiter?
         beq -                   ; yes, keep reading
 
@@ -140,10 +124,10 @@ term_read_term:
         ;
         tya                     ; now represents the start of the term-name
         clc                     ; (it's math time!)
-        adc zp_addr+LO          ; add to the original address
-        sta zp_addr+LO          ; and write-back
+        adc zp_input+LO         ; add to the original address
+        sta zp_input+LO         ; and write-back
         bcc +                   ; overflow?
-        inc zp_addr+HI          ; ripple the carry
+        inc zp_input+HI         ; ripple the carry
 
         ; start reading characters:
         ;-----------------------------------------------------------------------
@@ -154,7 +138,7 @@ term_read_term:
 +       ldy # 0
         sty pl_term_len
 
--       lda [zp_addr], y        ; read a character
+-       lda [zp_input], y       ; read a character
         beq @done               ; null terminator?
         cmp pl_delimiter        ; was it a delimiter?
         beq @done               ; if so, end term
@@ -184,30 +168,19 @@ term_read_term:
         ;
         tya                     ; number of characters read
         clc                     ; (it's math time!)
-        adc zp_addr+LO          ; add to the base address
-        sta zp_stack+0, x       ; return the lo-byte
-        lda zp_addr+HI          ; ripple the carry...
-        adc # 0                 ; to the address hi-byte
-        sta zp_stack+1, x       ; return the hi-byte
+        adc zp_input+LO         ; add to the base address
+        sta zp_input+LO         ; write it back
+        bcc +
+        inc zp_input+HI         ; ripple the carry...
++       rts
 
-        rts
-
-        ; end-of-line:
+        ; end-of-data:
         ;-----------------------------------------------------------------------
-@eol:   ; put $0000 on the stack to indicate no term found:
-        ; TODO: use EOD token instead
+@eod:   ; return an EOD token, instead of $0000
+        ; to prevent accidental fun in zero-page!
         ;
-.IFDEF  CPU_65C02
-        ; (this is not actually faster, just clearer intent)
-        stz zp_stack+0, x
-        stz zp_stack+1, x
-.ELSE   ;6502
-        ; (the null-terminator was already zero,
-        ;  so we don't have to load a zero)
-        sta zp_stack+0, x
-        sta zp_stack+1, x
-.ENDIF
-        rts
+        ldy # TOKEN_EOD
+        jmp push_token
 
 
 ; find-term ( -- w | EOD )

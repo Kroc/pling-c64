@@ -2,7 +2,7 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; disk.wla : disk I/O, load & save
+; term_disk.wla : disk I/O, load & save
 ;===============================================================================
 
 ; chain ( w -- )
