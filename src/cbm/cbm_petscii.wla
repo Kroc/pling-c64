@@ -12,12 +12,14 @@
 
 ; PETSCII constants:
 ;===============================================================================
-; case ranges:
+; character / case ranges:
 ;-------------------------------------------------------------------------------
 .DEF    PET_A_LO        65      ; PETSCII lower-case A
 .DEF    PET_A_UP        193     ; PETSCII upper-case A
 .DEF    PET_Z_LO        90      ; PETSCII lower-case Z
 .DEF    PET_Z_UP        218     ; PETSCII upper-case Z
+.DEF    PET_0           $30     ; PETSCII "0"
+.DEF    PET_9           $39     ; PETSCII "0"
 ;-------------------------------------------------------------------------------
 ; colours: (in canonical order)
 ;-------------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; stack.wla : shared stack routines
+; stack.wla : Pling's software-defined stack implementation
 ;===============================================================================
 ; data-types:
 ;-------------------------------------------------------------------------------
@@ -228,7 +228,6 @@ err_stack_underflow:
 
 err_type:
         ;-----------------------------------------------------------------------
-        ;;lda zp_type, x
         cmp # TOKEN_STK
         beq err_stack
 
@@ -241,7 +240,10 @@ get_type_byte:
 ; get the data-type of the item atop the stack, but error if it is not a byte.
 ; (stack under/over-flow automatically raises an error)
 ;
+; in:   X       stack-index
+;
 ; out:  A       data-type (byte)
+;       X, Y    (preserved)
 ;
 ;-------------------------------------------------------------------------------
         ; read the data-type without checking stack position;
@@ -257,7 +259,10 @@ get_type_word:
 ; get the data-type of the item atop the stack, but error if it is not a word.
 ; (stack under/over-flow automatically raises an error)
 ;
+; in:   X       stack-index
+;
 ; out:  A       data-type (word)
+;       X, Y    (preserved)
 ;
 ;-------------------------------------------------------------------------------
         ; read the data-type without checking stack position;
@@ -347,7 +352,10 @@ pop_int:
 ; pops the top item from the stack, be it a byte or word. if a byte is popped,
 ; the Y register is set to zero, so as to automatically form a word, if desired
 ;
-; out:  A       word lo-byte, or single byte
+; in:   X       stack-index
+;
+; out:  X       stack index, updated
+;       A       word lo-byte, or single byte
 ;       Y       word hi-byte, or zero if byte
 ;       c       0 for a byte, 1 for a word
 ;
@@ -390,6 +398,12 @@ pop_int:
 
 pop_byte:
 ;===============================================================================
+;
+; in:   X       stack-index
+;
+; out:  A       byte value
+;       X       stack-index, updated
+;       Y       (preserved)
 ;
 ;-------------------------------------------------------------------------------
         ; read the data-type without checking stack position;
@@ -445,9 +459,8 @@ pop_if_token:
         beq @skip               ; it's a byte, ignore
         bmi @skip               ; it's a word, ignore
 
-        ; if the stack is empty, ignore
-        cmp # TOKEN_STK
-        beq @skip
+        cmp # TOKEN_STK         ; if the stack is empty,
+        beq @skip               ; ignore
 
         ; when you have eliminated the impossible,
         ; whatever remains, however improbable,
@@ -466,9 +479,10 @@ pop_if_token:
 pop_token_EOD:
 ;===============================================================================
 ; 
+; out:  z       z=1 no EOD token present. z=0 EOD was present, and removed
+;
 ;-------------------------------------------------------------------------------
-        ; check the top item and remove it if it's a token
-        ; (this will do an optimised underflow check for us)
+        ; check the top item and remove it only if it's a token
         jsr pop_if_token
         ; the return value will be non-zero if it is a token,
         ; but we only care if it's specifically EOD; return

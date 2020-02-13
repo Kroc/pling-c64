@@ -23,7 +23,7 @@
 
 term_print_newline:
         ;-----------------------------------------------------------------------
-        lda # PET_RETURN
+        lda # SYS_RETURN        ; use the system's CR/LF character code
         jmp sys_chrout          ; print, skipping character conversion
 
 
@@ -192,7 +192,7 @@ term_print_bin:
         pla
         sta zp_temp1
 
-@byte:  ldy # '0' >> 1
+@byte:  ldy # SYS_0 >> 1
         lda # 0
         pha
         
@@ -235,7 +235,7 @@ term_print_bin:
         tya
         rol
 
--       jsr sys_print
+-       jsr sys_chrout
         pla
         bne -
         rts
@@ -368,8 +368,8 @@ term_print_stack:
         ldy #> @typet
         jsr sys_printstr
         
-        lda # PET_RETURN
-        jsr sys_print
+        lda # SYS_RETURN
+        jsr sys_chrout
         
         .plx
         rts
@@ -391,15 +391,15 @@ term_print_stack:
         ldy zp_stack+1, x
         jsr term_print_bin@word
 
-        lda # ' '
-        jsr sys_print
+        lda # SYS_SPC
+        jsr sys_chrout
 
         lda zp_stack+0, x
         ldy zp_stack+1, x
         jsr term_print_int@word
 
-        lda # PET_RETURN
-        jsr sys_print
+        lda # SYS_RETURN
+        jsr sys_chrout
 
         inx
         inx
@@ -422,21 +422,22 @@ term_print_stack:
         ldy zp_stack+1, x
         jsr term_print_bin@byte
 
-        lda # ' '
-        jsr sys_print
+        lda # SYS_SPC
+        jsr sys_chrout
 
         lda zp_stack+0, x
         ldy # 0
         jsr term_print_int@word
 
-        lda # PET_RETURN
-        jsr sys_print
+        lda # SYS_RETURN
+        jsr sys_chrout
 
         inx
         inc zp_index
         jmp @item
 
         ;=======================================================================
+        ; TODO: this is CBM/C64-specific
 @head:  .BYTE   PET_YELLOW, PET_RVRS_ON
         .BYTE   "item type   hex            binary dec   "
         .BYTE   PET_WHITE, PET_RVRS_OFF

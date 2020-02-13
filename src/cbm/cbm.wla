@@ -16,48 +16,9 @@
     .FAIL
 .ENDIF
 
-.INC    "cbm/cbm_err.wla"
+.INC    "cbm/cbm_sys.wla"       ; Pling <-> system interface
+.INC    "cbm/cbm_err.wla"       ; system-specific error handling and output
 
-
-sys_printstr:
-;===============================================================================
-; system specific routine for printing an *ASCII*, null-terminated string:
-;
-; in:   A       string address, lo-byte
-;       Y       string address, hi-byte
-;
-; out:  A, Y    (clobbered)
-;       X       (preserved)
-;
-;-------------------------------------------------------------------------------
-        sta zp_addr+LO          ; load the string address into our indexer
-        sty zp_addr+HI
-        
-        ldy # 0
--       lda [zp_addr], y        ; read a character
-        beq +                   ; null-terminator? exit
-        jsr asc2pet             ; convert to ASCII
-        jsr KERNAL_CHROUT       ; output to screen
-        iny                     ; move to the next character
-        bne -                   ; loop (but also end at 255 characters)
-
-+       rts
-
-
-.DEF    sys_chrout      KERNAL_CHROUT
-
-sys_print:
-;===============================================================================
-; system-specific routine for printing a single *ASCII* character:
-;
-; in:   A       ASCII-code
-;
-; out:  A       (clobbered)
-;       X, Y    (preserved)
-;
-;-------------------------------------------------------------------------------
-        jsr asc2pet             ; convert ASCII code to PETSCII
-        jmp KERNAL_CHROUT
 
 
 pet2asc:
@@ -71,7 +32,7 @@ pet2asc:
 ;
 ; out:  A       character code, converted  
 ;       X, Y    (preserved)
-;                                                                       ;cycles
+;
 ;-------------------------------------------------------------------------------
         ; is the character in the PETSCII upper-case range?
         ; note that the "case bit" in PETSCII is %10000000,
@@ -100,6 +61,7 @@ pet2asc:
 
 +       rts
 
+
 asc2pet:
 ;===============================================================================
 ; convert an ASCII character code to PETSCII:
@@ -111,7 +73,7 @@ asc2pet:
 ;
 ; out:  A       character code, converted  
 ;       X, Y    (preserved)
-;                                                                       ;cycles
+;
 ;-------------------------------------------------------------------------------
         ; is the character in the ASCII lower-case range?
         ;

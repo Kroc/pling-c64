@@ -1,0 +1,76 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; cbm_sys.wla : hardware abstraction layer for CBM systems
+;===============================================================================
+; all systems have to define these `sys_*` constants and routines, so that the
+; main Pling code doesn't have to have variations for every different system;
+; these are:
+;
+; sys_printstr      print an ASCII string
+; sys_print         print an ASCII character
+; sys_chrout        print a character using the native encoding
+;
+; SYS_SPC           native character code for space
+; SYS_RETURN        native character code for newline
+; SYS_0             native character code for "0"
+; SYS_9             native character code for "9"
+;
+
+sys_printstr:
+;===============================================================================
+; system specific routine for printing an *ASCII*, null-terminated string:
+;
+; in:   A       string address, lo-byte
+;       Y       string address, hi-byte
+;
+; out:  A, Y    (clobbered)
+;       X       (preserved)
+;
+;-------------------------------------------------------------------------------
+        sta zp_addr+LO          ; load the string address into our indexer
+        sty zp_addr+HI
+        
+        ldy # 0
+-       lda [zp_addr], y        ; read a character
+        beq +                   ; null-terminator? exit
+        jsr asc2pet             ; convert to ASCII
+        jsr KERNAL_CHROUT       ; output to screen
+        iny                     ; move to the next character
+        bne -                   ; loop (but also end at 255 characters)
+
++       rts
+
+
+sys_print:
+;===============================================================================
+; system-specific routine for printing a single *ASCII* character:
+;
+; in:   A       ASCII-code
+;
+; out:  A       (clobbered)
+;       X, Y    (preserved)
+;
+;-------------------------------------------------------------------------------
+        jsr asc2pet             ; convert ASCII code to PETSCII
+        jmp KERNAL_CHROUT
+
+
+;===============================================================================
+; the system-specific routine for printing a single character, in the native
+; character encoding (for Commodore machines, this is PETSCII)
+;
+; in this case, a wrapper isn't needed, so to avoid an unecessary jmp-chain
+; we provide the KERNAL ROM address rather than a local routine
+;
+.DEF    sys_chrout      KERNAL_CHROUT
+
+; in some instances, Pling will want to work with characters in the system's
+; own character encoding, rather than going through ASCII conversion. some
+; of the system's character codes are exposed via these constants:
+;
+.DEF    SYS_SPC     PET_SPC     ; space
+.DEF    SYS_RETURN  PET_RETURN  ; newline
+.DEF    SYS_0       PET_0       ; "0"
+.DEF    SYS_9       PET_9       ; "9"
