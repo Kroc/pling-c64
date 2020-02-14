@@ -85,7 +85,7 @@ term_00:
 ;       word + byte     = word
 ;       word + word     = word
 ;
-; in all instances, any overflow will go into the `overflow` variable
+; TODO: handle overflow
 ;-------------------------------------------------------------------------------
         .term   "+"
 
@@ -111,15 +111,7 @@ term_add:
         ;
         pla                     ; restore the first integer
         adc zp_stack, x         ; add the second
-        
-        ; handle the carry:
-        ;
-        ; even adding two words can only overflow 1-bit at most,
-        ; so the hi-byte of the overflow word will always be zero
-        lda # 0
-        sta zp_overflow+HI
-        rol                     ; add the carry to zero for the lo-byte;
-        sta zp_overflow+LO      ; the overflow word will be $0000 or $0001
+        sta zp_stack, x         ; write back result
         rts
 
         ; word for either:
@@ -133,25 +125,19 @@ term_add:
         pla                     ; retrieve our first integer's lo-byte
         clc                     
         adc zp_stack, x         ; add lo-bytes together
+        sta zp_stack, x         ; write back result, lo-byte
         tay                     ; Y still holds the hi-byte from the pop
         adc zp_stack+1, x       ; add-with-carry the hi-bytes
+        sta zp_stack+1, x       ; write back result, hi-byte
 
-        ; handle the carry:
-        ; (duplicate of above, for speed)
-        ;
-        ; even adding two words can only overflow 1-bit at most,
-        ; so the hi-byte of the overflow word will always be zero
-        lda # 0
-        sta zp_overflow+HI
-        rol                     ; add the carry to zero for the lo-byte;
-        sta zp_overflow+LO      ; the overflow word will be $0000 or $0001
         rts
 
 
 ; +1 ( i -- i )
 ;===============================================================================
 ; add one to the integer atop the stack:
-; TODO: also capture overflow
+; TODO: handle overflow
+;
 ;-------------------------------------------------------------------------------
         .term   "+1"
 
@@ -170,6 +156,7 @@ term_add1:
         inc zp_stack+1, x
 +       rts
 
+        ;-----------------------------------------------------------------------
 @byte:  inc zp_stack, x
         rts
 
@@ -184,7 +171,7 @@ term_add1:
 ;       word - byte     = word
 ;       word - word     = word
 ;
-; in all instances, any underflow will go into the `overflow` variable
+; TODO: handle underflow
 ;-------------------------------------------------------------------------------
         .term   "-"
 
@@ -211,19 +198,8 @@ term_sub:
         pla                     ; restore the first integer
         sec                     ; (logically, the cary is currently unset)
         sbc zp_stack, x         ; subtract the second
-        
-        ; handle the carry:
-        ;
-        ; since subtracting can only underflow by a maximum of one bit,
-        ; any carry (underflow) would always result in -1 (all 1s) for
-        ; the upper word in a 32-bit long (our `overflow` variable)
-        ; 
-        lda # 0
-        sbc # 0
-        sta zp_overflow+LO
-        lda zp_overflow+HI
-        sbc # 0
-        sta zp_overflow+HI
+        sta zp_stack, x         ; write back result
+
         rts
 
         ; word for either:
@@ -236,28 +212,19 @@ term_sub:
 
         pla                     ; retrieve our first integer's lo-byte
         sbc zp_stack, x         ; subtract lo-bytes from each other
+        sta zp_stack, x         ; write back result, lo-byte
         tay                     ; Y still holds the hi-byte from the pop
         sbc zp_stack+1, x       ; subtract-with-carry the hi-bytes
+        sta zp_stack+1, x       ; write back result, hi-byte
         
-        ; handle the carry:
-        ;
-        ; since subtracting can only underflow by a maximum of one bit,
-        ; any carry (underflow) would always result in -1 (all 1s) for
-        ; the upper word in a 32-bit long (our `overflow` variable)
-        ; 
-        lda # 0
-        sbc # 0
-        sta zp_overflow+LO
-        lda zp_overflow+HI
-        sbc # 0
-        sta zp_overflow+HI
         rts
 
 
 ; -1 ( i -- i )
 ;===============================================================================
 ; subtract one from the integer atop the stack:
-; TODO: also capture overflow
+; TODO: handle underflow
+;
 ;-------------------------------------------------------------------------------
         .term   "-1"
 
@@ -276,6 +243,7 @@ term_sub1:
         dec zp_stack+1, x
 +       rts
 
+        ;-----------------------------------------------------------------------
 @byte:  dec zp_stack, x
         rts
 

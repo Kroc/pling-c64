@@ -34,7 +34,8 @@
 .DEF    zp_temp2        $05
 ; likewise, but for the output value
 .DEF    zp_word         $06
-; overflow for word*word calculations
+
+; overflow status word
 .DEF    zp_overflow     $08
 
 ; address of the last defined term
