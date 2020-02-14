@@ -28,10 +28,14 @@ err_msghi:
 ; across different systems (which will convert to their encoding)
 ;
 err_msg_stack_underflow:
-        .BYTE   "Stack underflow!", NUL
+        .BYTE   "Stack underflow!"
+        .BYTE   NUL
 err_msg_stack_overflow:
-        .BYTE   "Stack overflow!", NUL
+        .BYTE   "Stack overflow!"
+        .BYTE   NUL
 err_msg_type:
-        .BYTE   "Unexpected data type!", NUL
+        .BYTE   "Unexpected data type!"
+        .BYTE   NUL
 err_msg_parse:
-        .BYTE   "Not a known term or valid number!", NUL
+        .BYTE   "Not a known term or valid number!"
+        .BYTE   NUL

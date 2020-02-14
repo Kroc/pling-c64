@@ -10,6 +10,8 @@
 ; term_00                     -- w              "00"
 ; term_add                i i -- i              "+"
 ; term_add1                 i -- i              "+1"
+; term_sub                i i -- i              "-"
+; term_sub1                 i -- i              "-1"
 ; term_neg                  i -- i              "neg"
 ; term_neg                  i -- i              "not"
 ;
@@ -75,7 +77,7 @@ term_00:
 
 ; + ( i i -- i )
 ;===============================================================================
-; add the top two integers on the stack together, returning a single integer:
+; add the top two integers on the stack together, returning a single integer.
 ; the size of the return integer will be:
 ;
 ;       byte + byte     = byte
@@ -172,9 +174,118 @@ term_add1:
         rts
 
 
+; - ( i i -- i )
+;===============================================================================
+; subtract the top two integers on the stack from each other, returning
+; a single integer. the size of the return integer will be:
+;
+;       byte - byte     = byte
+;       byte - word     = word
+;       word - byte     = word
+;       word - word     = word
+;
+; in all instances, any underflow will go into the `overflow` variable
+;-------------------------------------------------------------------------------
+        .term   "-"
+
+term_sub:
+        ;-----------------------------------------------------------------------
+        jsr pop_int             ; pop the top integer, regardless of type
+        pha                     ; keep a hold of the byte/lo-byte
+        bcs @word               ; the carry will be 0 = byte, 1 = word
+
+        ;-----------------------------------------------------------------------
+        ; if the first integer was a byte, then check the type of the second
+        ; (we won't pop it, rather just rewrite the top of the stack)
+        ;
+@byte:  lda zp_type, x
+        ; if either parameter is a word,
+        ; then the output is always a word
+        bne @word
+
+        ; byte - byte:
+        ;-----------------------------------------------------------------------
+        ; the top of the stack is already
+        ; a byte, so no need to push or extend
+        ;
+        pla                     ; restore the first integer
+        sec                     ; (logically, the cary is currently unset)
+        sbc zp_stack, x         ; subtract the second
+        
+        ; handle the carry:
+        ;
+        ; since subtracting can only underflow by a maximum of one bit,
+        ; any carry (underflow) would always result in -1 (all 1s) for
+        ; the upper word in a 32-bit long (our `overflow` variable)
+        ; 
+        lda # 0
+        sbc # 0
+        sta zp_overflow+LO
+        lda zp_overflow+HI
+        sbc # 0
+        sta zp_overflow+HI
+        rts
+
+        ; word for either:
+        ;-----------------------------------------------------------------------
+        ; if the first integer was a word, the result will always be a word.
+        ; if the 2nd integer is a byte, extend it to a word to hold the result
+        ; (if the top of the stack is already a word, no change will happen)
+        ;
+@word:  jsr term_extend
+
+        pla                     ; retrieve our first integer's lo-byte
+        sbc zp_stack, x         ; subtract lo-bytes from each other
+        tay                     ; Y still holds the hi-byte from the pop
+        sbc zp_stack+1, x       ; subtract-with-carry the hi-bytes
+        
+        ; handle the carry:
+        ;
+        ; since subtracting can only underflow by a maximum of one bit,
+        ; any carry (underflow) would always result in -1 (all 1s) for
+        ; the upper word in a 32-bit long (our `overflow` variable)
+        ; 
+        lda # 0
+        sbc # 0
+        sta zp_overflow+LO
+        lda zp_overflow+HI
+        sbc # 0
+        sta zp_overflow+HI
+        rts
+
+
+; -1 ( i -- i )
+;===============================================================================
+; subtract one from the integer atop the stack:
+; TODO: also capture overflow
+;-------------------------------------------------------------------------------
+        .term   "-1"
+
+term_sub1:
+        ;-----------------------------------------------------------------------
+        lda zp_type, x
+        bmi @word
+        beq @byte
+
+        ; a token type, including a stack underflow
+        jmp err_type
+
+        ;-----------------------------------------------------------------------
+@word:  dec zp_stack, x
+        bpl +
+        dec zp_stack+1, x
++       rts
+
+@byte:  dec zp_stack, x
+        rts
+
+
 ; neg ( i -- i )
 ;===============================================================================
 ; negates the integer atop the stack:
+;
+; in:   int     integer, original
+; out:  int     integer, negated (two's-compliment)
 ;
 ;-------------------------------------------------------------------------------
         .term   "neg"
@@ -201,6 +312,9 @@ term_neg:
 ; not ( i -- i )
 ;===============================================================================
 ; flips all the bits of the integer atop the stack:
+;
+; in:   int     integer, original
+; out:  int     integer, bits flipped
 ;
 ;-------------------------------------------------------------------------------
         .term   "not"
