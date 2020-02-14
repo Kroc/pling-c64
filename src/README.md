@@ -8,17 +8,21 @@ This is the main 'starting' file for the source code, begin reading here if you 
 
   Constants and routines for handling ASCII. Pling uses ASCII internally for portability between systems, particularly for reading plain text files that originated on a modern PC
 
+* __cpu_65xx.wla__
+
+  Macros, constants and code specific to 6502-based machines, including the 6502, 6510 (C64) & 65C02
+
 * __error.wla__
 
   Centralised error-handling
 
+* __print.wla__
+
+  Native code for outputting to screen; see "term_print.wla" for the routines exposed to _Pling_ scripts
+
 * __stack.wla__
 
   Native code, that manages the software-defined data stack that makes _Pling_ (or any _Forth_) what it is. For terms for manipulating the stack from _Pling_ scripts, see "term_core.wla"
-
-* __sys_65xx.wla__
-
-  Macros, constants and code specific to 6502-based machines, including the 6502, 6510 (C64) & 65C02
 
 * __term_core.wla__
 

@@ -33,7 +33,7 @@ term_line_input:
         cmp # PET_RETURN        ; is the key RETURN?
         beq +                   ; if yes, quit reading
         
-        jsr pet2asc             ; convert from PETSCII to ASCII
+        jsr sys_chr2asc         ; convert from PETSCII to ASCII
         sta $0200, y            ; add the key-code to the buffer
         iny                     ; move to the next character
         cpy # 81                ; have we hit the end of the line?
@@ -176,10 +176,7 @@ term_read_term:
 
         ; end-of-data:
         ;-----------------------------------------------------------------------
-@eod:   ; return an EOD token, instead of $0000
-        ; to prevent accidental fun in zero-page!
-        ;
-        ldy # TOKEN_EOD
+@eod:   ldy # TOKEN_EOD         ; return an End Of Data token
         jmp push_token
 
 

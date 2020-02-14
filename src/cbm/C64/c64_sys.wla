@@ -1,0 +1,15 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; c64_sys.wla : hardware abstraction specifics for the C64
+;===============================================================================
+
+
+; the system-specific routine for printing a single character, in the native
+; character encoding: (for Commodore machines, this is PETSCII)
+;
+; in this case, a wrapper isn't needed, so to avoid an unecessary jmp-chain
+; we provide the KERNAL ROM address rather than a local routine
+;
+.DEF    sys_chrout      $e716 ;;KERNAL_CHROUT_ADDR

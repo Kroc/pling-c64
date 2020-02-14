@@ -15,7 +15,7 @@
 .IFDEF  CPU_65XX
         ; macros for 6502-based systems (6502, 6510, 65C02)
         ; to polyfill differences in instruction sets
-        .INC    "sys_65xx.wla"
+        .INC    "cpu_65xx.wla"
 .ENDIF
 
 ; shared Pling initialisation:
@@ -80,9 +80,10 @@ pling_init:
         jmp @repl
 
 ;-------------------------------------------------------------------------------
+.INC    "ascii.wla"             ; ASCII constants / routines
+.INC    "print.wla"             ; screen output
 .INC    "stack.wla"             ; Pling's data/type stack routines
 .INC    "error.wla"             ; error handling
-.INC    "ascii.wla"             ; ASCII constants / routines
 
 
 ; built-in terminology:

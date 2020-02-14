@@ -17,7 +17,7 @@ sys_init:
 
         lda #< @ver
         ldy #> @ver
-        jsr sys_printstr
+        jsr print_str
 
         jmp pling_init
 

@@ -15,7 +15,7 @@ sys_ok:
 ;-------------------------------------------------------------------------------
         lda #< @ok
         ldy #> @ok
-        jmp sys_printstr
+        jmp print_str
 
         ;-----------------------------------------------------------------------
 @ok:    .BYTE   PET_RETURN, PET_YELLOW
@@ -34,7 +34,7 @@ sys_error:
 
         lda #< @err
         ldy #> @err
-        jsr sys_printstr
+        jsr print_str
         
         pla                     ; retrieve error number again
         tay                     ; use it as an index
@@ -43,11 +43,11 @@ sys_error:
         lda err_msghi, y        ; get error message address, hi-byte
         tay                     ; hi-byte goes into Y for printing routine
         pla                     ; lo-byte goes into A for printing routine
-        jsr sys_printstr        ; put it on-screen!
+        jsr print_str           ; put it on-screen!
 
         lda #< @ok
         ldy #> @ok
-        jmp sys_printstr
+        jmp print_str
 
         ;-----------------------------------------------------------------------
 @err:   .BYTE   PET_RETURN, PET_YELLOW

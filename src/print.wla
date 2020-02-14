@@ -1,0 +1,44 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; print.wla : screen output
+;===============================================================================
+
+print_asc:
+;===============================================================================
+; print an ASCII character:
+;
+; in:   A       ASCII-code
+;
+; out:  A       (clobbered)
+;       X, Y    (preserved)
+;
+;-------------------------------------------------------------------------------
+        jsr sys_asc2chr         ; convert ASCII code to native encoding
+        jmp sys_chrout
+
+
+print_str:
+;===============================================================================
+; print an ASCII, null-terminated string:
+;
+; in:   A       string address, lo-byte
+;       Y       string address, hi-byte
+;
+; out:  A, Y    (clobbered)
+;       X       (preserved)
+;
+;-------------------------------------------------------------------------------
+        sta zp_addr+LO          ; load the string address into our indexer
+        sty zp_addr+HI
+        
+        ldy # 0
+-       lda [zp_addr], y        ; read a character
+        beq +                   ; null-terminator? exit
+        jsr sys_asc2chr         ; convert to ASCII
+        jsr sys_chrout          ; output to screen
+        iny                     ; move to the next character
+        bne -                   ; loop (but also end at 255 characters)
+
++       rts

@@ -20,9 +20,9 @@
 ; switched off, then the vectors will be defined by the RAM underneath
 ; -- if the vectors in RAM are not set the system will crash!
 ;
-.DEF    HW_VECTOR_NMI   $fffa   ; Non-Maskable-Interrupt vector
-.DEF    HW_VECTOR_RESET $fffc   ; cold-reset vector
-.DEF    HW_VECTOR_IRQ   $fffe   ; interrupt vector
+.DEF    CPU_VECTOR_NMI  $fffa   ; Non-Maskable-Interrupt vector
+.DEF    CPU_VECTOR_RST  $fffc   ; cold-reset vector
+.DEF    CPU_VECTOR_IRQ  $fffe   ; interrupt vector
 
 ; device numbers:
 ;-------------------------------------------------------------------------------
@@ -61,7 +61,7 @@ KERNAL_VECTOR_IRQ       WORD    ;=$0314
 KERNAL_VECTOR_BRK       WORD    ;=$0316
 
 ; vector for the KERNAL's handling of the Non-Maskable Interrupt; note that
-; the hardware vector (below) is executed first, which points into the KERNAL
+; the CPU hardware vector is executed first, which points into the KERNAL
 ; by default. this vector only hijacks the NMI when the KERNAL ROM is on.
 ; if you want to bypass the KERNAL, set the hardware vector directly.
 ; default value is $FE47

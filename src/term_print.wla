@@ -41,10 +41,9 @@ term_print:
         ;-----------------------------------------------------------------------
         ; pop the byte (checking for underflow)
         jsr pop_byte
-        ; jump to the system-specific print routine that will do ASCII
-        ; conversion to the system's character encoding and handle
-        ; writing to the screen
-        jmp sys_print
+        ; print the character code, with conversion
+        ; to the system's native character encoding
+        jmp print_asc
 
 
 ; .int ( i -- )
@@ -267,7 +266,7 @@ term_print_stack:
         ;-----------------------------------------------------------------------
         lda #< @empty
         ldy #> @empty
-        jmp sys_printstr
+        jmp print_str
 
 @empty: .BYTE   "empty"
         .BYTE   NUL
@@ -280,7 +279,7 @@ term_print_stack:
         ;-----------------------------------------------------------------------
 +       lda #< @head
         ldy #> @head
-        jsr sys_printstr
+        jsr print_str
 
         ; the stack index measures hardware bytes, not "items" on the stack,
         ; as items can be bytes or words, so we need a counter for items
@@ -340,20 +339,20 @@ term_print_stack:
         cmp # '0'               ; is the digit a zero?
         bne +                   ; if not, print the digit as-is
         lda # ' '               ; (print a space instead of a leading "0")
-+       jsr sys_print           ; print the digit
++       jsr print_asc           ; print the digit
         clc                     ; (carry state unknown)
 
         pla                     ; retrieve the 1s-digit
         tay
-        jsr sys_print           ; print the digit
+        jsr print_asc           ; print the digit
 
         cpy # '5'
         bne +
         ldy # '4'
 +       lda @ord1-'0', y
-        jsr sys_print
+        jsr print_asc
         lda @ord2-'0', y
-        jsr sys_print
+        jsr print_asc
 
         ; data-type:
         ;-----------------------------------------------------------------------
@@ -366,7 +365,7 @@ term_print_stack:
         ; must be a token
 @token: lda #< @typet
         ldy #> @typet
-        jsr sys_printstr
+        jsr print_str
         
         lda # SYS_RETURN
         jsr sys_chrout
@@ -377,7 +376,7 @@ term_print_stack:
         ;-----------------------------------------------------------------------
 @word:  lda #< @typew
         ldy #> @typew
-        jsr sys_printstr
+        jsr print_str
 
         lda zp_stack+0, x
         ldy zp_stack+1, x
@@ -385,7 +384,7 @@ term_print_stack:
 
         lda #< @binw
         ldy #> @binw
-        jsr sys_printstr
+        jsr print_str
 
         lda zp_stack+0, x
         ldy zp_stack+1, x
@@ -409,14 +408,14 @@ term_print_stack:
         ;-----------------------------------------------------------------------
 @byte:  lda #< @typeb
         ldy #> @typeb
-        jsr sys_printstr
+        jsr print_str
 
         lda zp_stack, x
         jsr term_print_hex@byte
 
         lda #< @binb
         ldy #> @binb
-        jsr sys_printstr
+        jsr print_str
 
         lda zp_stack+0, x
         ldy zp_stack+1, x

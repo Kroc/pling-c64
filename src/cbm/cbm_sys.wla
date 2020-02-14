@@ -8,64 +8,23 @@
 ; main Pling code doesn't have to have variations for every different system;
 ; these are:
 ;
-; sys_printstr      print an ASCII string
-; sys_print         print an ASCII character
-; sys_chrout        print a character using the native encoding
+; sys_chrout            print a character using the native encoding
 ;
-; SYS_SPC           native character code for space
-; SYS_RETURN        native character code for newline
-; SYS_0             native character code for "0"
-; SYS_9             native character code for "9"
+; sys_asc2chr           convert PETSCII to ASCII
+; sys_chr2asc           convert ASCII to PETSCII
+;
+; SYS_SPC               native character code for space
+; SYS_RETURN            native character code for newline
+; SYS_0                 native character code for "0"
+; SYS_9                 native character code for "9"
 ;
 
-sys_printstr:
-;===============================================================================
-; system specific routine for printing an *ASCII*, null-terminated string:
-;
-; in:   A       string address, lo-byte
-;       Y       string address, hi-byte
-;
-; out:  A, Y    (clobbered)
-;       X       (preserved)
-;
-;-------------------------------------------------------------------------------
-        sta zp_addr+LO          ; load the string address into our indexer
-        sty zp_addr+HI
-        
-        ldy # 0
--       lda [zp_addr], y        ; read a character
-        beq +                   ; null-terminator? exit
-        jsr asc2pet             ; convert to ASCII
-        jsr KERNAL_CHROUT       ; output to screen
-        iny                     ; move to the next character
-        bne -                   ; loop (but also end at 255 characters)
-
-+       rts
-
-
-sys_print:
-;===============================================================================
-; system-specific routine for printing a single *ASCII* character:
-;
-; in:   A       ASCII-code
-;
-; out:  A       (clobbered)
-;       X, Y    (preserved)
-;
-;-------------------------------------------------------------------------------
-        jsr asc2pet             ; convert ASCII code to PETSCII
-        jmp KERNAL_CHROUT
+.IFDEF  SYSTEM_C64
+        .INC    "cbm/c64/c64_sys.wla"
+.ENDIF
 
 
 ;===============================================================================
-; the system-specific routine for printing a single character, in the native
-; character encoding (for Commodore machines, this is PETSCII)
-;
-; in this case, a wrapper isn't needed, so to avoid an unecessary jmp-chain
-; we provide the KERNAL ROM address rather than a local routine
-;
-.DEF    sys_chrout      KERNAL_CHROUT
-
 ; in some instances, Pling will want to work with characters in the system's
 ; own character encoding, rather than going through ASCII conversion. some
 ; of the system's character codes are exposed via these constants:
@@ -74,3 +33,84 @@ sys_print:
 .DEF    SYS_RETURN  PET_RETURN  ; newline
 .DEF    SYS_0       PET_0       ; "0"
 .DEF    SYS_9       PET_9       ; "9"
+
+
+sys_asc2chr:
+;===============================================================================
+; convert an ASCII character code to the system's native encoding:
+; for Commodore machines, this is PETSCII
+;
+; TODO: use a lookup-table for ROM-version?
+;       (would require preserving Y)
+;
+; in:   A       character code
+;
+; out:  A       character code, converted  
+;       X, Y    (preserved)
+;
+;-------------------------------------------------------------------------------
+        ; is the character in the ASCII lower-case range?
+        ;
+        cmp # $61               ; "a" and above?
+        bcc +                   ; no -- skip ahead
+        cmp # $7a+1             ; "z" and below?
+        bcs +                   ; no -- skip ahead
+
+        ; adjust ASCII lower-case $61..$7A down to PETSCII lower-case $41..$5A
+        ; NOTE: carry is clear, so this subtracts an additional 1 for us!
+        sbc # $20-1
+        rts
+        
+        ; is the character in the ASCII upper-case range?
+        ;
++       cmp # $41               ; "A" and above?
+        bcc +                   ; no -- exit
+        cmp # $5a+1             ; "z" and below?
+        bcs +                   ; no -- exit
+
+        ; adjust ASCII upper-case $41..$5A
+        ; up to PETSCII upper-case $C1..$DA
+        adc # $80
+
++       rts
+
+
+sys_chr2asc:
+;===============================================================================
+; convert a PETSCII character code to ASCII:
+;
+; TODO: use a lookup-table for ROM-version?
+;       (would require preserving Y)
+;
+; in:   A       character code
+;
+; out:  A       character code, converted  
+;       X, Y    (preserved)
+;
+;-------------------------------------------------------------------------------
+        ; is the character in the PETSCII upper-case range?
+        ; note that the "case bit" in PETSCII is %10000000,
+        ; not %00100000 as in ASCII
+        ;
+        cmp # PET_A_UP          ; "A" and above?
+        bcc +                   ; no -- skip ahead
+        cmp # PET_Z_UP+1        ; "Z" and below?
+        bcs +                   ; no -- skip ahead
+
+        ; adjust PETSCII upper-case $C1..$DA down to ASCII upper-case $41..$5A
+        ; NOTE: carry is clear, so this subtracts an additional 1 for us!
+        sbc # $80-1
+        rts
+        
+        ; is the character in the PETSCII lower-case range?
+        ;
++       cmp # PET_A_LO          ; "a" and above?
+        bcc +                   ; no -- exit
+        cmp # PET_Z_LO+1        ; "z" and below?
+        bcs +                   ; no -- exit
+
+        ; adjust PETSCII lower-case $41..$5A
+        ; up to ASCII lower-case $61..$7A
+        adc # $20
+
++       rts
