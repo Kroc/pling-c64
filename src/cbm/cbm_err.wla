@@ -13,15 +13,12 @@ sys_ok:
 ;
 ; TODO: should this be a part of the console/IDE, and not the runtime?
 ;-------------------------------------------------------------------------------
-        lda #< @ok
-        ldy #> @ok
-        jmp print_str
-
-        ;-----------------------------------------------------------------------
-@ok:    .BYTE   PET_RETURN, PET_YELLOW
-        .BYTE   PET_RVRS_ON, "ok.", PET_RVRS_OFF
-        .BYTE   PET_WHITE, PET_RETURN
-        .BYTE   NUL
+        jsr print_this
+            .BYTE   PET_RETURN, PET_YELLOW
+            .BYTE   PET_RVRS_ON, "ok.", PET_RVRS_OFF
+            .BYTE   PET_WHITE, PET_RETURN
+            .BYTE   NUL
+        rts
 
 
 sys_error:
@@ -32,9 +29,10 @@ sys_error:
 ;-------------------------------------------------------------------------------
         pha                     ; put aside error number momentarily
 
-        lda #< @err
-        ldy #> @err
-        jsr print_str
+        jsr print_this
+            .BYTE   PET_RETURN, PET_YELLOW
+            .BYTE   PET_RVRS_ON, "err:", PET_RVRS_OFF, " "
+            .BYTE   NUL
         
         pla                     ; retrieve error number again
         tay                     ; use it as an index
@@ -45,14 +43,7 @@ sys_error:
         pla                     ; lo-byte goes into A for printing routine
         jsr print_str           ; put it on-screen!
 
-        lda #< @ok
-        ldy #> @ok
-        jmp print_str
-
-        ;-----------------------------------------------------------------------
-@err:   .BYTE   PET_RETURN, PET_YELLOW
-        .BYTE   PET_RVRS_ON, "err:", PET_RVRS_OFF, " "
-        .BYTE   NUL
-        ;-----------------------------------------------------------------------
-@ok:    .BYTE   PET_RETURN, PET_WHITE
-        .BYTE   NUL
+        jsr print_this
+            .BYTE   PET_RETURN, PET_WHITE
+            .BYTE   NUL
+        rts

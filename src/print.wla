@@ -26,13 +26,16 @@ print_str:
 ; in:   A       string address, lo-byte
 ;       Y       string address, hi-byte
 ;
-; out:  A, Y    (clobbered)
+; out:  Y       number of bytes printed       
+;       A       (clobbered)
 ;       X       (preserved)
 ;
 ;-------------------------------------------------------------------------------
         sta zp_addr+LO          ; load the string address into our indexer
         sty zp_addr+HI
-        
+
+print_str_addr:
+        ;-----------------------------------------------------------------------
         ldy # 0
 -       lda [zp_addr], y        ; read a character
         beq +                   ; null-terminator? exit
@@ -42,3 +45,47 @@ print_str:
         bne -                   ; loop (but also end at 255 characters)
 
 +       rts
+
+
+print_this:
+;===============================================================================
+; print the ASCII, null-terminated, string that immediately follows the call
+; to this routine (i.e. an inline string); this routine modifies the return
+; address so that program control continues after the string
+;
+; out:  Y       (clobbered)
+;
+;-------------------------------------------------------------------------------
+        ; this routine finds the address that called it from the return stack;
+        ; when calling this routine, the return stack will look like this:
+        ;
+        ; stack pointer ->  (unused stack value) 
+        ;               +1  original call address for string, lo-byte
+        ;               +2  original call address for string, hi-byte
+        ;
+        stx zp_temp1            ; backup Pling's stack-index
+        tsx                     ; get current return stack pointer
+
+        clc
+        lda $0100+1, x          ; read the lo-byte from the stack
+        adc # 1                 ; add 1 to move into the inline string
+        sta zp_addr+LO          ; set the string address, lo-byte
+        lda $0100+2, x          ; read the hi-byte from the stack
+        adc # 0                 ; ripple the +1
+        sta zp_addr+HI          ; set the string address, hi-byte
+
+        jsr print_str_addr      ; print the string
+
+        ; we will need to add the length of the inline string to the call
+        ; address so as to 'step-over' those bytes and return execution to
+        ; the point after the inline-string
+        ;
+        iny                     ; step over the null-terminator
+        tya                     ; Y = length of string (1-based)
+        adc $0100+1, x          ; add this to the return address, lo-byte
+        sta $0100+1, x          ; write back
+        bcc +                   ; ripple the carry?
+        inc $0100+2, x          ; increment the return address, hi-byte
+
++       ldx zp_temp1            ; restore Pling's stack-index
+        rts

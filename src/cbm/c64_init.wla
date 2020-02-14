@@ -15,15 +15,11 @@ sys_init:
         sta VIC_BORDER
         sta VIC_BACKGROUND
 
-        lda #< @ver
-        ldy #> @ver
-        jsr print_str
+        jsr print_this
+            .BYTE   PET_CASE_LO, PET_CLEAR, PET_YELLOW, PET_RETURN
+            .BYTE   ">!< Pling! C64 v0.0", PET_RETURN
+            .BYTE   "    Kroc Camen <github.com/Kroc/pling>", PET_RETURN
+            .BYTE   "    built: ", WLA_TIME, PET_RETURN
+            .BYTE   PET_RETURN, PET_WHITE, NUL
 
         jmp pling_init
-
-        ;-----------------------------------------------------------------------
-@ver:   .BYTE   PET_CASE_LO, PET_CLEAR, PET_YELLOW, PET_RETURN
-        .BYTE   ">!< Pling! C64 v0.0", PET_RETURN
-        .BYTE   "    Kroc Camen <github.com/Kroc/pling>", PET_RETURN
-        .BYTE   "    built: ", WLA_TIME, PET_RETURN
-        .BYTE   PET_RETURN, PET_WHITE, NUL

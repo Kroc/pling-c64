@@ -264,12 +264,10 @@ term_print_stack:
 
         ; print the "empty" message:
         ;-----------------------------------------------------------------------
-        lda #< @empty
-        ldy #> @empty
-        jmp print_str
-
-@empty: .BYTE   "empty"
-        .BYTE   NUL
+        jsr print_this
+            .BYTE   "empty"
+            .BYTE   NUL
+        rts
 
         ;-----------------------------------------------------------------------
 @done:  .plx                    ; restore original stack index
@@ -277,9 +275,12 @@ term_print_stack:
 
         ; print the header:
         ;-----------------------------------------------------------------------
-+       lda #< @head
-        ldy #> @head
-        jsr print_str
++       jsr print_this
+            ; TODO: this is CBM/C64-specific
+            .BYTE   PET_YELLOW, PET_RVRS_ON
+            .BYTE   "item type   hex            binary dec   "
+            .BYTE   PET_WHITE, PET_RVRS_OFF
+            .BYTE   NUL
 
         ; the stack index measures hardware bytes, not "items" on the stack,
         ; as items can be bytes or words, so we need a counter for items
@@ -363,9 +364,9 @@ term_print_stack:
         ; when you have eliminated the impossible,
         ; whatever remains, however improbable,
         ; must be a token
-@token: lda #< @typet
-        ldy #> @typet
-        jsr print_str
+@token: jsr print_this
+            .BYTE   " tokn "
+            .BYTE   NUL
         
         lda # SYS_RETURN
         jsr sys_chrout
@@ -374,17 +375,17 @@ term_print_stack:
         rts
 
         ;-----------------------------------------------------------------------
-@word:  lda #< @typew
-        ldy #> @typew
-        jsr print_str
+@word:  jsr print_this
+            .BYTE   " word $"
+            .BYTE   NUL
 
         lda zp_stack+0, x
         ldy zp_stack+1, x
         jsr term_print_hex@word
 
-        lda #< @binw
-        ldy #> @binw
-        jsr print_str
+        jsr print_this
+            .BYTE   " %"
+            .BYTE   NUL
 
         lda zp_stack+0, x
         ldy zp_stack+1, x
@@ -406,16 +407,16 @@ term_print_stack:
         jmp @item
 
         ;-----------------------------------------------------------------------
-@byte:  lda #< @typeb
-        ldy #> @typeb
-        jsr print_str
+@byte:  jsr print_this
+            .BYTE   " byte $.."
+            .BYTE   NUL
 
         lda zp_stack, x
         jsr term_print_hex@byte
 
-        lda #< @binb
-        ldy #> @binb
-        jsr print_str
+        jsr print_this
+            .BYTE   " %........"
+            .BYTE   NUL
 
         lda zp_stack+0, x
         ldy zp_stack+1, x
@@ -436,19 +437,6 @@ term_print_stack:
         jmp @item
 
         ;=======================================================================
-        ; TODO: this is CBM/C64-specific
-@head:  .BYTE   PET_YELLOW, PET_RVRS_ON
-        .BYTE   "item type   hex            binary dec   "
-        .BYTE   PET_WHITE, PET_RVRS_OFF
-        .BYTE   NUL
-        ;-----------------------------------------------------------------------
         ;        0    1    2    3    4...
 @ord1:  .BYTE   "t", "s", "n", "r", "t"
 @ord2:  .BYTE   "h", "t", "d", "d", "h"
-        ;-----------------------------------------------------------------------
-@typet: .BYTE   " tokn ", NUL
-@typew: .BYTE   " word $", NUL
-@typeb: .BYTE   " byte $..", NUL
-        ;-----------------------------------------------------------------------
-@binb:  .BYTE   " %........", NUL
-@binw:  .BYTE   " %", NUL
