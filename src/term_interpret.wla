@@ -12,6 +12,8 @@
 ; term_find_term:             -- w | EOD        "find-term"
 ; term_exec:                w --                "exec"
 ; term_parse_number:          -- i              "parse-number"
+; term_define:                --                ":"
+; term_define_end:            --                ";"
 ;
 
 ; line-input ( -- )
@@ -473,71 +475,87 @@ term_parse_number:
 ;===============================================================================
 ; the term that defines new terms:
 ;
+; TODO: cannot define a term, when a term is already being defined
 ;-------------------------------------------------------------------------------
         .term   ":"
 
 term_define:
         ;-----------------------------------------------------------------------
-        rts
+        ; TODO: error if we read ";"?
+        ;
+        jsr term_read_term      ; read the next term name
+        jsr pop_token_EOD       ; check for End of Data
+        beq @err
 
-;;; new-term ( -- )
-;;;=============================================================================
-;;; create a new term; the name of the term is read from the input buffer
-;;;
-;;;-----------------------------------------------------------------------------
-;;        .term   "new-term"
-;;
-;;new_term:
-;;        ;---------------------------------------------------------------------
-;;        ; read the name of the next term:
-;;        ;
-;;        lda # $20               ; space = delimiter
-;;        dex
-;;        sta zp_stack, x
-;;        jsr term
-;;
-;;        ; this is now the last defined term:
-;;        lda pl_here_lo
-;;        sta pl_last_lo
-;;        lda pl_here_hi
-;;        sta pl_last_hi
-;;
-;;        ; the new term begins with the address
-;;        ; of the previous one: (back-link)
-;;        ;
-;;.IFNDEF CPU_65C02
-;;        ldy # 0
-;;.ENDIF
-;;        lda pl_last_lo          ; load address lo-byte of last term
-;;.IFDEF  CPU_65C02
-;;        sta [pl_here]           ; save at the new term's address
-;;.ELSE
-;;        sta [pl_here], y
-;;.ENDIF
-;;        inc pl_here_lo          ; move to the next byte of memory
-;;        bcc +                   ; page crossed?
-;;        inc pl_here_hi          ; (move to next page)
-;;+       lda pl_last_hi          ; load address hi-byte of last term
-;;.IFDEF  CPU_65C02
-;;        sta [pl_here]           ; save at the new term's address
-;;.ELSE
-;;        sta [pl_here], y
-;;.ENDIF
-;;        inc pl_here_lo          ; move to the next byte of memory
-;;        bcc +                   ; page crossed?
-;;        inc pl_here_hi          ; (move to next page)
-;;
-;;        ; write the name of the term to its terminology entry;
-;;        ; this includes the first byte which is the length of the term name
-;;        ;
-;;        ldy # 0
-;;-       lda pl_buffer_term, y   ; read a character
-;;        sta [pl_here]           ; write a character
-;;        inc pl_here_lo          ; move to the next writing address
-;;        bcc +                   ; page crossed?
-;;        inc pl_here_hi          ; (move to next page)
-;;+       iny
-;;        cpy pl_buffer_term
-;;        bne -
-;;
-;;        rts
+        ; create term header:
+        ;-----------------------------------------------------------------------
+        ; `here` is a variable that points to the next free byte of memory
+        ; in user-space, where we define and assemble new terms. each term
+        ; begins with a backlink -- the adress of the previous term
+        ;
+        lda zp_last+LO          ; get address of last term, lo-byte
+        sta [zp_here], y        ; write to the header of the new term
+        iny
+        lda zp_last+HI          ; get address of last term, hi-byte
+        sta [zp_here], y        ; write to the header of the new term
+        iny
+
+        ; set the new term as the "latest" term
+        lda zp_here+LO
+        sta zp_last+LO
+        lda zp_here+HI
+        sta zp_last+HI
+        
+        ; after the backlink, follows the term's name:
+        ; the first byte is the string-length
+        lda pl_term_len
+        sta [zp_here], y
+        
+        ; copy the term-name buffer into the new term's header:
+        ; note that since Y will be 3, we have to negatively offset the
+        ; buffer we're reading from to make source/destination align
+-       iny
+        lda pl_term_name-3, y
+        sta [zp_here], y
+        ; note that we must include the null-terminator in the term-header,
+        ; which is why we check for null *after* copying the byte
+        bne -
+
+        ; the term has been defined, and the term's code will be assembled
+        ; from this point forward -- to avoid running into undefined memory
+        ; when executing a term before any code has been added, we place an
+        ; RTS instruction at the beginning
+        ;
+        lda # CPU_RTS
+        sta [zp_here], y
+
+        ; move the `here` address forward
+        ; to this new starting position:
+        ;
+        tya                     ; number of bytes written to `here`
+        adc zp_here+LO          ; add to the original `here` address, lo-byte
+        sta zp_here+LO          ; write back result
+        bcc +                   ; carry?
+        inc zp_here+HI          ; ripple the carry
+
+        ; TODO: enable quote/compile mode!
++       rts
+
+        ;-----------------------------------------------------------------------
+        ; a term name must follow `:`
+        ; TODO: add a specific error message for this
+@err:   jmp err_parse
+
+
+; ; ( -- )
+;===============================================================================
+; the term that ends a current definition:
+;
+; TODO: error if term is not currently being defined
+;-------------------------------------------------------------------------------
+        .term   ";"
+
+term_define_end:
+        ;-----------------------------------------------------------------------
+        ; TODO: end quote/compile mode!
+        rts

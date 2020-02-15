@@ -37,7 +37,7 @@ pling_init:
         sta zp_type_und
         sta zp_type_ovr
 
-        ; set the last term to have be defined:
+        ; set the last term to have been defined:
         ; (this is the address of the term's header, not its code)
         lda #< _last
         ldy #> _last
@@ -47,9 +47,9 @@ pling_init:
         ; set the user-space starting address,
         ; where new terms will be compiled
         lda #< begin_here
+        ldy #> begin_here
         sta zp_here+LO
-        lda #> begin_here
-        sta zp_here+HI
+        sty zp_here+HI
 
         ; set the default delimiter for the interpreter (ASCII)
         lda # ' '
@@ -130,6 +130,7 @@ term_last_term:
         lda zp_last+LO
         ldy zp_last+HI
         jmp push_word
+
 
 ;===============================================================================
 ; WARNING: *ANY* code / data placed after this point

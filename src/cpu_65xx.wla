@@ -4,6 +4,9 @@
 ;
 ; cpu_65xx.wla : macros for 6502/6510/65C02
 ;===============================================================================
+.DEF    CPU_RTS         $60     ; opcode for RTS instruction
+.DEF    CPU_BRK         $00     ; opcode for BRK instruction
+
 
 ; macro to polyfill 65C02's PusH-X instruction
 ;-------------------------------------------------------------------------------

@@ -50,6 +50,8 @@
 .DEF    zp_int_base     $0e
 .DEF    zp_index        $0e
 
+; current position in the input buffer
+; (used when parsing)
 .DEF    zp_input        $9b
 
 ;-------------------------------------------------------------------------------
