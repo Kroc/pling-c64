@@ -7,11 +7,11 @@
 .INC    "cbm/cbm_petscii.wla"   ; the CBM PETSCII character mapping
 
 .IFDEF  SYSTEM_C64
-    ;///////////////////////////////////////////////////////////////////////////
-    .INC    "cbm/c64/c64.wla"   ; generalised C64 hardware / ROM constants
-    .INC    "cbm/c64_mem.wla"   ; Pling-specific C64 memory layout
+;///////////////////////////////////////////////////////////////////////////////
+.INC    "cbm/c64/c64.wla"       ; generalised C64 hardware / ROM constants
+.INC    "cbm/c64/c64_mem.wla"   ; Pling-specific C64 memory layout
+.INC    "cbm/c64/C64_init.wla"  ; C64-specific initialisation
 
-    .INC    "cbm/C64_init.wla"  ; C64-specific initialisation
 .ELSE
     .FAIL
 .ENDIF

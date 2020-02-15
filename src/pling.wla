@@ -73,9 +73,9 @@ pling_init:
 
         ; main Read, Exceute, Print Loop:
         ;=======================================================================
-@repl:  jsr term_line_input
+@repl:  jsr sys_ok
+        jsr term_line_input
         jsr term_interpret
-        jsr sys_ok
 
         jmp @repl
 

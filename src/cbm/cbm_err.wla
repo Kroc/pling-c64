@@ -15,8 +15,8 @@ sys_ok:
 ;-------------------------------------------------------------------------------
         jsr print_this
             .BYTE   PET_RETURN, PET_YELLOW
-            .BYTE   PET_RVRS_ON, "ok.", PET_RVRS_OFF
-            .BYTE   PET_WHITE, PET_RETURN
+            .BYTE   PET_RVRS_ON, "ok:", PET_RVRS_OFF, " "
+            .BYTE   PET_WHITE
             .BYTE   NUL
         rts
 

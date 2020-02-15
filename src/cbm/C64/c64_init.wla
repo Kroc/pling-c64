@@ -19,7 +19,7 @@ sys_init:
             .BYTE   PET_CASE_LO, PET_CLEAR, PET_YELLOW, PET_RETURN
             .BYTE   ">!< Pling! C64 v0.0", PET_RETURN
             .BYTE   "    Kroc Camen <github.com/Kroc/pling>", PET_RETURN
-            .BYTE   "    built: ", WLA_TIME, PET_RETURN
-            .BYTE   PET_RETURN, PET_WHITE, NUL
+            .BYTE   "    built: ", WLA_TIME, PET_WHITE, PET_RETURN
+            .BYTE   NUL
 
         jmp pling_init
