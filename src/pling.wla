@@ -71,19 +71,17 @@ pling_init:
         ; unless backed up / restored by a routine
         ldx # PL_STACK_SIZE
 
-        ; main Read, Exceute, Print Loop:
-        ;=======================================================================
-@repl:  jsr sys_ok
-        jsr term_line_input
-        jsr term_interpret
+        ; start the interactive shell:
+        ;-----------------------------------------------------------------------
+        jmp console_init
 
-        jmp @repl
 
-;-------------------------------------------------------------------------------
+;===============================================================================
 .INC    "ascii.wla"             ; ASCII constants / routines
 .INC    "print.wla"             ; screen output
 .INC    "stack.wla"             ; Pling's data/type stack routines
 .INC    "error.wla"             ; error handling
+.INC    "console.wla"           ; interactive shell UI
 
 
 ; built-in terminology:

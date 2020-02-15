@@ -6,7 +6,11 @@ This is the main 'starting' file for the source code, begin reading here if you 
 
 * __ascii.wla__
 
-  Constants and routines for handling ASCII. Pling uses ASCII internally for portability between systems, particularly for reading plain text files that originated on a modern PC
+  Constants and routines for handling ASCII. _Pling!_ uses ASCII internally for portability between systems, particularly for reading plain text files that originated on a modern PC
+
+* __console.wla__
+
+  This is the "user interface" of _Pling!_, the interactive shell
 
 * __cpu_65xx.wla__
 
