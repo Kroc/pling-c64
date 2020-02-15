@@ -62,7 +62,9 @@
 .MACRO  .raiseStack
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         inx
-        cpx # PL_STACK_SIZE
+        ; note that raising the stack to the empty position is okay,
+        ; therefore what we are checking for is raising above empty
+        cpx # PL_STACK_SIZE+1
         bcc @\.__\@
         jmp err_stack_underflow
 
@@ -76,7 +78,9 @@
         ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         inx
         inx
-        cpx # PL_STACK_SIZE
+        ; note that raising the stack to the empty position is okay,
+        ; therefore what we are checking for is raising above empty
+        cpx # PL_STACK_SIZE+1
         bcc @\.__\@
         jmp err_stack_underflow
 

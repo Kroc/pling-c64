@@ -42,54 +42,26 @@
 
 ; drop ( x -- )
 ;===============================================================================
-; forget the top-most item on the stack, moving the stack down
-; to the next item
+; forget the top-most item on the stack, raising the stack to the next item
 ;
 ;-------------------------------------------------------------------------------
         .term   "drop"
 
 term_drop:
         ;-----------------------------------------------------------------------
-        ; is the top-most item a byte or a word?
-        lda zp_type, x
-        beq @byte
-        bmi @word
-
-        ; TODO: handle stack under/over-flow token
-        inc VIC_BORDER
-        jmp @byte
-
+        lda zp_type, x          ; get the data-type of the top item
+        beq @byte               ; drop a byte
+        
+        ; this leaves either words or tokens,
+        ; check for the stack-underflow token:
+        cmp # TOKEN_STK
+        beq @err                ; stack is empty, can't drop!
+        
 @word:  inx                     ; drop word
 @byte:  inx                     ; drop byte
         rts
-
-
-; exec ( w -- )
-;===============================================================================
-; execute the address on top of the stack
-;
-;-------------------------------------------------------------------------------
-        .term   "exec"
-
-term_exec:
         ;-----------------------------------------------------------------------
-        ; we must reduce the stack by 2 bytes *before* we jump!
-        ; (check for stack underflow before jumping)
-        ; TODO: data-type check!
-        .raiseStack2
-
-.IFDEF  CPU_65C02
-        ; 65C02: do a jump directly from the data stack,
-        ; with -2 to compensate for already having popped the stack
-        jmp [zp_stack-2, x]
-
-.ELSE   ; 6502:
-        lda zp_stack-2, x
-        sta zp_addr+LO
-        lda zp_stack-1, x
-        sta zp_addr+HI
-        jmp [zp_addr]
-.ENDIF
+@err:   jmp err_type
 
 
 ; extend ( b -- w )
@@ -129,9 +101,4 @@ term_extend:
         jmp set_type_word
 
         ;-----------------------------------------------------------------------
-        ; is it one of the stack error markers?
-@err:   cmp # TOKEN_STK
-        beq +
-        jmp err_type
-        ; this handler will work out if the stack under- or over-flowed
-+       jmp err_stack
+@err    jmp err_type

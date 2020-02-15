@@ -10,9 +10,9 @@
 ; term_interpret:             --                "interpret"
 ; term_read_term:             -- [EOD]          "read-term"
 ; term_find_term:             -- w | EOD        "find-term"
+; term_exec:                w --                "exec"
 ; term_parse_number:          -- i              "parse-number"
 ;
-
 
 ; line-input ( -- )
 ;===============================================================================
@@ -193,8 +193,8 @@ term_read_term:
 
 term_find_term:
         ;-----------------------------------------------------------------------
-        ; start searching from the last defined word. this address
-        ; points to the term header, *not* the term's code (which follows)
+        ; start searching from the last defined word. this address points
+        ; to the term header, *not* the term's code (which follows)
         ;
         ; the first two bytes of a term header are the address of the previous
         ; term, allowing one to follow the chain back through terms
@@ -281,6 +281,39 @@ term_find_term:
 @eod:   lda # 0                 ; the token's value is not important
         ldy # TOKEN_EOD         ; make it a token, not a regular byte
         jmp push_token
+
+
+; exec ( w -- )
+;===============================================================================
+; execute the address on top of the stack
+;
+;-------------------------------------------------------------------------------
+        .term   "exec"
+
+term_exec:
+        ;-----------------------------------------------------------------------
+        lda zp_type, x          ; check data-type
+        bpl @err                ; *MUST* be a word! 
+        
+        ; we must raise the stack by
+        ; 2 bytes *before* we jump!
+        inx
+        inx
+
+.IFDEF  CPU_65C02
+        ; do a jump directly from the data stack, with -2
+        ; to compensate for having already popped the stack
+        jmp [zp_stack-2, x]
+
+.ELSE   ; 6502:
+        lda zp_stack-2, x
+        sta zp_addr+LO
+        lda zp_stack-1, x
+        sta zp_addr+HI
+        jmp [zp_addr]
+.ENDIF
+        ;-----------------------------------------------------------------------
+@err:   jmp err_type
 
 
 ; parse-number ( -- i )
@@ -435,6 +468,17 @@ term_parse_number:
         ;-----------------------------------------------------------------------
 @neg:   jmp term_neg            ; flip the number to make it negative
 
+
+; : ( -- )
+;===============================================================================
+; the term that defines new terms:
+;
+;-------------------------------------------------------------------------------
+        .term   ":"
+
+term_define:
+        ;-----------------------------------------------------------------------
+        rts
 
 ;;; new-term ( -- )
 ;;;=============================================================================
