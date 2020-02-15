@@ -10,11 +10,11 @@
 ;///////////////////////////////////////////////////////////////////////////////
 .INC    "cbm/c64/c64.wla"       ; generalised C64 hardware / ROM constants
 .INC    "cbm/c64/c64_mem.wla"   ; Pling-specific C64 memory layout
-.INC    "cbm/c64/C64_init.wla"  ; C64-specific initialisation
 
 .ELSE
     .FAIL
 .ENDIF
 
+.INC    "cbm/cbm_init.wla"      ; system-specific bootstrap/initialisation
 .INC    "cbm/cbm_sys.wla"       ; Pling <-> system interface
 .INC    "cbm/cbm_err.wla"       ; system-specific error handling and output

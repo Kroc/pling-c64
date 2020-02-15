@@ -1,0 +1,19 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; cbm_init.wla : system intialisation for CBM machines
+;===============================================================================
+; start the program's code with the BASIC bootstrap
+; to jump to the machine code that follows:
+;
+.INC    "cbm/cbm_basic.wla"
+
+sys_init:
+;===============================================================================
+        ldx # $ff               ; throw away the current stack,
+        txs                     ; we won't be returning to BASIC
+
+        ; begin the system-independent
+        ; Pling! initialisation
+        jmp pling_init
