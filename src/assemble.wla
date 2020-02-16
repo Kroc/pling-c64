@@ -1,0 +1,135 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; assemble.wla : routines for assembling code into new terms
+;===============================================================================
+
+inc_here_y:
+;===============================================================================
+; this is a utility routine used when assembling instructions into a term,
+; it moves the `here` variable forward by the number in Y
+;
+;-------------------------------------------------------------------------------
+        ; to avoid execution running off into undefined memory,
+        ; the assembling point is always capped with an RTS
+        lda # CPU_RTS
+        sta [zp_here], y
+        
+        tya                     ; number of bytes written to `here`
+        adc zp_here+LO          ; add to the original `here` address, lo-byte
+        sta zp_here+LO          ; write back result
+        bcs +                   ; carry?
+        rts
++       inc zp_here+HI          ; ripple the carry
+        rts
+
+
+asm_push_byte:
+;===============================================================================
+; assembles a `push_byte` into user-space:
+; the byte value to assemble is on the stack
+;
+; in:   Y       offset from `zp_here`
+;       X       stack-index
+;
+; out:  Y       offset from `zp_here`, incremented
+;       X       stack-index
+;       A       (clobbered)
+; 
+;-------------------------------------------------------------------------------
+        ; assemble `LDA # $nn`
+        ;-----------------------------------------------------------------------
+        lda # CPU_LDA
+        sta [zp_here], y
+        iny
+        lda zp_stack+0, x       ; get the byte value from the stack
+        sta [zp_here], y        ; add to the LDA instruction
+        iny
+        inx                     ; raise the stack
+
+        ; assemble `JSR push_byte`
+        ;-----------------------------------------------------------------------
+        lda # CPU_JSR
+        sta [zp_here], y
+        iny
+        lda #< push_byte
+        sta [zp_here], y
+        iny
+        lda #> push_byte
+        sta [zp_here], y
+        iny
+        rts
+
+
+asm_push_word:
+;===============================================================================
+; assembles a `push_word` into user-space:
+; the word value to assemble is on the stack
+;
+; in:   Y       offset from `zp_here`
+;       X       stack-index
+;
+; out:  Y       offset from `zp_here`, incremented
+;       X       stack-index
+;       A       (clobbered)
+; 
+;-------------------------------------------------------------------------------
+        ; assemble `LDA # $nn`
+        ;-----------------------------------------------------------------------
+        lda # CPU_LDA
+        sta [zp_here], y
+        iny
+        lda zp_stack+0, x       ; get the byte value from the stack
+        sta [zp_here], y        ; add to the LDA instruction
+        iny
+        inx                     ; raise the stack
+
+        ; assemble `LDY # $nn`
+        ;-----------------------------------------------------------------------
+        lda # CPU_LDY
+        sta [zp_here], y
+        iny
+        lda zp_stack+0, x       ; get the byte value from the stack
+        sta [zp_here], y        ; add to the LDA instruction
+        iny
+        inx                     ; raise the stack
+
+        ; assemble `JSR push_word`
+        ;-----------------------------------------------------------------------
+        lda # CPU_JSR
+        sta [zp_here], y
+        iny
+        lda #< push_word
+        sta [zp_here], y
+        iny
+        lda #> push_word
+        sta [zp_here], y
+        iny
+        rts
+
+
+asm_jsr:
+;===============================================================================
+;
+;-------------------------------------------------------------------------------
+        lda # CPU_JSR
+        sta [zp_here], y
+        iny
+        lda zp_stack+0, x       ; get the execution address lo-byte
+        sta [zp_here], y        ; add to the JSR instruction
+        iny
+        lda zp_stack+1, x       ; get the execution address hi-byte
+        sta [zp_here], y        ; add to the JSR instruction
+        iny
+        rts
+
+
+asm_rts:
+;===============================================================================
+; assembles an RTS instruction in user-space
+;
+;-------------------------------------------------------------------------------
+        lda # CPU_RTS
+        sta [zp_here], y
+        rts

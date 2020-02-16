@@ -18,9 +18,20 @@
 ; guaranteed to be constant, or even exist, between systems/implementations 
 ;
 .ENUMID 1
-.ENUMID TOKEN_STK       ; Stack under/overflow 
-.ENUMID TOKEN_TYP       ; data-type error 
+
+; unlike other types of errors, stack under/overflow cannot be caught and
+; handled after happening; a stack underflow represents a critical program
+; logic error and the program cannot continue. if we were to push an error
+; token on the stack upon underflow, this would just pass the error down
+; the call chain, making it difficult to ascertain where the underflow
+; occurred. a stack overflow would, naturally, leave no room to push an
+; error token!
+;
+.ENUMID TOKEN_STK
+
 .ENUMID TOKEN_EOD       ; "End Of Data" (read / write)
+.ENUMID ERROR_TYPE      ; data-type error
+.ENUMID ERROR_PARSE     ; parsing error
 
 
 ; lower the stack
@@ -232,8 +243,10 @@ err_stack_underflow:
 
 err_type:
         ;-----------------------------------------------------------------------
-        cmp # TOKEN_STK
-        beq err_stack
+        ; check for stack underflow / overflow
+        ;
+        cmp # TOKEN_STK         ; is the stack-index on one of the end markers?
+        beq err_stack           ; critical stack under/over-flow error
 
         lda # 2
         jmp sys_error
@@ -257,6 +270,7 @@ get_type_byte:
         lda zp_type, x
         bne err_type            ; error if not a byte
         rts                     ; is a byte, return
+
 
 get_type_word:
 ;===============================================================================
@@ -484,6 +498,7 @@ pop_token_EOD:
 ;===============================================================================
 ; 
 ; out:  z       z=1 no EOD token present. z=0 EOD was present, and removed
+;       A, Y    (clobbered)
 ;
 ;-------------------------------------------------------------------------------
         ; check the top item and remove it only if it's a token

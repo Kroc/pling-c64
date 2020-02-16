@@ -81,6 +81,7 @@ pling_init:
 .INC    "print.wla"             ; screen output
 .INC    "stack.wla"             ; Pling's data/type stack routines
 .INC    "error.wla"             ; error handling
+.INC    "assemble.wla"          ; for assembling code into new terms
 .INC    "console.wla"           ; interactive shell UI
 
 

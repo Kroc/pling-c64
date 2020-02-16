@@ -9,6 +9,7 @@ console_init:
 ;===============================================================================
         ; set up the screen:
         ;-----------------------------------------------------------------------
+        ; TODO: this is CBM/C64-specific
         lda # VIC_BLACK
         sta VIC_BORDER
         sta VIC_BACKGROUND
@@ -23,7 +24,9 @@ console_init:
         ; main Read, Exceute, Print Loop:
         ;=======================================================================
 @repl:  jsr sys_ok
+        ; TODO: should this return an error?
         jsr term_line_input
+        ; TODO: check for unhandled error
         jsr term_interpret
 
         jmp @repl

@@ -9,20 +9,9 @@
 
 ; other addresses used by KERNAL:
 ;-------------------------------------------------------------------------------
-; BASIC programs starting address
-.DEF    basic_start     $0801
-; BASIC/KERNAL input buffer
-.DEF    input_buffer    $0200
-
-; these vectors are called by hardware events, independent of the KERNAL.
-; when the KERNAL ROM is enabled the ROM provides the values, which are KERNAL
-; addresses, to allow normal operation of the C64. if the KERNAL ROM is
-; switched off, then the vectors will be defined by the RAM underneath
-; -- if the vectors in RAM are not set the system will crash!
-;
-.DEF    CPU_VECTOR_NMI  $fffa   ; Non-Maskable-Interrupt vector
-.DEF    CPU_VECTOR_RST  $fffc   ; cold-reset vector
-.DEF    CPU_VECTOR_IRQ  $fffe   ; interrupt vector
+.DEF    basic_start     $0801   ; BASIC programs starting address
+.DEF    input_buffer    $0200   ; BASIC/KERNAL input buffer
+.DEF    INPUT_LENGTH    80      ; capacity of input buffer
 
 ; device numbers:
 ;-------------------------------------------------------------------------------
@@ -201,7 +190,7 @@ KERNAL_VECTOR_SAVE      WORD    ;=$0332
 .DEF    KERNAL_MEMTOP           $ff9c
 .DEF    KERNAL_MEMTOP_ADDR      $fe34
 
-; query keyboard; put current matrix code into memory address $00CB,
+; query keyboard; put current matrix code into memory address $CB,
 ; current status of shift keys into memory address $028D and PETSCII
 ; code into keyboard buffer
 .DEF    KERNAL_SCNKEY           $ff9f

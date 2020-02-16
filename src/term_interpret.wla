@@ -7,8 +7,8 @@
 ; label:                    stack:              term-name:
 ;-------------------------------------------------------------------------------
 ; term_line_input:            --                "line-input"
-; term_interpret:             --                "interpret"
-; term_read_term:             -- [EOD]          "read-term"
+; term_interpret:             -- * ERR?         "interpret"
+; term_read_term:             -- EOD?           "read-term"
 ; term_find_term:             -- w | EOD        "find-term"
 ; term_exec:                w --                "exec"
 ; term_parse_number:          -- i              "parse-number"
@@ -19,47 +19,28 @@
 ; line-input ( -- )
 ;===============================================================================
 ; wait for the user to type a line of text:
-; the input is stored on the system's input line-buffer ($0200)
+; the input is stored on the system's input line-buffer
 ;
-; TODO: this to be redone completely. the C64's KERNAL routine allows
-;       pressing the cursor keys during input
 ;-------------------------------------------------------------------------------
         .term   "line-input"
 
 term_line_input:
         ;-----------------------------------------------------------------------
-        ldy # 0
-
-        ; TODO: move into system-specific code
--       jsr KERNAL_CHRIN        ; read a character from the keyboard
-        cmp # PET_RETURN        ; is the key RETURN?
-        beq +                   ; if yes, quit reading
-        
-        jsr sys_chr2asc         ; convert from PETSCII to ASCII
-        sta $0200, y            ; add the key-code to the buffer
-        iny                     ; move to the next character
-        cpy # 81                ; have we hit the end of the line?
-        bne -
-
-+       jsr sys_chrout          ; actually print the RETURN (go to next line)
-
-        ; append a null-terminator:
-.IFDEF  CPU_65C02
-        stz $0200, y
-.ELSE   ;6502
-        lda # 0
-        sta $0200, y
-.ENDIF
-        lda #< $0200
-        ldy #> $0200
-        sta zp_input+LO
-        sty zp_input+HI
-        rts
+        ; defer to the system's input routine as these
+        ; vary wildly from system to system
+        ;
+        jmp sys_input
 
 
-; interpret ( -- )
+; interpret ( -- * ERR? )
 ;===============================================================================
 ; read source code input and execute
+;
+; out:  *       execution of the intepretted code may push any quantity
+;               of data of any type (including none at all) on the stack
+;
+;       ERR?    if an error occurs either in parsing or execution,
+;               the error token is returned atop the stack
 ;
 ; TODO: for now this merely reads a string already in memory, but with the
 ;       introduction of stream I/O we'll want this to be able to read from
@@ -88,7 +69,7 @@ term_interpret:
 @rts:   rts
 
 
-; read-term ( -- [EOD] )
+; read-term ( -- EOD? )
 ;===============================================================================
 ; read a term name from the input buffer
 ;
@@ -97,9 +78,10 @@ term_interpret:
 ;       cannot be more than 256-31 characters of delimiters before the
 ;       term-name begins
 ;
-; out:  [EOD]   if the input string reaches the end without reading a term,
+; out:  EOD?    if the input string reaches the end without reading a term,
 ;               an End Of Data token is returned
 ;
+; TODO: enforce 31-char limit
 ;-------------------------------------------------------------------------------
         .term   "read-term"
 
@@ -288,31 +270,32 @@ term_find_term:
 ; exec ( w -- )
 ;===============================================================================
 ; execute the address on top of the stack
-;
+;                                                                       ;cycles
 ;-------------------------------------------------------------------------------
         .term   "exec"
 
-term_exec:
+term_exec:                                                              ;=6
         ;-----------------------------------------------------------------------
-        lda zp_type, x          ; check data-type
-        bpl @err                ; *MUST* be a word! 
+        lda zp_type, x          ; check data-type                       ;+4=10
+        bpl @err                ; *MUST* be a word!                     ;+2=12
         
         ; we must raise the stack by
         ; 2 bytes *before* we jump!
-        inx
-        inx
+        inx                                                             ;+2=14
+        inx                                                             ;+2=16
 
 .IFDEF  CPU_65C02
         ; do a jump directly from the data stack, with -2
         ; to compensate for having already popped the stack
-        jmp [zp_stack-2, x]
+        jmp [zp_stack-2, x]                                             ;+6=22
 
 .ELSE   ; 6502:
-        lda zp_stack-2, x
-        sta zp_addr+LO
-        lda zp_stack-1, x
-        sta zp_addr+HI
-        jmp [zp_addr]
+        ; if there's a faster way to do this, I'm all ears...
+        lda zp_stack-2, x                                               ;+4=26
+        sta zp_addr+LO                                                  ;+3=29
+        lda zp_stack-1, x                                               ;+4=33
+        sta zp_addr+HI                                                  ;+3=36
+        jmp [zp_addr]                                                   ;+5=41
 .ENDIF
         ;-----------------------------------------------------------------------
 @err:   jmp err_type
@@ -530,16 +513,45 @@ term_define:
         sta [zp_here], y
 
         ; move the `here` address forward
-        ; to this new starting position:
-        ;
-        tya                     ; number of bytes written to `here`
-        adc zp_here+LO          ; add to the original `here` address, lo-byte
-        sta zp_here+LO          ; write back result
-        bcc +                   ; carry?
-        inc zp_here+HI          ; ripple the carry
+        ; to this new starting position
+        jsr inc_here_y
 
+        ; compile term:
+        ;-----------------------------------------------------------------------
+        ; begin reading terms and compiling them into
+        ; the new term, rather than executing them
+        ;
+@loop:  jsr term_read_term      ; read a term name from the input buffer
+        jsr pop_token_EOD       ; any result?
+        beq @done               ; should we error if EOD before ";"?
+        jsr term_find_term      ; try find the name in the terminology
+        jsr pop_token_EOD       ; did we find the term?
+        bne @int
+
+        ; assemble a JSR at `here`
+        ;
+        ldy # 0                 ; `here` is already at the assembly point
+        jsr asm_jsr
+
+        ; move the `here` address forward
+        ; to this new starting position
+        jsr inc_here_y
+        
+        ;-----------------------------------------------------------------------
         ; TODO: enable quote/compile mode!
-+       rts
+@done:  rts
+
+        ;-----------------------------------------------------------------------
+@int:   jsr term_parse_number   ; try parse the unknown term as a number
+        
+        ; the number having been parsed,
+        ; assemble a `push_word` into user-space
+        jsr asm_push_word
+        ; move the `here` address forward
+        ; to this new starting position
+        jsr inc_here_y
+
+        rts
 
         ;-----------------------------------------------------------------------
         ; a term name must follow `:`

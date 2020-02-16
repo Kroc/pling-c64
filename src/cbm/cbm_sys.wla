@@ -8,17 +8,17 @@
 ; main Pling code doesn't have to have variations for every different system;
 ; these are:
 ;
-; sys_chrout            print a character using the native encoding
+;       SYS_SPC         native character code for space
+;       SYS_RETURN      native character code for newline
+;       SYS_0           native character code for "0"
+;       SYS_9           native character code for "9"
+;       
+;       sys_asc2chr     convert PETSCII to ASCII
+;       sys_chr2asc     convert ASCII to PETSCII
+;       
+;       sys_chrout      print a character using the native encoding
+;       sys_input       let the user input a line of text
 ;
-; sys_asc2chr           convert PETSCII to ASCII
-; sys_chr2asc           convert ASCII to PETSCII
-;
-; SYS_SPC               native character code for space
-; SYS_RETURN            native character code for newline
-; SYS_0                 native character code for "0"
-; SYS_9                 native character code for "9"
-;
-
 .IFDEF  SYSTEM_C64
         .INC    "cbm/c64/c64_sys.wla"
 .ENDIF
@@ -114,3 +114,38 @@ sys_chr2asc:
         adc # $20
 
 +       rts
+
+
+sys_input:
+;===============================================================================
+; wait for the user to type a line of text:
+; the input is stored on the system's input line-buffer ($0200)
+;
+;-------------------------------------------------------------------------------
+        ldy # 0
+
+-       jsr KERNAL_CHRIN        ; read a character from the keyboard
+        cmp # PET_RETURN        ; is the key RETURN?
+        beq +                   ; if yes, quit reading
+        
+        jsr sys_chr2asc         ; convert from PETSCII to ASCII
+        sta input_buffer, y     ; add the key-code to the buffer
+        iny                     ; move to the next character
+        cpy # INPUT_LENGTH+1    ; have we hit the end of the line?
+        bne -
+
++       jsr sys_chrout          ; actually print the RETURN (go to next line)
+
+        ; append a null-terminator:
+.IFDEF  CPU_65C02
+        stz input_buffer, y
+.ELSE   ;6502
+        lda # 0
+        sta input_buffer, y
+.ENDIF
+        lda #< input_buffer
+        ldy #> input_buffer
+        sta zp_input+LO
+        sty zp_input+HI
+
+        rts

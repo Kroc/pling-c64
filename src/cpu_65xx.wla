@@ -4,9 +4,18 @@
 ;
 ; cpu_65xx.wla : macros for 6502/6510/65C02
 ;===============================================================================
-.DEF    CPU_RTS         $60     ; opcode for RTS instruction
-.DEF    CPU_BRK         $00     ; opcode for BRK instruction
+.DEF    CPU_VECTOR_NMI  $fffa   ; Non-Maskable-Interrupt vector
+.DEF    CPU_VECTOR_RST  $fffc   ; cold-reset vector
+.DEF    CPU_VECTOR_IRQ  $fffe   ; interrupt vector
 
+.DEF    CPU_LDA         $a9     ; opcode for `LDA # $nn`
+.DEF    CPU_LDA_ZP      $a5     ; opcode for `LDA $zp`
+.DEF    CPU_LDA_ZPX     $b5     ; opcode for `LDA $zp, x`
+.DEF    CPU_LDA_ABS     $ad     ; opcode for `LDA $nnnn`
+.DEF    CPU_LDY         $a0     ; opcode for `LDY # $nn`
+.DEF    CPU_JSR         $20     ; opcode for `JSR $nnnn`
+.DEF    CPU_RTS         $60     ; opcode for `RTS`
+.DEF    CPU_BRK         $00     ; opcode for `BRK`
 
 ; macro to polyfill 65C02's PusH-X instruction
 ;-------------------------------------------------------------------------------
