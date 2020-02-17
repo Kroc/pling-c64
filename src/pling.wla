@@ -108,7 +108,7 @@ __\.\@: .WORD   prev_term
 .INC    "term_math.wla"         ; core number & math routines
 .INC    "term_muldiv.wla"       ; multiply & divide math
 .INC    "term_string.wla"       ; core string routines
-.INC    "term_stream.wla"       ; I/O streams
+.INC    "term_channel.wla"      ; I/O channels
 .INC    "term_disk.wla"         ; disk I/O
 
 .INC    "term_print.wla"        ; printing text/data to screen

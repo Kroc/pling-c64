@@ -2,15 +2,15 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; term_stream.wla : stream I/O
+; term_channel.wla : I/O channels
 ;===============================================================================
 ;
 ;   <       read (generic)
 ;   
-;           uses the stream handle atop the stack to read from the stream.
-;           the return value is dependent on the stream
+;           uses the channel handle atop the stack to read from the channel.
+;           the return value is dependent on the channel
 ;
 ;   >       write (generic)
 ;
-;           uses the stream handle atop the stack to write to the stream
+;           uses the channel handle atop the stack to write to the channel
 ;

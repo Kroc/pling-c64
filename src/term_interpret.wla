@@ -43,7 +43,7 @@ term_line_input:
 ;               the error token is returned atop the stack
 ;
 ; TODO: for now this merely reads a string already in memory, but with the
-;       introduction of stream I/O we'll want this to be able to read from
+;       introduction of channel I/O we'll want this to be able to read from
 ;       any source
 ;
 ;-------------------------------------------------------------------------------

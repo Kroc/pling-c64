@@ -16,7 +16,7 @@ print_asc:
 ;
 ;-------------------------------------------------------------------------------
         jsr sys_asc2chr         ; convert ASCII code to native encoding
-        jmp sys_chrout
+        jmp sys_chrout          ; print using the system-specific routine
 
 
 print_str:
