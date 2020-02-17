@@ -12,6 +12,10 @@ This is the main 'starting' file for the source code, begin reading here if you 
 
   Code for assembling code into new terms.
 
+* __channel.wla__
+
+  _Pling_'s channel I/O interface (incomplete)
+
 * __console.wla__
 
   This is the "user interface" of _Pling!_, the interactive shell
@@ -55,10 +59,6 @@ This is the main 'starting' file for the source code, begin reading here if you 
 * __term_print.wla__
 
   Terms for outputting to the screen
-
-* __term_stream.wla__
-
-  _Pling_'s stream I/O interface (incomplete)
 
 * __term_string.wla__
 

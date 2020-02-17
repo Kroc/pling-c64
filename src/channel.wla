@@ -1,0 +1,137 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; channel.wla : native code for I/O channels
+;===============================================================================
+; channels are Pling!'s way of abstracting various forms of I/O into a single,
+; portable interface. channels isolate the programmer from manual memory
+; management as well as providing protection from buffer-overruns
+;
+; a channel consists of a set of variables
+; for tracking the channel's state:
+;
+; * a base address (for example, strings in RAM, rather than disk I/O)
+; * an index (where the read/write cursor is in the channel)
+; * the length of the channel's data (if known)
+; * a set of terms for reading from or writing to the channel
+;
+channel_reserve:
+;===============================================================================
+; creates a new channel by reserving user-space for the channel's variables:
+; this routine does not actually populate the channel's variables though
+;
+;-------------------------------------------------------------------------------
+        ; the current position in user space will form the new channel;
+        ; we need to remember this address, for the channel's terms to
+        ; refer to for their data
+        ;
+        lda zp_here+LO
+        sta zp_channel+LO
+        lda zp_here+HI
+        sta zp_channel+HI
+
+        ; move the user-space pointer `here`
+        ; over the new channel header
+        clc
+        lda zp_here+LO
+        adc # 2
+        sta zp_here+LO
+        bcc +
+        inc zp_here+HI
++       
+        rts
+
+
+channel_attach:
+;===============================================================================
+; attach to a channel to begin operating with it:
+;
+; this routine copies the channel's variables into the zero-page addresses
+; used by all other channel routines. you *MUST* attach to a channel before
+; using it, otherwise all actions will happen to the previously used channel,
+; or even a 'channel' coming from undefined RAM!
+;
+; once channel operations are complete, use `channel_detach` to write-back
+; the updated zero-page variables to the channel's variable space -- changes
+; to a channel object will *NOT* be reflected until `channel_detach` is used
+;
+; in:   A       channel object's address, lo-byte
+;       Y       channel object's address, hi-byte
+;
+; out   A, Y    (clobbered)
+;       X       (preserved)
+;
+;-------------------------------------------------------------------------------
+        ; remember the channel's object address; this is so we know where
+        ; to copy the variables back to when we detach from the channel
+        sta zp_channel+LO
+        sty zp_channel+HI
+
+        ; copy the channel's variables to zero-page
+        ;-----------------------------------------------------------------------
+        ldy # 6                 ; TODO: use a size_of / struct to know this
+-       lda [zp_channel], y     ; read a byte from the channel's variables
+        sta zp_chan, y          ; copy to the zero-page channel
+        dey                     ; next byte...
+        bpl -                   ; any remaining?
+
+        rts
+
+
+channel_detach:
+;===============================================================================
+; detach from a channel:
+;
+; writes back changes made to the zero-page channel to the original channel
+; object -- changes to a channel object will *NOT* be reflected until detached!
+;
+; out:  A, Y    (clobbered)
+;       X       (preserved)
+;
+;-------------------------------------------------------------------------------
+        ldy # 6                 ; TODO: use a size_of / struct to know this
+-       lda zp_chan, y          ; read a byte from the zero-page channel
+        sta [zp_channel], y     ; write back to the original channel object
+        dey                     ; next byte...
+        bpl -                   ; any remaining?
+
+        rts
+
+
+channel_str_write:
+;===============================================================================
+; writes a byte to a string channel already defined in the zero-page channel
+;
+; in:   A       byte to write to the channel
+;
+; TODO: handle cursor overflow
+;-------------------------------------------------------------------------------
+        ldy zp_chan_index       ; read the current string index
+        sta [zp_chan_base], y   ; write the byte to the string
+        iny                     ; move the cursor forward
+        
+        cpy zp_chan_len         ; has the string increased in length?
+        bcc +                   ; i.e. the cursor is > length
+        inc zp_chan_len         ; increase the length of the string
+
++       lda # 0
+        sta [zp_chan_base], y   ; ensure the string is always null-terminated
+        sty zp_chan_index       ; update the index
+        rts
+
+
+channel_str_read:
+;===============================================================================
+; reads a byte from a string channel already defined in the zero-page channel
+;
+; out:   A       byte read from the channel
+;
+; TODO: handle cursor overflow
+;-------------------------------------------------------------------------------
+        ldy zp_chan_index       ; get the current string index
+        lda [zp_chan_base], y   ; read the byte from the string
+        iny                     ; move the cursor forward
+        sty zp_chan_index       ; update the cursor position
+        
+        rts

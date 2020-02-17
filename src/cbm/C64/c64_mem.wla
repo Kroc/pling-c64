@@ -54,6 +54,21 @@
 ; (used when parsing)
 .DEF    zp_input        $9b
 
+; currently attached channel object,
+; as used by channel I/O operations:
+;
+.DEF    zp_channel      $d9     ; contains address of the channel object 
+.DEF    zp_chan         $db     ; start of the channel variables:
+.DEF    zp_chan_base    $db     ; copy of the channel's base address
+.DEF    zp_chan_index   $dd     ; copy of the channel's index
+.DEF    zp_chan_len     $df     ; copy of the channel's length
+
+; these are the pre-assigned variables
+; for the built-in string channel:
+.DEF    zp_str_base     $e1
+.DEF    zp_str_index    $e3
+.DEF    zp_str_len      $e5     ; only 1 byte is used
+
 ;-------------------------------------------------------------------------------
 ; Pling's data stack works downwards; this direction was chosen specifically
 ; so that the low byte of a word appears top-most on the stack, yet at the
