@@ -13,7 +13,10 @@
 ; term_sub                i i -- i              "-"
 ; term_sub1                 i -- i              "-1"
 ; term_neg                  i -- i              "neg"
-; term_neg                  i -- i              "not"
+; term_not                  i -- i              "not"
+; term_and                i i -- i              "and"
+; term_or                 i i -- i              "or"
+; term_xor                i i -- i              "xor"
 ;
 
 ; 0 ( -- b )
@@ -308,3 +311,153 @@ term_not:
         sta zp_stack, x
         
         rts
+
+
+; and ( i i -- i )
+;===============================================================================
+; bitwise and the top two integers on the stack together, returning a single
+; integer. the two integers *MUST* be of matching size!
+;
+;-------------------------------------------------------------------------------
+        .term   "and"
+
+term_and:
+        ;-----------------------------------------------------------------------
+        lda zp_type+0, x        ; get the data-type of the top item
+        bmi @word               ; handle word & word...
+        bne @err                ; token/stack-underflow = error
+
+        ; byte & byte:
+        ;-----------------------------------------------------------------------
+        ; if the first integer was a byte, the second must also be a byte
+        ;
+@byte:  lda zp_type+1, x        ; read the second integer's type
+        bne @err                ; word/token/stack-underflow = error
+
+        lda zp_stack+0          ; read first integer,
+        and zp_stack+1, x       ; bitwise-and the second,
+        inx                     ; raise the stack,
+        sta zp_stack+0, x       ; write back result
+
+        rts
+
+        ; word & word:
+        ;-----------------------------------------------------------------------
+        ; if the first integer was a word, the second must also be a word
+        ;
+@word:  lda zp_type+2, x
+        bpl @err                ; byte/token/stack-underflow = error
+
+        lda zp_stack+0, x       ; read the first integer, lo-byte
+        and zp_stack+2, x       ; bitwise-and lo-bytes together
+        sta zp_stack+2, x       ; write back result, lo-byte
+        lda zp_stack+1, x       ; read the first integer, hi-byte
+        and zp_stack+3, x       ; bitwise-and the hi-bytes
+        sta zp_stack+3, x       ; write back result, hi-byte
+        inx                     ; raise the stack twice
+        inx                     ; to place one word at the top
+        
+        rts
+
+        ;-----------------------------------------------------------------------
+@err:   jmp err_type
+
+
+; or ( i i -- i )
+;===============================================================================
+; bitwise or the top two integers on the stack together, returning a single
+; integer. the two integers *MUST* be of matching size!
+;
+;-------------------------------------------------------------------------------
+        .term   "or"
+
+term_or:
+        ;-----------------------------------------------------------------------
+        lda zp_type+0, x        ; get the data-type of the top item
+        bmi @word               ; handle word & word...
+        bne @err                ; token/stack-underflow = error
+
+        ; byte & byte:
+        ;-----------------------------------------------------------------------
+        ; if the first integer was a byte, the second must also be a byte
+        ;
+@byte:  lda zp_type+1, x        ; read the second integer's type
+        bne @err                ; word/token/stack-underflow = error
+
+        lda zp_stack+0          ; read first integer,
+        ora zp_stack+1, x       ; bitwise-or the second,
+        inx                     ; raise the stack,
+        sta zp_stack+0, x       ; write back result
+
+        rts
+
+        ; word & word:
+        ;-----------------------------------------------------------------------
+        ; if the first integer was a word, the second must also be a word
+        ;
+@word:  lda zp_type+2, x
+        bpl @err                ; byte/token/stack-underflow = error
+
+        lda zp_stack+0, x       ; read the first integer, lo-byte
+        ora zp_stack+2, x       ; bitwise-or lo-bytes together
+        sta zp_stack+2, x       ; write back result, lo-byte
+        lda zp_stack+1, x       ; read the first integer, hi-byte
+        ora zp_stack+3, x       ; bitwise-or the hi-bytes
+        sta zp_stack+3, x       ; write back result, hi-byte
+        inx                     ; raise the stack twice
+        inx                     ; to place one word at the top
+        
+        rts
+
+        ;-----------------------------------------------------------------------
+@err:   jmp err_type
+
+
+; xor ( i i -- i )
+;===============================================================================
+; bitwise xor the top two integers on the stack together, returning a single
+; integer. the two integers *MUST* be of matching size!
+;
+;-------------------------------------------------------------------------------
+        .term   "xor"
+
+term_xor:
+        ;-----------------------------------------------------------------------
+        lda zp_type+0, x        ; get the data-type of the top item
+        bmi @word               ; handle word & word...
+        bne @err                ; token/stack-underflow = error
+
+        ; byte & byte:
+        ;-----------------------------------------------------------------------
+        ; if the first integer was a byte, the second must also be a byte
+        ;
+@byte:  lda zp_type+1, x        ; read the second integer's type
+        bne @err                ; word/token/stack-underflow = error
+
+        lda zp_stack+0          ; read first integer,
+        eor zp_stack+1, x       ; bitwise-xor the second,
+        inx                     ; raise the stack,
+        sta zp_stack+0, x       ; write back result
+
+        rts
+
+        ; word & word:
+        ;-----------------------------------------------------------------------
+        ; if the first integer was a word, the second must also be a word
+        ;
+@word:  lda zp_type+2, x
+        bpl @err                ; byte/token/stack-underflow = error
+
+        lda zp_stack+0, x       ; read the first integer, lo-byte
+        eor zp_stack+2, x       ; bitwise-xor lo-bytes together
+        sta zp_stack+2, x       ; write back result, lo-byte
+        lda zp_stack+1, x       ; read the first integer, hi-byte
+        eor zp_stack+3, x       ; bitwise-xor the hi-bytes
+        sta zp_stack+3, x       ; write back result, hi-byte
+        inx                     ; raise the stack twice
+        inx                     ; to place one word at the top
+        
+        rts
+
+        ;-----------------------------------------------------------------------
+@err:   jmp err_type
