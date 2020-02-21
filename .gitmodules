@@ -1,0 +1,3 @@
+[submodule "src/bsod64"]
+	path = src/bsod64
+	url = https://github.com/Kroc/BSOD64.git
