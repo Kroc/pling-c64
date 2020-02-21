@@ -5,108 +5,78 @@
 ; c64_mem.wla : memory layout for C64
 ;===============================================================================
 
-; Pling! memory map:
-; (C64 disk version)
+; C64 memory map:
 ;
-;  $0 $0800    ?        $4000           $8000            $C000    $E000    $FFFF
-;  +--+--------+------------------------+--------------------+----+--------+
-;  |  | PLING! | USER CODE              | USER HEAP          | IO | DSKBUF |
-;  +--+--------+------------------------+--------------------+----+--------+
-;       ^        ^ compiled               ^ program heap            ^ disk
-;       runtime    pling code               (moveable)                buffer
-;
-.DEF    pl_screen       $0400   ; screen-RAM
-.DEF    pl_code         $0800   ; user-space starting address
-.DEF    pl_heap         $8000   ; user-heap starting address
-.DEF    pl_disk         $e000   ; disk-buffer space
+.MEMORYMAP
+        DEFAULTSLOT     2
+        SLOTSIZE        $0100
+        SLOT 0          $0000   "zero-page"
+        SLOT 1          $0100   "stack"
+        
+        ; main program RAM
+        ; ("ROM" in WLA-DX parlance)
+        ;
+        SLOTSIZE        $FDFA   ; $FFFA-$FFFF are 6502 interrupt vectors
+        SLOT 2          $0200   "main"
 
-;-------------------------------------------------------------------------------
-; if we want to make use of the built in functions of the KERNAL, we have
-; to pick our zero-page locations very, very carefully. finding enough
-; contiguous space for the stacks is the most difficult, so we do not
-; rely upon any auto-numbering to pick zero-page addresses for us
-;
-; a temporary address available for indirect addressing
-.DEF    zp_addr         $02
-; a temporary value available for conversions
-.DEF    zp_temp         $04
-.DEF    zp_temp1        $04
-.DEF    zp_temp2        $05
-; likewise, but for the output value
-.DEF    zp_word         $06
+        SLOTSIZE        $1000
+        SLOT 3          $C000   "hiram"
+        SLOT 4          $D000   "io"
+        SLOTSIZE        $2000
+        SLOT 5          $E000   "kernal"
+.ENDME
 
-; overflow status word
-.DEF    zp_overflow     $08
+.ROMBANKSIZE            $FDFA
+.ROMBANKS               1
 
-; address of the last defined term
-; (updated when new terms are added)
-.DEF    zp_last         $0a
+.RAMSECTION "ZP_00"     SLOT $00 ORGA $00 FORCE
+        ;-----------------------------------------------------------------------
+        ; CPU port: memory layout & Datasette
+        ;
+        ; memory address $00/$01 is hard-wired to the C64's 6510 CPU; the
+        ; "processor port", $01, controls the memory layout of the C64 as well
+        ; as the Datasette. the "data direction" register, $00, controls which
+        ; bits of the processor port can be written to, allowing you to mask
+        ; out writes to certain bits -- e.g. ignore writes to the Datasette
+        ; when changing memory layout
+        ;
+        CPU_MASK        BYTE    ; data direction register
+        CPU_CONTROL     BYTE    ; processor port (memory layout & Datasette)
+.ENDS
 
-; the address of the next free byte of memory in user-space.
-; this is where new terms are compiled
-.DEF    zp_here         $0c
+.RAMSECTION "ZP_91"     SLOT $00 ORGA $91 FORCE
+        ;-----------------------------------------------------------------------
+        ; a flag for key-state:
+        ; 127: stop, 223: C=, 239: SPACE, 251: CTRL, 255: no key pressed
+        ZP_KEY_FLAG     BYTE    ;=$91
+.ENDS
 
-; number base (2, 10, 16) used during number parsing
-.DEF    zp_int_base     $0e
-.DEF    zp_index        $0e
+.RAMSECTION "ZP_A0"     SLOT $00 ORGA $a0 FORCE
+        ;-----------------------------------------------------------------------
+        ; C64's "jiffy clock", updated every 60th/s, even on PAL
+        ;
+        ZP_JIFFY        DSB 3   ;=$A0
+.ENDS
 
-; current position in the input buffer
-; (used when parsing)
-.DEF    zp_input        $9b
+.RAMSECTION "ZP_C5"     SLOT $00 ORGA $c5 FORCE
+        ;-----------------------------------------------------------------------
+        ; matrix co-ordinate of last key press, $40 = none
+        ZP_KEY_MATRIX   BYTE    ;=$C5
+        ; number of keys in the keyboard buffer
+        ZP_KEY_COUNT    BYTE    ;=$C6
+        ; print reverse characters?
+        ; (used with `KERNAL_CHROUT`)
+        ZP_PRINT_RVRS   BYTE    ;=$C7
+.ENDS
 
-; currently attached channel object,
-; as used by channel I/O operations:
-;
-.DEF    zp_channel      $d9     ; contains address of the channel object 
-.DEF    zp_chan         $db     ; start of the channel variables:
-.DEF    zp_chan_base    $db     ; copy of the channel's base address
-.DEF    zp_chan_index   $dd     ; copy of the channel's index
-.DEF    zp_chan_len     $df     ; copy of the channel's length
-
-; these are the pre-assigned variables
-; for the built-in string channel:
-.DEF    zp_str_base     $e1
-.DEF    zp_str_index    $e3
-.DEF    zp_str_len      $e5     ; only 1 byte is used
-
-;-------------------------------------------------------------------------------
-; Pling's data stack works downwards; this direction was chosen specifically
-; so that the low byte of a word appears top-most on the stack, yet at the
-; same time the bytes are in little-Endian order, allowing for vectored jumps
-;
-;                    direction of stack <--- | ---> direction of RAM
-;     +--------------------------------------+
-;     |                              $34 $12 | < little-Endian words on stack
-;     +--------------------------------------+
-;     ^ bottom of stack         top of stack ^  
-;
-; Pling's stack index is pre-inc/decrement, and not post-inc/decrement like
-; the C64's hardware stack. this means that Pling's stack index points to
-; the *currently active* cell, unlike the C64 which moves the stack index
-; to an *unused* cell
-;
-; number of bytes in the data stack: note that this also implies
-; the same number of bytes for the data-type stack to match
-.DEF    PL_STACK_SIZE   64
-.DEF    zp_stack        $0f                                         ;=$0F..$4F
-.DEF    zp_type_und     $4f
-.DEF    zp_type         $50                                         ;=$50..$8F
-.DEF    zp_type_ovr     $90
-
-; WARNING: CANNOT USE $91!!!
-
-;-------------------------------------------------------------------------------
-; current delimiter between terms
-.DEF    pl_delimiter    $033a
-
-; string buffer for parsing term names:
-; (the first byte is the length)
-.DEF    PL_TERM_LEN     31
-.DEF    pl_term_len     $033b
-.DEF    pl_term_name    $033c
-
-; active device number (system-dependent);
-; this is the same ZP byte used by the KERNAL
-; to store the last-used device number
-;
-.DEF    zp_device       ZP_KERNAL_DEV                               ;=$BA
+.RAMSECTION "ZP_CB"     SLOT $00 ORGA $cb FORCE
+        ;-----------------------------------------------------------------------
+        ; index into key-decoding table for currently pressed key, $40 = none
+        ZP_KEY_INDEX    BYTE    ;=$CB
+        ; flash cursor? $00 = yes, !$00 = no
+        ZP_CRSR_BLINK   BYTE    ;=$CC
+        ; counter for cursor flashing
+        ZP_CRSR_COUNT   BYTE    ;=$CD
+        ; character at cursor position
+        ZP_CRSR_CHAR    BYTE    ;=$CE
+.ENDS

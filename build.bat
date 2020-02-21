@@ -29,7 +29,7 @@ REM # build a 1541 floppy disk image
 %C1541% ^
     -format "pling!,00" d64 "build/pling-c64.d64" ^
     -write  "build/pling_c64.prg" "pling!" ^
-    -write  "test.!" "test"
+    -write  "autoexec.!" "!autoexec"
 
 IF ERRORLEVEL 1 EXIT /B 1
 

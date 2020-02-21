@@ -21,7 +21,7 @@ term_disk_chain:
         jsr pop_byte            ; get the string-length
         sta zp_temp             ; (put aside)
 
-        ; backup Pling's stack pointer
+        ; backup Pling's stack index
         .phx
 
         ; prepare for loading

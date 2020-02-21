@@ -4,7 +4,10 @@
 ;
 ; term_mudiv.wla : math multiply & divide routines
 ;===============================================================================
-; multipling and dividing on 8-bit systems is a complicated process
+; label:                    stack:              term-name:
+;-------------------------------------------------------------------------------
+; term_multiply           i i -- w              "*"
+;
 
 ; * ( i i -- w )
 ;===============================================================================
@@ -19,6 +22,7 @@
 ;
 ; out:  word    result, as a word
 ;
+; TODO: 8-bit optimisations
 ;-------------------------------------------------------------------------------
         .term   "*"
 
@@ -46,9 +50,8 @@ term_multiply:
         sta zp_word+HI
 
         ; clear the overflow word:
-        ; NB: A=$00 is required below, do not use `stz` on 65C02!
-        lda # $00
-        sta zp_overflow+LO
+        lda # $00               ; NB: A=$00 is required below,
+        sta zp_overflow+LO      ; do not use `stz` on 65C02!
         sta zp_overflow+HI
 
         ; set binary count to 16 digits

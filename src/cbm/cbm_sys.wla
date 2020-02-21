@@ -119,7 +119,7 @@ sys_chr2asc:
 sys_input:
 ;===============================================================================
 ; wait for the user to type a line of text:
-; the input is stored on the system's input line-buffer ($0200)
+; the input is stored on the system's input line-buffer
 ;
 ;-------------------------------------------------------------------------------
         ldy # 0
@@ -142,10 +142,10 @@ sys_input:
 .ELSE   ;6502
         lda # 0
         sta input_buffer, y
-.ENDIF
+.ENDIF  
         lda #< input_buffer
         ldy #> input_buffer
         sta zp_input+LO
         sty zp_input+HI
-
+        
         rts

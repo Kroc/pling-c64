@@ -14,44 +14,113 @@
 .DEF    SCREEN_COLS             40
 .DEF    SCREEN_ROWS             25
 
-; C64 memory map:
-;
-.MEMORYMAP
-        DEFAULTSLOT     2
-        ; zero-page:
-        ; $00/$01 are not available on the C64,
-        ; as these are the CPU port
-        SLOTSIZE        $00FE
-        SLOT 0          $0002   "zero-page"
-        ; 6502 hardware stack:
-        SLOTSIZE        $0100
-        SLOT 1          $0100   "stack"
-        ; main program RAM ("ROM")
-        SLOTSIZE        $FDFA   ; $FFFA-$FFFF are 6502 interrupt vectors
-        SLOT 2          $0200   "main"
-
-        SLOTSIZE        $1000
-        SLOT 3          $C000   "hiram"
-        SLOT 4          $D000   "i/o"
-        SLOTSIZE        $2000
-        SLOT 5          $E000   "kernal-space"
-.ENDME
-
-.ROMBANKSIZE            $FDFA
-.ROMBANKS               1
-
 .INC    "cbm/c64/c64_cia.wla"
 .INC    "cbm/c64/c64_vic.wla"
 .INC    "cbm/c64/c64_kernal.wla"
 
-
-; CPU port: memory layout & Datasette
 ;===============================================================================
-; memory address $00/$01 is hard-wired to the C64's 6510 CPU; the "processor
-; port", $01, controls the memory layout of the C64 as well as the Datasette.
-; the "data direction" register, $00, controls which bits of the processor port
-; can be written to, allowing you to mask out writes to certain bits -- e.g.
-; ignore writes to the Datasette when changing memory layout
+; Pling! memory map:
+; (C64 disk version)
+;
+;  $0 $0800    ?        $4000           $8000            $C000    $E000    $FFFF
+;  +--+--------+------------------------+--------------------+----+--------+
+;  |  | PLING! | USER CODE              | USER HEAP          | IO | DSKBUF |
+;  +--+--------+------------------------+--------------------+----+--------+
+;       ^        ^ compiled               ^ program heap            ^ disk
+;       runtime    pling code               (moveable)                buffer
+;
+.DEF    pl_screen       $0400   ; screen-RAM
+.DEF    pl_code         $0800   ; user-space starting address
+.DEF    pl_heap         $8000   ; user-heap starting address
+.DEF    pl_disk         $e000   ; disk-buffer space
 
-.DEF    CPU_MASK        $00     ; data direction register
-.DEF    CPU_CONTROL     $01     ; processor port (memory layout and Datasette)
+;-------------------------------------------------------------------------------
+; if we want to make use of the built in functions of the KERNAL, we have
+; to pick our zero-page locations very, very carefully. finding enough
+; contiguous space for the stacks is the most difficult, so we do not
+; rely upon any auto-numbering to pick zero-page addresses for us
+;
+; a temporary address available for indirect addressing
+.DEF    zp_addr         $02
+; a temporary value available for conversions
+.DEF    zp_temp         $04
+.DEF    zp_temp1        $04
+.DEF    zp_temp2        $05
+; likewise, but for the output value
+.DEF    zp_word         $06
+
+; overflow status word
+.DEF    zp_overflow     $08
+
+; address of the last defined term
+; (updated when new terms are added)
+.DEF    zp_last         $0a
+
+; the address of the next free byte of memory in user-space.
+; this is where new terms are compiled
+.DEF    zp_here         $0c
+
+; currently attached channel object,
+; as used by channel I/O operations:
+;
+.DEF    zp_channel      $d9     ; contains address of the channel object
+ 
+.DEF    zp_chan         $db     ; start of the channel variables:
+.DEF    zp_chan_base    $db     ; copy of the channel's base address
+.DEF    zp_chan_index   $dd     ; copy of the channel's index
+.DEF    zp_chan_len     $df     ; copy of the channel's length
+
+.DEF    zp_input        $e1
+
+; number base (2, 10, 16) used during number parsing
+.DEF    zp_int_base     $e3
+.DEF    zp_index        $e4
+
+.DEF    zp_sign         $e5     ; integer sign used during parsing
+                                ; $00 = +ve, $01 = -ve (to allow shifting in)
+
+;-------------------------------------------------------------------------------
+; Pling's data stack works downwards; this direction was chosen specifically
+; so that the low byte of a word appears top-most on the stack, yet at the
+; same time the bytes are in little-Endian order, allowing for vectored jumps
+;
+;                    direction of stack <--- | ---> direction of RAM
+;     +--------------------------------------+
+;     |                              $34 $12 | < little-Endian words on stack
+;     +--------------------------------------+
+;     ^ bottom of stack         top of stack ^  
+;
+; Pling's stack index is pre-inc/decrement, and not post-inc/decrement like
+; the C64's hardware stack. this means that Pling's stack index points to
+; the *currently active* cell, unlike the C64 which moves the stack index
+; to an *unused* cell
+;
+; number of bytes in the data stack: note that this also implies
+; the same number of bytes for the data-type stack to match
+.DEF    PL_STACK_SIZE   64
+.DEF    zp_stack        $0f                                         ;=$0F..$4F
+.DEF    zp_type_und     $4f
+.DEF    zp_type         $50                                         ;=$50..$8F
+.DEF    zp_type_ovr     $90
+
+; WARNING: CANNOT USE $91!!!
+
+;-------------------------------------------------------------------------------
+; current delimiter between terms
+.DEF    pl_delimiter    $033a
+
+; string buffer for parsing term names:
+; (the first byte is the length)
+.DEF    PL_TERM_LEN     31
+.DEF    pl_term_len     $033b
+.DEF    pl_term_name    $033c
+
+; number of digits read when parsing numbers;
+; used to determine byte/word size from binary/hexadecimal numbers
+.DEF    pl_digits       $0339
+
+; active device number (system-dependent);
+; this is the same ZP byte used by the KERNAL
+; to store the last-used device number
+;
+.DEF    zp_device       ZP_KERNAL_DEV                               ;=$BA

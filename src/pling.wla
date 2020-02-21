@@ -112,6 +112,7 @@ __\.\@: .WORD   prev_term
 .INC    "term_disk.wla"         ; disk I/O
 
 .INC    "term_print.wla"        ; printing text/data to screen
+.INC    "term_assemble.wla"     ; assembling/compiling
 .INC    "term_interpret.wla"    ; parser, interpreter & compiler
 
 

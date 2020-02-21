@@ -11,7 +11,7 @@
 
 sys_init:
 ;===============================================================================
-        ldx # $ff               ; throw away the current stack,
+        ldx # $ff               ; throw away the current return stack,
         txs                     ; we won't be returning to BASIC
 
         ; begin the system-independent

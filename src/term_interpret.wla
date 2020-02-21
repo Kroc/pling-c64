@@ -26,8 +26,8 @@
 
 term_line_input:
         ;-----------------------------------------------------------------------
-        ; defer to the system's input routine as these
-        ; vary wildly from system to system
+        ; let the user input a line of code,
+        ; and don't return until they press return!
         ;
         jmp sys_input
 
@@ -334,17 +334,16 @@ term_parse_number:
         ; make room on top of the stack for our working number
         jsr term_00
 
-        ; begin with the first character
-        ldy # 0
+        ldy # 0                 ; begin with the first character
+        sty pl_digits           ; reset digit-count
 
         ; is the number negative?
         lda pl_term_name        ; check first character
         cmp # '-'               ; is it minus?
-        bne +                   ; no, skip over
+        bne +                   ; no, continue with +ve number
         iny                     ; skip over the minus sign
         
-        ; put aside the sign-bit for later
-+       .phy
++       sty zp_sign             ; put aside the sign-bit for later
 
         ; check for `$` (hexadecimal) or `%` (binary) sigil:
         lda pl_term_name, y
@@ -354,25 +353,11 @@ term_parse_number:
         beq @bin
 
         ; parse decimal string:
-        lda # 10                ; set base 10
+        ;-----------------------------------------------------------------------
+@dec:   lda # 16
         sta zp_int_base
         bne @loop               ; (always branches)
-
-        ; optimisation for a single character:
-        ;-----------------------------------------------------------------------
-        ; a single character can only be a valid number if it's 0-9
-        ;
-@single lda pl_term_name
-        sec
-        sbc # '0'               ; ASCI "0" or above?
-        cmp # 10                ; no higher than 9?
-        bcs +
-
-        ; A is now the number
-        jmp push_byte
-
-        ; ASCII code is not a number!
-+       jmp err_parse
+        ;;jmp parse_decimal
 
         ;-----------------------------------------------------------------------
 @hex:   lda # 16
@@ -384,6 +369,19 @@ term_parse_number:
         sta zp_int_base
         iny                     ; skip over the "%" sigil
         bne @loop               ; (always branches)
+
+        ; optimisation for a single character:
+        ;-----------------------------------------------------------------------
+        ; a single character can only be a valid number if it's 0-9
+        ;
+@single lda pl_term_name        ; read the first character
+        sec                     ; subtract:
+        sbc # '0'               ; ASCI "0" or above?
+        cmp # 10                ; no higher than 9?
+        bcs @err
+
+        ; A is now the number
+        jmp push_byte
 
         ;=======================================================================
         ; one digit converted! add to our running total:
@@ -424,8 +422,8 @@ term_parse_number:
 
         ; check for ASCII "0"-"9"
         sec
-        sbc # '0'       ; ASCI "0" or above?
-        cmp # 10        ; no higher than 9?
+        sbc # '0'               ; ASCI "0" or above?
+        cmp # 10                ; no higher than 9?
         bcc +
 
         ; there are 7 ASCII characters between "9" & "A", so if we subtract 7
@@ -443,15 +441,83 @@ term_parse_number:
         ; fall through if base was incorrect
         ; for the size of the digit
         ;
-        pla                     ; eject the negative-bit to balance the stack
 @err:   jmp err_parse           ; raise an error
 
         ;-----------------------------------------------------------------------
-@done:  pla                     ; retrieve the negative-bit
+@done:  lda zp_sign             ; retrieve the negative-bit
         bne @neg                ; was it a negative number?
         rts
         ;-----------------------------------------------------------------------
 @neg:   jmp term_neg            ; flip the number to make it negative
+
+
+;;parse_decimal:
+;;        ;=====================================================================
+;;        ; are there more digits to process?
+;;        ;
+;;-       lda pl_term_name, y     ; get an ASCII character
+;;        beq @done               ; null terminator? finish up
+;;        pha                     ; put aside the ASCII digit momentarily
+;;        iny                     ; move to next character
+;;
+;;        ; multiply result by 10
+;;        ; <http://nparker.llx.com/a2/mult.html>
+;;        ;---------------------------------------------------------------------
+;;        lda zp_stack+0, x
+;;        sta zp_temp+LO          ; start with RESULT = NUM
+;;        lda zp_stack+1, x
+;;        sta zp_temp+HI
+;;
+;;        asl zp_stack+0, x
+;;        rol zp_stack+1, x       ; RESULT = 2*NUM
+;;        asl zp_stack+0, x
+;;        rol zp_stack+1, x       ; RESULT = 4*NUM
+;;        clc
+;;        lda zp_temp+LO
+;;        adc zp_stack+0, x
+;;        sta zp_stack+0, x
+;;        lda zp_temp+HI
+;;        adc zp_stack+1, x
+;;        sta zp_stack+1, x       ; RESULT = 5*NUM
+;;        
+;;        asl zp_stack+0, x
+;;        rol zp_stack+1, x       ; RESULT = 10*NUM
+;;
+;;        ; check for ASCII "0"-"9"
+;;        pla                     ; retrieve ASCII digit
+;;        sec                     ; subtract:
+;;        sbc # '0'               ; ASCI "0" or above?
+;;        cmp # 10                ; no higher than 9?
+;;        bcs @err
+;;
+;;        ; add to the running total:
+;;        adc zp_stack+0, x       ; add the new decimal to current total
+;;        sta zp_stack+0, x       ; write back result
+;;        bcc -
+;;        inc zp_stack+1, x       ; ripple the add
+;;        bne -
+;;
+;;        kil                     ; overflow?
+;;
+;;@done   lda zp_sign             ; retrieve the negative-bit
+;;        bne @neg                ; was it a negative number?
+;;        rts
+;;        ;---------------------------------------------------------------------
+;;@neg:   jmp term_neg            ; flip the number to make it negative
+;;        ;---------------------------------------------------------------------
+;;@err:   jmp err_parse           ; raise an error
+;;
+;;
+;;parse_binary:
+;;        ;=====================================================================
+;;        ; skip over the "%" sigil
+;;-       iny
+;;        beq @done
+;;
+;;        kil
+;;
+;;@done   rts
+;;@err:   jmp err_parse           ; raise an error
 
 
 ; : ( -- )
@@ -472,49 +538,38 @@ term_define:
 
         ; create term header:
         ;-----------------------------------------------------------------------
-        ; `here` is a variable that points to the next free byte of memory
-        ; in user-space, where we define and assemble new terms. each term
-        ; begins with a backlink -- the adress of the previous term
-        ;
-        lda zp_last+LO          ; get address of last term, lo-byte
-        sta [zp_here], y        ; write to the header of the new term
-        iny
-        lda zp_last+HI          ; get address of last term, hi-byte
-        sta [zp_here], y        ; write to the header of the new term
-        iny
+        ; each term begins with a backlink
+        ; -- the address of the previous term:
+        
+        ; push the address of the last term defined on the stack
+        jsr term_last_term
 
         ; set the new term as the "latest" term
+        ; (before we advance the user-space cursor)
+        ; TODO: create `!term` to do this
         lda zp_here+LO
         sta zp_last+LO
         lda zp_here+HI
         sta zp_last+HI
-        
+
+        ; write the address of the last term to the new term header
+        jsr term_write_here
+
         ; after the backlink, follows the term's name:
         ; the first byte is the string-length
         lda pl_term_len
-        sta [zp_here], y
+        jsr asm
         
         ; copy the term-name buffer into the new term's header:
-        ; note that since Y will be 3, we have to negatively offset the
-        ; buffer we're reading from to make source/destination align
--       iny
-        lda pl_term_name-3, y
-        sta [zp_here], y
-        ; note that we must include the null-terminator in the term-header,
-        ; which is why we check for null *after* copying the byte
+        ; TODO: cleaner solution for this -- a generic 'copy-string-to-here'?
+        ldy # 0
+-       lda pl_term_name, y
+        beq +
+        jsr asm
+        iny
         bne -
-
-        ; the term has been defined, and the term's code will be assembled
-        ; from this point forward -- to avoid running into undefined memory
-        ; when executing a term before any code has been added, we place an
-        ; RTS instruction at the beginning
-        ;
-        lda # CPU_RTS
-        sta [zp_here], y
-
-        ; move the `here` address forward
-        ; to this new starting position
-        jsr inc_here_y
+        ; note that we must include the null-terminator in the term-header,
++       jsr asm
 
         ; compile term:
         ;-----------------------------------------------------------------------
@@ -530,13 +585,8 @@ term_define:
 
         ; assemble a JSR at `here`
         ;
-        ldy # 0                 ; `here` is already at the assembly point
-        jsr asm_jsr
+        kil
 
-        ; move the `here` address forward
-        ; to this new starting position
-        jsr inc_here_y
-        
         ;-----------------------------------------------------------------------
         ; TODO: enable quote/compile mode!
 @done:  rts
@@ -546,10 +596,7 @@ term_define:
         
         ; the number having been parsed,
         ; assemble a `push_word` into user-space
-        jsr asm_push_word
-        ; move the `here` address forward
-        ; to this new starting position
-        jsr inc_here_y
+        jsr term_push_here
 
         rts
 
@@ -570,4 +617,5 @@ term_define:
 term_define_end:
         ;-----------------------------------------------------------------------
         ; TODO: end quote/compile mode!
-        rts
+        ;
+        jmp asm_rts

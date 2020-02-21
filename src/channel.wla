@@ -14,7 +14,7 @@
 ; * a base address (for example, strings in RAM, rather than disk I/O)
 ; * an index (where the read/write cursor is in the channel)
 ; * the length of the channel's data (if known)
-; * a set of terms for reading from or writing to the channel
+;
 ;
 channel_reserve:
 ;===============================================================================
@@ -62,6 +62,9 @@ channel_attach:
 ; out   A, Y    (clobbered)
 ;       X       (preserved)
 ;
+; TODO: we want to optimise attaching to the same channel
+; TODO: detach current channel, before attaching the other,
+;       need to be able to identify a 'null' channel
 ;-------------------------------------------------------------------------------
         ; remember the channel's object address; this is so we know where
         ; to copy the variables back to when we detach from the channel

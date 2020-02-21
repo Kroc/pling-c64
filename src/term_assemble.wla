@@ -1,0 +1,85 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; term_assembe.wla : Pling-accessible terms for compiling/assembling
+;===============================================================================
+; label:                    stack:              term-name:
+;-------------------------------------------------------------------------------
+; >here                     i --                ">here"
+; push>here                 i --                "push>here"
+;
+
+; >here ( i -- )
+;===============================================================================
+; writes the integer atop the stack to the current position in user-space:
+;
+; in:   int     integer, byte or word, to be written to user-space
+;
+;-------------------------------------------------------------------------------
+        .term   ">here"
+
+term_write_here:
+        ;-----------------------------------------------------------------------
+        jsr pop_int             ; pop integer atop the stack, error for tokens
+        bcc @byte               ; c=0: byte, c=1: word
+
+        ;-----------------------------------------------------------------------
+        ; write the word to the current cursor position:
+        ;
+@word:  jsr asm                 ; write the lo-byte
+        tya                     ; retreive the hi-byte
+
+        ;-----------------------------------------------------------------------
+        ; write the byte to the current cursor position:
+        ;
+@byte:  jmp asm
+
+
+; push>here ( i -- )
+;===============================================================================
+; assembles a push-to-stack of the integer currently on the stack, that is,
+; assembles code to user-space to push an integer to the stack, the value
+; of which is taken from the current stack
+;
+;-------------------------------------------------------------------------------
+        .term   "push>here"
+
+term_push_here:
+        ;-----------------------------------------------------------------------
+        jsr pop_int             ; pop integer atop the stack, error for tokens
+        bcc @byte               ; c=0: byte, c=1: word
+
+        ;-----------------------------------------------------------------------
+@word:  pha                     ; put aside integer lo-byte
+        
+        lda # CPU_LDA           ; assemble `LDA # $nn`
+        jsr asm                 ; write the opcode
+        pla                     ; retrieve the integer lo-byte
+        jsr asm                 ; write the parameter byte
+        
+        lda # CPU_LDY           ; assemble `LDY # $nn`
+        jsr asm                 ; write the opcode
+        tya                     ; retrieve the integer hi-byte
+        jsr asm                 ; write the parameter byte
+
+        ; assemble `JSR push_word`
+        lda #< push_word
+        ldy #> push_word
+        jmp asm_jsr
+
+        ;-----------------------------------------------------------------------
+@byte:  pha                     ; put aside integer
+
+        lda # CPU_LDA           ; assemble `LDA # $nn`
+        jsr asm                 ; write the opcode
+        pla                     ; retrieve the integer
+        jsr asm                 ; write the parameter byte
+        
+        ; assemble `JSR push_byte`
+        lda #< push_byte
+        ldy #> push_byte
+        jmp asm_jsr
+
+        ;-----------------------------------------------------------------------
+@err:   jmp err_type
