@@ -1,0 +1,34 @@
+; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; cbm_console.wla : CBM-specific console/UI handling
+;===============================================================================
+
+sys_console_init:
+;===============================================================================
+; system-specific console initialisation:
+; essentially the UI setup
+;
+;-------------------------------------------------------------------------------
+        lda # VIC_BLACK
+        sta VIC_BORDER
+        sta VIC_BACKGROUND
+
+        jsr print_this
+            .BYTE   PET_CASE_LO, PET_CLEAR, PET_YELLOW, PET_RETURN
+            .BYTE   ">!< Pling! C64 v0.0", PET_RETURN
+            .BYTE   "    Kroc Camen <github.com/Kroc/pling>", PET_RETURN
+            .BYTE   "    built: ", WLA_TIME, PET_WHITE, PET_RETURN
+            .BYTE   NUL
+
+.IFDEF  SYSTEM_C64
+        ; TODO: install BSOD64 hooks
+        jsr print_this
+            .BYTE   PET_YELLOW, PET_RETURN
+            .BYTE   "    BSOD64: <github.com/Kroc/BSOD64>", PET_RETURN
+            .BYTE   "    Press RESTORE to break/debug"
+            .BYTE   PET_WHITE, PET_RETURN
+            .BYTE   NUL
+.ENDIF
+        rts

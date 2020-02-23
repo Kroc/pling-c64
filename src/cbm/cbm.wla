@@ -18,3 +18,4 @@
 .INC    "cbm/cbm_init.wla"      ; system-specific bootstrap/initialisation
 .INC    "cbm/cbm_sys.wla"       ; Pling <-> system interface
 .INC    "cbm/cbm_err.wla"       ; system-specific error handling and output
+.INC    "cbm/cbm_console.wla"   ; system-specific console / UI

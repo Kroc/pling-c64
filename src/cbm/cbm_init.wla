@@ -14,6 +14,42 @@ sys_init:
         ldx # $ff               ; throw away the current return stack,
         txs                     ; we won't be returning to BASIC
 
+        ; for C64-only, we can use BSOD64 to do some debugging
+        ;
+.IFDEF  SYSTEM_C64
+        ;///////////////////////////////////////////////////////////////////////
+        ; prepare for loading
+        ; TODO: use a variable for current dev#
+        ;
+        ldx ZP_KERNAL_DEV       ; last-used KERNAL device number
+        bne +                   ; not 0? good
+        ldx # DEV_DRV8          ; default to drive 8
++       ldy # $01               ; use PRG-provided load-address
+        tya                     ; logical file number
+        jsr KERNAL_SETLFS
+
+        ldx #< @bsod64
+        ldy #> @bsod64
+        lda # 6                 ; A is string-length
+        jsr KERNAL_SETNAM       ; set KERNAL file name
+
+        lda # $00               ; load, not verify
+        jsr KERNAL_LOAD
+
+        bcc +
+
+-       inc VIC_BORDER
+        jmp -
+
++       ; begin the system-independent
+        ; Pling! initialisation
+        jmp pling_init
+
+@bsod64:
+        .ASC    "bsod64", 0
+
+.ELSE   ;///////////////////////////////////////////////////////////////////////
         ; begin the system-independent
         ; Pling! initialisation
         jmp pling_init
+.ENDIF
