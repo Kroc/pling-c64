@@ -11,7 +11,6 @@ CALL "%BSOD64%\build.bat"
 ECHO:
 
 SET WLA_6510="bin\wla-dx\wla-6510.exe"   -i -x -I "src"
-SET WLA_65C02="bin\wla-dx\wla-65c02.exe" -i -x -I "src"
 SET WLA_LINK="bin\wla-dx\wlalink.exe"    -i -A -S
 
 REM # combine the CPU assembler and system symbols for a C64
@@ -24,13 +23,13 @@ SET VICE="bin\vice\x64.exe"
 ECHO Pling! C64:
 ECHO ========================================
 %WLA_C64% -v ^
-    -o "build\pling_c64.o" ^
+    -o "build\pling.o" ^
        "pling.wla"
 
 IF ERRORLEVEL 1 EXIT /B 1
 
 %WLA_LINK% -v -t CBMPRG ^
-    -b "link_c64.ini" ^
+    -b "link.ini" ^
        "build\pling_c64.prg"
 
 IF ERRORLEVEL 1 EXIT /B 1
@@ -45,4 +44,3 @@ REM # build a 1541 floppy disk image
 IF ERRORLEVEL 1 EXIT /B 1
 
 %VICE% --autostart "%~dp0build\pling-c64.d64"
-REM %X16EMU% -debug -prg "%~dp0build\pling-x16.prg" -run
