@@ -1,0 +1,91 @@
+; Pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; cbm_mem.wla : shared Commodore (C64/128/16/+4/PET*) memory layout
+;===============================================================================
+; if we want to make use of the built in functions of the KERNAL, we have
+; to pick our zero-page locations very, very carefully. finding enough
+; contiguous space for the stacks is the most difficult, so we do not
+; rely upon any auto-numbering to pick zero-page addresses for us
+;
+.RAMSECTION "PL_ZP1"    SLOT $00
+        ;-----------------------------------------------------------------------
+        ; a temporary address available for indirect addressing
+        zp_addr         WORD
+        ; a temporary value available for conversions
+        zp_temp        .WORD
+        zp_temp1        DB
+        zp_temp2        DB
+        ; likewise, but for the output value
+        zp_word         WORD
+.ENDS
+
+.RAMSECTION "PL_ZP2"    SLOT $00
+        ;-----------------------------------------------------------------------
+        ; address of the last defined term
+        ; (updated when new terms are added)
+        zp_last         WORD
+        ; address of the next free byte of memory in user-space.
+        ; this is where new terms are compiled
+        zp_here         WORD
+        
+        zp_input        WORD
+.ENDS
+
+.RAMSECTION "PL_ZP3"    SLOT $00
+        ;-----------------------------------------------------------------------
+        ; number base (2, 10, 16) used during number parsing
+        zp_int_base    .BYTE
+        zp_index        BYTE
+        ; integer sign used during parsing:
+        ; $00 = +ve, $01 = -ve (to allow shifting in)
+        zp_sign         BYTE
+        ; overflow status word
+        zp_overflow     WORD
+.ENDS
+
+; currently attached channel object,
+; as used by channel I/O operations:
+;
+.RAMSECTION "PL_ZP4"    SLOT $00
+        ;-----------------------------------------------------------------------
+        zp_channel      WORD    ; contains address of the channel object
+ 
+        zp_chan        .WORD    ; start of the channel variables:
+        zp_chan_base    WORD    ; copy of the channel's base address
+        zp_chan_index   WORD    ; copy of the channel's index
+        zp_chan_len     WORD    ; copy of the channel's length
+.ENDS
+
+;-------------------------------------------------------------------------------
+; Pling's data stack works downwards; this direction was chosen specifically
+; so that the low byte of a word appears top-most on the stack, yet at the
+; same time the bytes are in little-Endian order, allowing for vectored jumps
+;
+;                    direction of stack <--- | ---> direction of RAM
+;     +--------------------------------------+
+;     |                              $34 $12 | < little-Endian words on stack
+;     +--------------------------------------+
+;     ^ bottom of stack         top of stack ^  
+;
+; Pling's stack index is pre-inc/decrement, and not post-inc/decrement like
+; the C64's hardware stack. this means that Pling's stack index points to
+; the *currently active* cell, unlike the C64 which moves the stack index
+; to an *unused* cell
+;
+; number of bytes in the data stack: note that this also implies
+; the same number of bytes for the data-type stack to match
+.DEF    PL_STACK_SIZE   64
+
+.RAMSECTION "PL_STACK"  SLOT $00
+        ;-----------------------------------------------------------------------
+        zp_stack        DSB PL_STACK_SIZE
+.ENDS
+
+.RAMSECTION "PL_TYPE"   SLOT $00
+        ;-----------------------------------------------------------------------
+        zp_type_und     BYTE
+        zp_type         DSB PL_STACK_SIZE
+        zp_type_ovr     BYTE
+.ENDS

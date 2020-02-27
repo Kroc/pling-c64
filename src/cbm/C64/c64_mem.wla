@@ -30,6 +30,7 @@
 .ROMBANKSIZE            $FDFA
 .ROMBANKS               1
 
+
 .RAMSECTION "ZP_00"     SLOT $00 ORGA $00 FORCE
         ;-----------------------------------------------------------------------
         ; CPU port: memory layout & Datasette
@@ -45,25 +46,81 @@
         CPU_CONTROL     BYTE    ; processor port (memory layout & Datasette)
 .ENDS
 
-.RAMSECTION "ZP_91"     SLOT $00 ORGA $91 FORCE
+.RAMSECTION "ZP_90"     SLOT $00 ORGA $90 FORCE
         ;-----------------------------------------------------------------------
+        ; KERNAL I/O status, bit 6 = EOF
+        ZP_IO_STATUS    BYTE    ;=$90
         ; a flag for key-state:
-        ;
-        ;    127: stop, 223: C=, 239: SPACE
-        ;    251: CTRL, 255: no key pressed
-        ;
+        ; 127: stop, 223: C=, 239: SPACE
+        ; 251: CTRL, 255: no key pressed
         ZP_KEY_FLAG     BYTE    ;=$91
+.ENDS
+
+.RAMSECTION "ZP_93"     SLOT $00 ORGA $93 FORCE
+        ;-----------------------------------------------------------------------
+        ; 0 = LOAD, 1 = VERIFY
+        ZP_KERNAL_LOAD  BYTE    ;=93
+        
+        ; flag for indicating a byte is ready to go out the serial bus
+        .               BYTE    ;=$94
+        ; serial bus output register
+        ZP_SERIAL_OUT   BYTE    ;=$95
+.ENDS
+
+.RAMSECTION "ZP_97"     SLOT $00 ORGA $97 FORCE
+        ;-----------------------------------------------------------------------
+        ; temporary storage for X-register,
+        ; used in `KERNAL_CHRIN`
+        .               BYTE    ;=$97
+        ; "number of open I/O file; pointer to top of file table"
+        .               BYTE    ;=$98
+        ; current input device, defaults to $00 = keyboard
+        ZP_DEV_IN       BYTE    ;=$99
+        ; current output device, defaults to $03 = screen
+        ZP_DEV_OUT      BYTE    ;=$9A
+.ENDS
+
+.RAMSECTION "ZP_9D"     SLOT $00 ORGA $9d FORCE
+        ;-----------------------------------------------------------------------
+        ;KERNAL message display control:
+        ; bit 6 = error messages, bit 7 = control message 
+        .               BYTE
 .ENDS
 
 .RAMSECTION "ZP_A0"     SLOT $00 ORGA $a0 FORCE
         ;-----------------------------------------------------------------------
         ; C64's "jiffy clock", updated every 60th/s, even on PAL
-        ;
-        ZP_JIFFY        DSB 3   ;=$A0
+        ZP_JIFFY        DSB 3   ;=$A0/1/2
+        ; bit-counter for serial I/O
+        .               WORD    ;=$A3
 .ENDS
 
-.RAMSECTION "ZP_C5"     SLOT $00 ORGA $c5 FORCE
+.RAMSECTION "ZP_AE"     SLOT $00 ORGA $ae FORCE
         ;-----------------------------------------------------------------------
+        ; pointer to the last byte after a LOAD/VERIFY/SAVE operation
+        ZP_LOAD_LAST    WORD    ;=$AE
+.ENDS
+
+.RAMSECTION "ZP_B7"     SLOT $00 ORGA $b7 FORCE
+        ;-----------------------------------------------------------------------
+        ; length of current filename
+        ZP_FILE_NAMELEN BYTE    ;=$B7
+        ; current logical file number
+        ZP_FILE_NUM     BYTE    ;=$B8
+        ; current logical secondary address
+        ZP_FILE_ADR     BYTE    ;=$B9
+        ; current device number
+        ZP_DEV_NUM      BYTE    ;=$BA
+        ; pointer to current filename
+        ZP_FILENAME     WORD    ;=$BB
+.ENDS
+
+.RAMSECTION "ZP_C1"     SLOT $00 ORGA $c1 FORCE
+        ;-----------------------------------------------------------------------
+        ; start address for LOAD / SAVE
+        .               WORD    ;=$C1
+        ; end address for LOAD / SAVE
+        .               WORD    ;=$C3
         ; matrix co-ordinate of last key press, $40 = none
         ZP_KEY_MATRIX   BYTE    ;=$C5
         ; number of keys in the keyboard buffer
