@@ -1,4 +1,4 @@
-; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; Pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
@@ -8,6 +8,7 @@
 ; C64 memory map:
 ;
 .MEMORYMAP
+        ;-----------------------------------------------------------------------
         DEFAULTSLOT     2
         SLOTSIZE        $0100
         SLOT 0          $0000   "zero-page"
@@ -47,7 +48,10 @@
 .RAMSECTION "ZP_91"     SLOT $00 ORGA $91 FORCE
         ;-----------------------------------------------------------------------
         ; a flag for key-state:
-        ; 127: stop, 223: C=, 239: SPACE, 251: CTRL, 255: no key pressed
+        ;
+        ;    127: stop, 223: C=, 239: SPACE
+        ;    251: CTRL, 255: no key pressed
+        ;
         ZP_KEY_FLAG     BYTE    ;=$91
 .ENDS
 
@@ -79,4 +83,30 @@
         ZP_CRSR_COUNT   BYTE    ;=$CD
         ; character at cursor position
         ZP_CRSR_CHAR    BYTE    ;=$CE
+        ; current cursor state, $00 = visible, !$00 = invisible
+        ZP_CRSR_STATE   BYTE    ;=$CF
+        ; device number for getting / putting characters;
+        ; read/written by `KERNAL_CHRIN` & `KERNAL_CHROUT`
+        ; $03 = screen, $00 = other
+        ZP_DEV_CHAR     BYTE    ;=$D0
+
+        .               BYTE    ;=$D1
+        .               BYTE    ;=$D2
+        .               BYTE    ;=$D3
+        .               BYTE    ;=$D4
+        .               BYTE    ;=$D5
+        .               BYTE    ;=$D6
+        
+        ; last character printed
+        ZP_LAST_CHAR    BYTE    ;=$D7
+
+        .               BYTE    ;$=D8
+.ENDS
+
+.RAMSECTION "ZP_F3"     SLOT $00 ORGA $f3 FORCE
+        ;-----------------------------------------------------------------------
+        .               BYTE    ;=$F3
+        .               BYTE    ;=$F4
+        .               BYTE    ;=$F5
+        .               BYTE    ;=$F6
 .ENDS

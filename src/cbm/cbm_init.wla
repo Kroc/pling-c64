@@ -1,4 +1,4 @@
-; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; Pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
@@ -14,12 +14,12 @@ sys_init:
         ldx # $ff               ; throw away the current return stack,
         txs                     ; we won't be returning to BASIC
 
-        ; for C64-only, we can use BSOD64 to do some debugging
+        ; for C64-only, we utilise
+        ; BSOD64 to do some debugging:
         ;
 .IFDEF  SYSTEM_C64
         ;///////////////////////////////////////////////////////////////////////
-        ; prepare for loading
-        ; TODO: use a variable for current dev#
+        ; prepare KERNAL for loading
         ;
         ldx ZP_KERNAL_DEV       ; last-used KERNAL device number
         bne +                   ; not 0? good

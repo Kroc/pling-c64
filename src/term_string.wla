@@ -1,4 +1,4 @@
-; pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; Pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
@@ -22,7 +22,8 @@ term_asc2lower:
         ; no need to pop+push, we'll just rewrite the value atop the stack.
         ; first, peek the byte atop the stack, verifying data-type & underflow
         jsr peek_byte
-        ; the ASCII character code obtained, do the conversion:
+        ; the ASCII character code obtained,
+        ; do the conversion: (see "ascii.wla")
         jsr asc2lower
         ; update the value already on the stack:
         ; we've already error-checked with the peek,
@@ -43,7 +44,8 @@ term_asc2upper:
         ; no need to pop+push, we'll just rewrite the value atop the stack.
         ; first, peek the byte atop the stack, verifying data-type & underflow
         jsr peek_byte
-        ; the ASCII character code obtained, do the conversion:
+        ; the ASCII character code obtained,
+        ; do the conversion: (see "ascii.wla")
         jsr asc2upper
         ; update the value already on the stack:
         ; we've already error-checked with the peek,
