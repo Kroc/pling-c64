@@ -41,7 +41,11 @@ sys_init:
 -       inc VIC_BORDER
         jmp -
 
-+       ; begin the system-independent
+        ; enable BSOD64's hooks to trap BRK
+        ; instructions and the RESTORE key
++       jsr $c000
+
+        ; begin the system-independent
         ; Pling! initialisation
         jmp pling_init
 
