@@ -143,9 +143,4 @@ sys_input:
         lda # 0
         sta input_buffer, y
 .ENDIF  
-        lda #< input_buffer
-        ldy #> input_buffer
-        sta zp_input+LO
-        sty zp_input+HI
-        
         rts

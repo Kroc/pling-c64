@@ -26,6 +26,12 @@
 
 term_line_input:
         ;-----------------------------------------------------------------------
+        ; reset the index of the line-input channel,
+        ; so that the line can be read from the beginning
+        ;
+        lda # 0
+        jsr channel_input_seek
+
         ; let the user input a line of code,
         ; and don't return until they press return!
         ;
@@ -34,7 +40,7 @@ term_line_input:
 
 ; interpret ( -- * ERR? )
 ;===============================================================================
-; read source code input and execute
+; read source code input and execute:
 ;
 ; out:  *       execution of the intepretted code may push any quantity
 ;               of data of any type (including none at all) on the stack
@@ -71,17 +77,13 @@ term_interpret:
 
 ; read-term ( -- EOD? )
 ;===============================================================================
-; read a term name from the input buffer
-;
-; NOTE: since a term-name is limited to 31 characters, the string will be
-;       indexed with 8-bits, placing an arbitrary limitation that there
-;       cannot be more than 256-31 characters of delimiters before the
-;       term-name begins
+; read a term name from the input buffer:
 ;
 ; out:  EOD?    if the input string reaches the end without reading a term,
 ;               an End Of Data token is returned
 ;
 ; TODO: enforce 31-char limit
+; TODO: re-use the EOD from the input-channel (when it does so)
 ;-------------------------------------------------------------------------------
         .term   "read-term"
 
@@ -89,74 +91,43 @@ term_read_term:
         ;-----------------------------------------------------------------------
         ; skip initial delimiters:
         ;-----------------------------------------------------------------------
-        ; note that we must leave the index on a non-delimiter character,
-        ; rather than the next [unread] character. this requires incrementing
-        ; the index before testing, instead of after, which is why we begin
-        ; with an index of -1 before entering the loop
-        ;
-        ldy # -1
--       iny                     ; pre-emptively move to the next character
-        lda [zp_input], y       ; read character from the input buffer
+-       jsr channel_input_read  ; read a byte from the input-channel
         beq @eod                ; null-terminator?
         cmp pl_delimiter        ; was it a delimiter?
         beq -                   ; yes, keep reading
 
-        ; if we use Y to move forward the pointer in the input buffer, then the
-        ; index for both the input buffer and the term-name (output) buffer can
-        ; be the same, and we can use Y for both, forgoing the need to use
-        ; another index register
-        ;
-        tya                     ; now represents the start of the term-name
-        clc                     ; (it's math time!)
-        adc zp_input+LO         ; add to the original address
-        sta zp_input+LO         ; and write-back
-        bcc +                   ; overflow?
-        inc zp_input+HI         ; ripple the carry
-
         ; start reading characters:
         ;-----------------------------------------------------------------------
-        ; TODO: limit to 31 characters!
-        
         ; initialise the string-length we'll be using
         ; to track the length of the read term-name
-+       ldy # 0
-        sty pl_term_len
-
--       lda [zp_input], y       ; read a character
+        ldy # 0
+        sty.w pl_term_len
+        ; a non-delimter character has already been read, and is in A
+        ; so we need to skip reading another character for the first
+        ; iteration of the loop
+        beq +                   ; (always branches)
+        
+@char:  jsr channel_input_read  ; read a byte from the input-channel
         beq @done               ; null terminator?
         cmp pl_delimiter        ; was it a delimiter?
         beq @done               ; if so, end term
       
         ; add the character to the term-name (output) buffer:
         ;
-        sta pl_term_name, y     ; write character to the term-name buffer
-        inc pl_term_len         ; increment its length
++       sta pl_term_name, y     ; write character to the term-name buffer
+        inc.w pl_term_len       ; increment its length
 
         ; go read next character
         iny                     ; move to the next character
-        bne -                   ; always branches, assuming string len < 256
+        bne @char               ; always branches, assuming string len < 256
         kil
 
         ;-----------------------------------------------------------------------
         ; the term name has been read:
-@done:  ; the captured term name must be null-terminated
+        ; the captured term name must be null-terminated
         ;
-.IFDEF  CPU_65C02
-        stz pl_term_name, y
-.ELSE   ;6502
-        lda # 0
-        sta pl_term_name, y
-.ENDIF
-        ; move the input buffer's address forward
-        ; by the number of characters we read
-        ;
-        tya                     ; number of characters read
-        clc                     ; (it's math time!)
-        adc zp_input+LO         ; add to the base address
-        sta zp_input+LO         ; write it back
-        bcc +
-        inc zp_input+HI         ; ripple the carry...
-+       rts
+@done:  sta pl_term_name, y     ; (A = 0 due to loop-exit logic above)
+        rts
 
         ; end-of-data:
         ;-----------------------------------------------------------------------
@@ -221,7 +192,7 @@ term_find_term:
         ; a speed optimisation common with Forths is to simply
         ; compare string lengths first... (the first byte of
         ; the term-name buffer is its length)
-        cmp pl_term_len
+        cmp.w pl_term_len
         ; if not the same length, move to the next term
         bne @next
 
@@ -326,7 +297,7 @@ term_exec:                                                              ;=6
 
 term_parse_number:
         ;-----------------------------------------------------------------------
-        ldy pl_term_len         ; how many characters?
+        ldy.w pl_term_len       ; how many characters?
         beq @err                ; sanity check: should NOT be zero!
         dey                     ; 1-character only?
         beq @single             ; optimisation for single character
@@ -338,7 +309,7 @@ term_parse_number:
         sty pl_digits           ; reset digit-count
 
         ; is the number negative?
-        lda pl_term_name        ; check first character
+        lda.w pl_term_name      ; check first character
         cmp # '-'               ; is it minus?
         bne +                   ; no, continue with +ve number
         iny                     ; skip over the minus sign
@@ -374,7 +345,7 @@ term_parse_number:
         ;-----------------------------------------------------------------------
         ; a single character can only be a valid number if it's 0-9
         ;
-@single lda pl_term_name        ; read the first character
+@single lda.w pl_term_name      ; read the first character
         sec                     ; subtract:
         sbc # '0'               ; ASCI "0" or above?
         cmp # 10                ; no higher than 9?
@@ -394,7 +365,7 @@ term_parse_number:
 
         ; are there more digits to process?
 +       iny                     ; move to next character
-        cpy pl_term_len         ; reached length of term?
+        cpy.w pl_term_len       ; reached length of term?
         bcs @done
 
         ; multiply working number by the base
@@ -557,7 +528,7 @@ term_define:
 
         ; after the backlink, follows the term's name:
         ; the first byte is the string-length
-        lda pl_term_len
+        lda.w pl_term_len
         jsr asm
         
         ; copy the term-name buffer into the new term's header:

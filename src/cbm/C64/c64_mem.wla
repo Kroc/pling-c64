@@ -4,8 +4,12 @@
 ;
 ; c64_mem.wla : memory layout for C64
 ;===============================================================================
-
-; C64 memory map:
+; the assembler, WLA-DX, requires a "memory map" to determine where to begin
+; assembling. each SLOT in the memory map describes a boundried region of
+; memory, however SLOTs are only relevant to how code will be addressed at
+; run-time; the binary that is produced packs all bytes together
+;
+; this is the Commodore 64-specific memory map:
 ;
 .MEMORYMAP
         ;-----------------------------------------------------------------------
@@ -27,6 +31,8 @@
         SLOT 5          $E000   "kernal"
 .ENDME
 
+; the Commodore 64 has only one "bank" of RAM,
+; all of it fits within the 64K address-space
 .ROMBANKSIZE            $FDFA
 .ROMBANKS               1
 

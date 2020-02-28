@@ -1,0 +1,44 @@
+; Pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+; channel_input.wla : a built in channel for reading the line-input buffer
+;===============================================================================
+
+channel_input_read:
+;===============================================================================
+; read a byte from the input buffer:
+;
+; out:  A       character-code (PETSCII?)
+;       z, n    zero & negative flags are set according to the character-code
+;       X, Y    (preserved)
+;
+; TODO: should we not preseve Y, and let the caller handle that?
+;-------------------------------------------------------------------------------
+        sty zp_y                ; backup Y-register
+        ldy pl_input_index      ; get the current string-index
+        lda input_buffer, y     ; read a byte from the buffer
+
+        ; if null-terminator, return 0
+        ; and don't advance the index
+        beq @eod
+
+        ; TODO: handle index overflow
+        inc pl_input_index
+
+@eod:   ldy zp_y                ; restore Y-register
+        ora # %00000000         ; return expected z-flag!
+        rts
+
+
+channel_input_seek:
+;===============================================================================
+; re-position the input buffer's index:
+; note that this does no error checking for seeking beyond the end of
+; the string, that's handled by the term that wraps this functionality
+;
+; in:   A       index to set
+;
+;-------------------------------------------------------------------------------
+        sta pl_input_index
+        rts
