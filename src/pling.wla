@@ -18,25 +18,73 @@
         .INC    "cpu_65xx.wla"
 .ENDIF
 
+; RAM variables:
+;===============================================================================
+.RAMSECTION "PL_ZP1"    SLOT $00        RETURNORG
+        ;-----------------------------------------------------------------------
+        ; a temporary address available for indirect addressing
+        zp_addr         WORD
+        ; a temporary value available for conversions
+        zp_temp        .WORD
+        zp_temp1        DB
+        zp_temp2        DB
+        ; likewise, but for the output value
+        zp_word         WORD
+.ENDS
+
+.RAMSECTION "PL_ZP2"    SLOT $00        RETURNORG
+        ;-----------------------------------------------------------------------
+        ; temporary locations for backing up registers;
+        ; cannot be nested, so should only be used within
+        ; routines that do not call any other routines
+        zp_x            BYTE
+        zp_y            BYTE
+.ENDS
+
+.RAMSECTION "PL_ZP4"    SLOT $00        RETURNORG
+        ;-----------------------------------------------------------------------
+        ; number base (2, 10, 16) used during number parsing
+        zp_int_base    .BYTE
+        zp_index        BYTE
+        ; integer sign used during parsing:
+        ; $00 = +ve, $01 = -ve (to allow shifting in)
+        zp_sign         BYTE
+        ; overflow status word
+        zp_overflow     WORD
+.ENDS
+
+;===============================================================================
+.INC    "ascii.wla"             ; ASCII constants / routines
+.INC    "print.wla"             ; screen output
+.INC    "stack.wla"             ; Pling's data/type stack routines
+.INC    "error.wla"             ; error handling
+.INC    "channel.wla"           ; I/O channels
+.INC    "assemble.wla"          ; for assembling code into new terms
+.INC    "console.wla"           ; interactive shell UI
+
 ; shared Pling initialisation:
 ;===============================================================================
+; TODO: ideally we will want some kind of term to reset the whole interpretter
+;
 pling_init:
         ;-----------------------------------------------------------------------
         ; reset Pling's stacks
         ;-----------------------------------------------------------------------
         ldy # PL_STACK_SIZE-1
--       lda # $00
+-       lda # $00               ; set stack data to $00
         sta zp_stack, y
-        lda # TOKEN_EOD
+        lda # TOKEN_EOD         ; set data-type to EOD
         sta zp_type, y
         dey
         bpl -
+        
         ; put in place the stack error markers that exist at either end
         ; of the stack to automatically catch under/overflow
         lda # TOKEN_STK
         sta zp_type_und
         sta zp_type_ovr
 
+        ;-----------------------------------------------------------------------
         ; set the last term to have been defined:
         ; (this is the address of the term's header, not its code)
         lda #< _last
@@ -60,6 +108,8 @@ pling_init:
         ldy # PL_TERM_LEN-1
 -       sta pl_term_name, y
         dey
+        ; note that the first byte (Y=0) is the string-length,
+        ; which must also be initialised to 0
         bpl -
 
         ; set the data stack pointer to the starting (empty) position:
@@ -76,19 +126,19 @@ pling_init:
         jmp console_init
 
 
-;===============================================================================
-.INC    "ascii.wla"             ; ASCII constants / routines
-.INC    "print.wla"             ; screen output
-.INC    "stack.wla"             ; Pling's data/type stack routines
-.INC    "error.wla"             ; error handling
-.INC    "channel.wla"           ; I/O channels
-.INC    "assemble.wla"          ; for assembling code into new terms
-.INC    "console.wla"           ; interactive shell UI
-
-
 ; built-in terminology:
 ;===============================================================================
 ; here begins the built-in "terms" (Pling functions)
+
+.RAMSECTION "PL_ZP3"    SLOT $00        RETURNORG
+        ;-----------------------------------------------------------------------
+        ; address of the last defined term
+        ; (updated when new terms are added)
+        zp_last         WORD
+        ; address of the next free byte of memory in user-space.
+        ; this is where new terms are compiled
+        zp_here         WORD
+.ENDS
 
 .DEF    prev_term       $0000
 

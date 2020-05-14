@@ -3,18 +3,20 @@
 ; how you please as long as you retain the copyright notice
 ;
 ;===============================================================================
-.DEF    CPU_65XX        1
-.DEF    CPU_6502        1
-.DEF    CPU_6510        1
+; CPU identification:
+;
+.DEF    CPU_65XX        1       ; a 6502-based CPU;
+.DEF    CPU_6502        1       ; similar enough to a 6502 to warrant this
+.DEF    CPU_6510        1       ; specifically, the C64 uses a 6510 CPU
 
 ; number of rows / columns in text-mode, 1-based.
 ; (this is defined across different systems to provide
 ;  standard screen width / height constants)
 ;
-.DEF    SCREEN_COLS             40
-.DEF    SCREEN_ROWS             25
+.DEF    SYS_SCREEN_COLS 40
+.DEF    SYS_SCREEN_ROWS 25
 
-.INC    "cbm/c64/c64_mem.wla"
+.INC    "cbm/c64/c64_mem.wla"   ; C64-specific memory addresses
 .INC    "cbm/c64/c64_cia.wla"
 .INC    "cbm/c64/c64_vic.wla"
 .INC    "cbm/c64/c64_kernal.wla"
@@ -35,8 +37,6 @@
 .DEF    pl_heap         $8000   ; user-heap starting address
 .DEF    pl_disk         $e000   ; disk-buffer space
 
-; the string-index for the line-input channel
-.DEF    pl_input_index  $0259
 ; current delimiter between terms
 .DEF    pl_delimiter    $033a
 

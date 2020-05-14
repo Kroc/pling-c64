@@ -37,6 +37,17 @@
 .ROMBANKS               1
 
 
+;-------------------------------------------------------------------------------
+.DEF    basic_start     $0801   ; BASIC programs starting address
+.DEF    input_buffer    $0200   ; BASIC/KERNAL input buffer
+.DEF    input_index     $0258   ; string-index for the input-buffer
+.DEF    INPUT_LENGTH    80      ; capacity of input buffer
+                                ; (technically, 88 bytes are available, due to
+                                ;  the size of the input-buffer on the VIC-20)
+
+
+; critical zero-page addresses used by KERNAL / BASIC:
+;===============================================================================
 .RAMSECTION "ZP_00"     SLOT $00 ORGA $00 FORCE
         ;-----------------------------------------------------------------------
         ; CPU port: memory layout & Datasette

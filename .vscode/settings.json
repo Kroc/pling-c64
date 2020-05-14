@@ -32,9 +32,15 @@
     "spellright.documentTypes": [
         "markdown",
         "latex",
-        "plaintext"
+        "plaintext",
+        "wla-dx-asm"
     ],
     "files.exclude": {
         "bin": true
+    },
+    "spellright.parserByClass": {
+        "wla-dx-asm": {
+            "parser": "code"
+        }
     }
 }

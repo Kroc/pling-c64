@@ -33,6 +33,39 @@
 .ENUMID ERROR_TYPE      ; data-type error
 .ENUMID ERROR_PARSE     ; parsing error
 
+; stack RAM:
+;-------------------------------------------------------------------------------
+; Pling's data stack works downwards; this direction was chosen specifically
+; so that the low byte of a word appears top-most on the stack, yet at the
+; same time the bytes are in little-Endian order, allowing for vectored jumps
+;
+;                    direction of stack <--- | ---> direction of RAM
+;     +--------------------------------------+
+;     |                              $34 $12 | < little-Endian words on stack
+;     +--------------------------------------+
+;     ^ bottom of stack         top of stack ^  
+;
+; Pling's stack index is pre-inc/decrement, and not post-inc/decrement like
+; the C64's hardware stack. this means that Pling's stack index points to
+; the *currently active* cell, unlike the C64 which moves the stack index
+; to an *unused* cell
+;
+; number of bytes in the data stack: note that this also implies
+; the same number of bytes for the data-type stack to match
+.DEF    PL_STACK_SIZE   64
+
+.RAMSECTION "PL_STACK"  SLOT $00        RETURNORG
+        ;-----------------------------------------------------------------------
+        zp_stack        DSB PL_STACK_SIZE
+.ENDS
+
+.RAMSECTION "PL_TYPE"   SLOT $00        RETURNORG
+        ;-----------------------------------------------------------------------
+        zp_type_und     BYTE
+        zp_type         DSB PL_STACK_SIZE
+        zp_type_ovr     BYTE
+.ENDS
+
 
 ; lower the stack
 ;===============================================================================

@@ -7,12 +7,6 @@
 ;-------------------------------------------------------------------------------
 .DEF    ZP_KERNAL_DEV   $ba     ; last-used device, e.g. drive 8
 
-; other addresses used by KERNAL:
-;-------------------------------------------------------------------------------
-.DEF    basic_start     $0801   ; BASIC programs starting address
-.DEF    input_buffer    $0200   ; BASIC/KERNAL input buffer
-.DEF    INPUT_LENGTH    80      ; capacity of input buffer
-
 ; device numbers:
 ;-------------------------------------------------------------------------------
 ; some KERNAL routines ask for device numbers

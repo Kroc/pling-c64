@@ -12,6 +12,7 @@
 ; term_find_term:             -- w | EOD        "find-term"
 ; term_exec:                w --                "exec"
 ; term_parse_number:          -- i              "parse-number"
+; term_parse_string           -- i              "parse-string"
 ; term_define:                --                ":"
 ; term_define_end:            --                ";"
 ;
@@ -19,24 +20,19 @@
 ; line-input ( -- )
 ;===============================================================================
 ; wait for the user to type a line of text:
-; the input is stored on the system's input line-buffer
+; the text is stored in the input channel
 ;
 ;-------------------------------------------------------------------------------
         .term   "line-input"
 
 term_line_input:
         ;-----------------------------------------------------------------------
-        ; reset the index of the line-input channel,
-        ; so that the line can be read from the beginning
-        ;
-        lda # 0
-        jsr channel_input_seek
-
         ; let the user input a line of code,
         ; and don't return until they press return!
+        ; TODO: limit to 80 characters, etc.
         ;
         jmp sys_input
-
+        
 
 ; interpret ( -- * ERR? )
 ;===============================================================================
@@ -63,12 +59,13 @@ term_interpret:
 
         jsr term_find_term      ; search for the term in the terminology
         jsr pop_token_EOD       ; did we find the term?
-        beq +                   ; not found; could it be a number?
+        beq +                   ; not found; could it be a string/number?
 
         jsr term_exec           ; execute it!
         jmp -                   ; check for any further terms
 
         ; TODO: handle parse-number error
+        ; TODO: handle strings
 +       jsr term_parse_number   ; attempt to parse as a number
         jmp -                   ; check for any further terms
 
@@ -256,19 +253,21 @@ term_exec:                                                              ;=6
         inx                                                             ;+2=16
 
 .IFDEF  CPU_65C02
+        ;///////////////////////////////////////////////////////////////////////
         ; do a jump directly from the data stack, with -2
         ; to compensate for having already popped the stack
         jmp [zp_stack-2, x]                                             ;+6=22
 
 .ELSE   ; 6502:
+        ;///////////////////////////////////////////////////////////////////////
         ; if there's a faster way to do this, I'm all ears...
         lda zp_stack-2, x                                               ;+4=26
         sta zp_addr+LO                                                  ;+3=29
         lda zp_stack-1, x                                               ;+4=33
         sta zp_addr+HI                                                  ;+3=36
         jmp [zp_addr]                                                   ;+5=41
-.ENDIF
-        ;-----------------------------------------------------------------------
+.ENDIF  ;///////////////////////////////////////////////////////////////////////
+
 @err:   jmp err_type
 
 
@@ -370,6 +369,7 @@ term_parse_number:
 
         ; multiply working number by the base
         ; to effectively move up the digits
+        ;
         ; TODO: use specific optimisation for decimal:
         ;       <http://6502.org/source/integers/fastx10.htm>
         .phy
@@ -421,6 +421,17 @@ term_parse_number:
         ;-----------------------------------------------------------------------
 @neg:   jmp term_neg            ; flip the number to make it negative
 
+
+; parse-string ( -- i )
+;===============================================================================
+; parses the term-name buffer for a string; the string is written to user-space
+; and the address of the string is returned on the stack
+;
+;-------------------------------------------------------------------------------
+        .term   "parse-string"
+
+term_parse_string:
+        ;-----------------------------------------------------------------------
 
 ;;parse_decimal:
 ;;        ;=====================================================================
@@ -556,7 +567,7 @@ term_define:
 
         ; assemble a JSR at `here`
         ;
-        kil
+        brk
 
         ;-----------------------------------------------------------------------
         ; TODO: enable quote/compile mode!
@@ -588,5 +599,6 @@ term_define:
 term_define_end:
         ;-----------------------------------------------------------------------
         ; TODO: end quote/compile mode!
+        ; TODO: apply tail-call optimisation
         ;
         jmp asm_rts

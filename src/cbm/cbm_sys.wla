@@ -13,11 +13,11 @@
 ;       SYS_0           native character code for "0"
 ;       SYS_9           native character code for "9"
 ;       
-;       sys_asc2chr     convert PETSCII to ASCII
-;       sys_chr2asc     convert ASCII to PETSCII
+;       sys_chr2asc     convert native character encoding to ASCII
+;       sys_asc2chr     convert ASCII to native character encoding
 ;       
 ;       sys_chrout      print a character using the native encoding
-;       sys_input       let the user input a line of text
+;       sys_getkey      get a keypress from the user in the native encoding
 ;
 .IFDEF  SYSTEM_C64
         .INC    "cbm/c64/c64_sys.wla"
@@ -33,46 +33,6 @@
 .DEF    SYS_RETURN  PET_RETURN  ; newline
 .DEF    SYS_0       PET_0       ; "0"
 .DEF    SYS_9       PET_9       ; "9"
-
-
-sys_asc2chr:
-;===============================================================================
-; convert an ASCII character code to the system's native encoding:
-; for Commodore machines, this is PETSCII
-;
-; TODO: use a lookup-table for ROM-version?
-;       (would require preserving Y)
-;
-; in:   A       character code
-;
-; out:  A       character code, converted  
-;       X, Y    (preserved)
-;
-;-------------------------------------------------------------------------------
-        ; is the character in the ASCII lower-case range?
-        ;
-        cmp # $61               ; "a" and above?
-        bcc +                   ; no -- skip ahead
-        cmp # $7a+1             ; "z" and below?
-        bcs +                   ; no -- skip ahead
-
-        ; adjust ASCII lower-case $61..$7A down to PETSCII lower-case $41..$5A
-        ; NOTE: carry is clear, so this subtracts an additional 1 for us!
-        sbc # $20-1
-        rts
-        
-        ; is the character in the ASCII upper-case range?
-        ;
-+       cmp # $41               ; "A" and above?
-        bcc +                   ; no -- exit
-        cmp # $5a+1             ; "z" and below?
-        bcs +                   ; no -- exit
-
-        ; adjust ASCII upper-case $41..$5A
-        ; up to PETSCII upper-case $C1..$DA
-        adc # $80
-
-+       rts
 
 
 sys_chr2asc:
@@ -116,31 +76,79 @@ sys_chr2asc:
 +       rts
 
 
+sys_asc2chr:
+;===============================================================================
+; convert an ASCII character code to the system's native encoding:
+; for Commodore machines, this is PETSCII
+;
+; TODO: use a lookup-table for ROM-version?
+;       (would require preserving Y)
+;
+; in:   A       character code
+;
+; out:  A       character code, converted  
+;       X, Y    (preserved)
+;
+;-------------------------------------------------------------------------------
+        ; is the character in the ASCII lower-case range?
+        ;
+        cmp # $61               ; "a" and above?
+        bcc +                   ; no -- skip ahead
+        cmp # $7a+1             ; "z" and below?
+        bcs +                   ; no -- skip ahead
+
+        ; adjust ASCII lower-case $61..$7A down to PETSCII lower-case $41..$5A
+        ; NOTE: carry is clear, so this subtracts an additional 1 for us!
+        sbc # $20-1
+        rts
+        
+        ; is the character in the ASCII upper-case range?
+        ;
++       cmp # $41               ; "A" and above?
+        bcc +                   ; no -- exit
+        cmp # $5a+1             ; "z" and below?
+        bcs +                   ; no -- exit
+
+        ; adjust ASCII upper-case $41..$5A
+        ; up to PETSCII upper-case $C1..$DA
+        adc # $80
+
++       rts
+
+
+sys_getkey      = KERNAL_CHRIN
+;===============================================================================
+; get a character of input from the user, in the native encoding:
+;
+; out:  A       character code in the native encoding
+;       X, Y    (clobbered)
+;
+; NOTE: for CBM-systems, we don't need to wrap this, call the KERNAL directly
+;-------------------------------------------------------------------------------
+
+
 sys_input:
 ;===============================================================================
 ; wait for the user to type a line of text:
 ; the input is stored on the system's input line-buffer
 ;
 ;-------------------------------------------------------------------------------
-        ldy # 0
+        ; reset the input-buffer, intialising it with nulls,
+        ; and rewinding the cursor to the beginning
+        ;
+        jsr channel_input_init  ; NOTE: sets Y to zero for us
 
--       jsr KERNAL_CHRIN        ; read a character from the keyboard
+-       jsr sys_getkey          ; read a character from the keyboard
         cmp # PET_RETURN        ; is the key RETURN?
         beq +                   ; if yes, quit reading
         
-        jsr sys_chr2asc         ; convert from PETSCII to ASCII
-        sta input_buffer, y     ; add the key-code to the buffer
-        iny                     ; move to the next character
-        cpy # INPUT_LENGTH+1    ; have we hit the end of the line?
+        jsr sys_chr2asc         ; convert the native encoding to ASCII
+        jsr channel_input_write ; add the ASCII-code to the buffer
+        cpy # INPUT_LENGTH      ; have we hit the end of the line?
         bne -
 
+        ;-----------------------------------------------------------------------
 +       jsr sys_chrout          ; actually print the RETURN (go to next line)
-
-        ; append a null-terminator:
-.IFDEF  CPU_65C02
-        stz input_buffer, y
-.ELSE   ;6502
-        lda # 0
-        sta input_buffer, y
-.ENDIF  
-        rts
+        
+        ; rewind the input channel for parasing
+        jmp channel_input_rewind

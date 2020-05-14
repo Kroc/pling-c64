@@ -39,7 +39,7 @@ term_write_here:
 ; push>here ( i -- )
 ;===============================================================================
 ; assembles a push-to-stack of the integer currently on the stack, that is,
-; assembles code to user-space to push an integer to the stack, the value
+; assembles code in user-space to push an integer to the stack, the value
 ; of which is taken from the current stack
 ;
 ;-------------------------------------------------------------------------------

@@ -2,43 +2,106 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; channel_input.wla : a built in channel for reading the line-input buffer
+; channel_input.wla : a built-in channel for reading the line-input buffer
 ;===============================================================================
+; TODO: should this just be a regular string-channel, rather than custom?
+
+
+channel_input_init:
+;===============================================================================
+; resets the channel; clearing the content and rewinding the cursor:
+;
+; out:  A       = 0
+;       Y       = 0
+;       X       (preserved)
+;-------------------------------------------------------------------------------
+        ; clear the buffer:
+        ldy # INPUT_LENGTH      ; begin at the end
+        lda # 0                 ; write zeroes
+-       sta input_buffer-1, y   ; (clear 0 to length-1)
+        dey                     ; move down a byte
+        bne -                   ; keep going until we reach zero
+        sty input_index         ; set the cursor to zero
+
+        rts
+
 
 channel_input_read:
 ;===============================================================================
 ; read a byte from the input buffer:
 ;
-; out:  A       character-code (PETSCII?)
+; out:  A       character-code, ASCII
 ;       z, n    zero & negative flags are set according to the character-code
 ;       X, Y    (preserved)
 ;
 ; TODO: should we not preseve Y, and let the caller handle that?
 ;-------------------------------------------------------------------------------
         sty zp_y                ; backup Y-register
-        ldy pl_input_index      ; get the current string-index
+        ldy input_index         ; get the current string-index
         lda input_buffer, y     ; read a byte from the buffer
 
         ; if null-terminator, return 0
         ; and don't advance the index
+        ; TODO: should we return EOD?
         beq @eod
 
         ; TODO: handle index overflow
-        inc pl_input_index
+        inc input_index
 
 @eod:   ldy zp_y                ; restore Y-register
         ora # %00000000         ; return expected z-flag!
         rts
 
 
+channel_input_write:
+;===============================================================================
+; append a byte to the input-buffer:
+;
+; in:   A       character-code, ASCII
+;
+; out:  A       unchanged, as-above
+;       Y       updated buffer index
+;       X       (preserved)
+;
+; TODO: index overflow
+;-------------------------------------------------------------------------------
+        ldy input_index         ; get the current index
+        sta input_buffer, y     ; write the given byte to the buffer
+        iny                     ; move the the next byte
+        sty input_index         ; update the saved index
+
+        rts
+
+
+channel_input_rewind:
+;===============================================================================
+; TODO: should all channels support this?
+;
+;-------------------------------------------------------------------------------
+        lda # 0
+
+
 channel_input_seek:
 ;===============================================================================
-; re-position the input buffer's index:
+; re-position the input-buffer's index:
+;
 ; note that this does no error checking for seeking beyond the end of
 ; the string, that's handled by the term that wraps this functionality
 ;
 ; in:   A       index to set
 ;
+; out:  Y       returns the index set, for the convenience
+;               of immediately indexing the channel
+;       X       (preserved)
 ;-------------------------------------------------------------------------------
-        sta pl_input_index
+        sta input_index
+        tay
         rts
+
+
+channel_input_size:
+;===============================================================================
+; TODO: returns the size of the input-channel:
+;
+;-------------------------------------------------------------------------------
+        brk

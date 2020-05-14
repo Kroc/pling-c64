@@ -9,7 +9,11 @@
 ; the system-specific routine for printing a single character, in the native
 ; character encoding: (for Commodore machines, this is PETSCII)
 ;
-; in this case, a wrapper isn't needed, so to avoid an unecessary jmp-chain
+; in this case, a wrapper isn't needed, so to avoid an unnecessary JMP-chain
 ; we provide the KERNAL ROM address rather than a local routine
+;
+; NOTE: the KERNAL entrypoint is at $FFD2, but this goes through some
+;       additional jumps and checks which output device is selected;
+;       for speed we use a ROM address that always prints to the screen
 ;
 .DEF    sys_chrout      $e716 ;;KERNAL_CHROUT_ADDR
