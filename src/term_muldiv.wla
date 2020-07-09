@@ -32,7 +32,7 @@ term_multiply:
         ; this routine will return A = lo, Y = hi, where Y = 0 if the
         ; integer was a byte (i.e. automatically forming a word)
         jsr pop_int
-        ; this word is our "multipler"
+        ; this word is our "multiplier"
         ; -- the amount we're multiplying *by*
         sta zp_temp+LO
         sty zp_temp+HI

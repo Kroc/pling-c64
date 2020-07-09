@@ -7,10 +7,15 @@
 ; Pling uses ASCII internally for portability between systems, particularly
 ; for reading plain text files that originated on a modern PC
 ;
+.DEF    ASC_SMARK               34
+.DEF    ASC_A                   65
+.DEF    ASC_Z                   90
+.DEF    ASC_a                   97
+.DEF    ASC_z                   122
 
 asc2lower:
 ;===============================================================================
-; convert an ASCII character to lower-case
+; convert an ASCII character to lower-case:
 ;
 ; in:   A       ASCII code
 ;
@@ -30,7 +35,7 @@ asc2lower:
 
 asc2upper:
 ;===============================================================================
-; convert an ASCII character to upper-case
+; convert an ASCII character to upper-case:
 ;
 ; in:   A       ASCII code
 ;

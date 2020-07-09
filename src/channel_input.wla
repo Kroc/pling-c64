@@ -26,6 +26,30 @@ channel_input_init:
         rts
 
 
+channel_input_peek:
+;===============================================================================
+; return the current byte in the input buffer, without advancing the index:
+;
+; out:  A       character-code, ASCII
+;       z, n    zero & negative flags are set according to the character-code
+;       X, Y    (preserved)
+;
+; TODO: optimise / combine with `channel_input_read`?
+;-------------------------------------------------------------------------------
+        .put_y                  ; backup Y-register
+        ldy input_index         ; get the current string-index
+        lda input_buffer, y     ; read a byte from the buffer
+
+        ; if null-terminator, return 0
+        ; and don't advance the index
+        ; TODO: should we return EOD?
+        beq @eod
+
+@eod:   .get_y                  ; restore Y-register
+        ora # %00000000         ; return expected z-flag!
+        rts
+
+
 channel_input_read:
 ;===============================================================================
 ; read a byte from the input buffer:
@@ -36,7 +60,7 @@ channel_input_read:
 ;
 ; TODO: should we not preseve Y, and let the caller handle that?
 ;-------------------------------------------------------------------------------
-        sty zp_y                ; backup Y-register
+        .put_y                  ; backup Y-register
         ldy input_index         ; get the current string-index
         lda input_buffer, y     ; read a byte from the buffer
 
@@ -48,7 +72,7 @@ channel_input_read:
         ; TODO: handle index overflow
         inc input_index
 
-@eod:   ldy zp_y                ; restore Y-register
+@eod:   .get_y                  ; restore Y-register
         ora # %00000000         ; return expected z-flag!
         rts
 

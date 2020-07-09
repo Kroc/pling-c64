@@ -63,6 +63,16 @@
         CPU_CONTROL     BYTE    ; processor port (memory layout & Datasette)
 .ENDS
 
+;;.RAMSECTION "ZP_73"     SLOT $00 ORGA $73 FORCE
+;;        ;---------------------------------------------------------------------
+;;        ZP_CHRGET       DSB 23
+;;.ENDS
+;;
+;;.RAMSECTION "ZP_8B"     SLOT $00 ORGA $8b FORCE
+;;        ;---------------------------------------------------------------------
+;;        ZP_RND_SEED     DSB 5
+;;.ENDS
+
 .RAMSECTION "ZP_90"     SLOT $00 ORGA $90 FORCE
         ;-----------------------------------------------------------------------
         ; KERNAL I/O status, bit 6 = EOF

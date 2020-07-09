@@ -34,40 +34,53 @@ term_line_input:
         jmp sys_input
         
 
-; interpret ( -- * ERR? )
+; interpret ( -- * )
 ;===============================================================================
 ; read source code input and execute:
 ;
 ; out:  *       execution of the intepretted code may push any quantity
 ;               of data of any type (including none at all) on the stack
 ;
-;       ERR?    if an error occurs either in parsing or execution,
-;               the error token is returned atop the stack
+; TODO: this needs to better handle non-executable returns,
+;       such as strings and numbers
 ;
-; TODO: for now this merely reads a string already in memory, but with the
-;       introduction of channel I/O we'll want this to be able to read from
-;       any source
+;       term    -> execution token
+;       integer -> integer on stack
+;       string  -> string-channel execution token? (how to differentiate)
 ;
+; TODO: this should be able to interpret from any input channel,
+;       such as a string or disk channel
+;
+; TODO: should we push the channel address to the hardware stack?
+;       how do we handle a critical error, cancelling the interpretter?
+;       (throw away stack and reset the interpretter?)
 ;-------------------------------------------------------------------------------
         .term   "interpret"
 
 term_interpret:
         ;-----------------------------------------------------------------------
--       jsr term_read_term      ; check the input buffer
+@loop:  jsr term_read_term      ; check the input buffer
         jsr pop_token_EOD       ; did we reach the end of the buffer?
         beq @rts                ; if yes, all work is done
 
-        jsr term_find_term      ; search for the term in the terminology
+        ; search for the term in the terminology:
+        ; note that we do this before attempting to parse numbers & strings,
+        ; as this allows for "overrides" such as "0" for speed purposes
+        jsr term_find_term
         jsr pop_token_EOD       ; did we find the term?
         beq +                   ; not found; could it be a string/number?
 
         jsr term_exec           ; execute it!
-        jmp -                   ; check for any further terms
+        jmp @loop               ; check for any further terms
 
         ; TODO: handle parse-number error
         ; TODO: handle strings
-+       jsr term_parse_number   ; attempt to parse as a number
-        jmp -                   ; check for any further terms
++       ;;jsr term_parse_string
+        ;;jsr pop_token_EOD
+        ;;bne @loop
+
+        jsr term_parse_number   ; attempt to parse as a number
+        jmp @loop               ; check for any further terms
 
 @rts:   rts
 
@@ -128,8 +141,7 @@ term_read_term:
 
         ; end-of-data:
         ;-----------------------------------------------------------------------
-@eod:   ldy # TOKEN_EOD         ; return an End Of Data token
-        jmp push_token
+@eod:   jmp push_token_EOD      ; return an End Of Data token
 
 
 ; find-term ( -- w | EOD )
@@ -230,9 +242,7 @@ term_find_term:
         ; users accidentally trying to execute address $0000! attempting
         ; to read the token as a byte or word will give a data-type error
         ;
-@eod:   lda # 0                 ; the token's value is not important
-        ldy # TOKEN_EOD         ; make it a token, not a regular byte
-        jmp push_token
+@eod:   jmp push_token_EOD
 
 
 ; exec ( w -- )
@@ -261,11 +271,40 @@ term_exec:                                                              ;=6
 .ELSE   ; 6502:
         ;///////////////////////////////////////////////////////////////////////
         ; if there's a faster way to do this, I'm all ears...
+        ; (we could manipulate the return stack but RTS takes 6 cycles :/)
+        ;
+        ;       lda zp_stack-2, x       ;+4=26
+        ;       pha                     ;+3=29
+        ;       lda zp_stack-1, x       ;+4=33
+        ;       pha                     ;+3=36
+        ;       rts                     ;+6=42
+        ;
         lda zp_stack-2, x                                               ;+4=26
         sta zp_addr+LO                                                  ;+3=29
         lda zp_stack-1, x                                               ;+4=33
         sta zp_addr+HI                                                  ;+3=36
         jmp [zp_addr]                                                   ;+5=41
+
+        ; TODO: this requires a lookup table of stack-index to stack-addr
+        ;       (not usable with ROM build)
+        ;
+        ;       inx                                                     ;+2=14
+        ;       lda stack_map, x                                        ;+4=18
+        ;       sta @jmp+1                                              ;+4=22
+        ;       inx                                                     ;+2=24
+        ; @jmp: jmp [$0088]                                             ;+5=29
+
+        ; TODO: slightly slower version that does not need the lookup tables
+        ;       (not usable with ROM build)
+        ;
+        ;       inx                                                     ;+2=14
+        ;       txa                                                     ;+2=16
+        ;       clc                                                     ;+2=18
+        ;       adc # zp_stack                                          ;+2=20
+        ;       sta @jmp+1                                              ;+4=24
+        ;       inx                                                     ;+2=26
+        ; @jmp: jmp [$0088]                                             ;+5=31
+
 .ENDIF  ;///////////////////////////////////////////////////////////////////////
 
 @err:   jmp err_type
@@ -281,7 +320,7 @@ term_exec:                                                              ;=6
 ;       0128    : zero-prefix forces word-size for decimals
 ;        -01    : (also for negatives)
 ;        $FF    : hexadecimal, 2 digits = byte
-;      $0000    : 4 digits = word, even if value is <256
+;      $0000    : >2 digits = word, even if value is <256
 ;     -$FFFF    : (negatives allowed)
 ;  %01010101    : binary. 8 digits = byte, 16 digits = word
 ;
@@ -324,7 +363,7 @@ term_parse_number:
 
         ; parse decimal string:
         ;-----------------------------------------------------------------------
-@dec:   lda # 16
+@dec:   lda # 10
         sta zp_int_base
         bne @loop               ; (always branches)
         ;;jmp parse_decimal
@@ -341,14 +380,14 @@ term_parse_number:
         bne @loop               ; (always branches)
 
         ; optimisation for a single character:
-        ;-----------------------------------------------------------------------
+        ;=======================================================================
         ; a single character can only be a valid number if it's 0-9
         ;
 @single lda.w pl_term_name      ; read the first character
         sec                     ; subtract:
         sbc # '0'               ; ASCI "0" or above?
         cmp # 10                ; no higher than 9?
-        bcs @err
+        bcs @err                ; not a valid single-character number?
 
         ; A is now the number
         jmp push_byte
@@ -357,10 +396,10 @@ term_parse_number:
         ; one digit converted! add to our running total:
         ; carry is already clear thanks to the base compare :)
         ;
-@next:  adc zp_stack+0, x       ; add the new decimal to current total
-        sta zp_stack+0, x       ; write back result
+@next:  adc zp_stack+LO, x      ; add the new decimal to current total
+        sta zp_stack+LO, x      ; write back result
         bcc +
-        inc zp_stack+1, x       ; ripple the add
+        inc zp_stack+HI, x      ; ripple the add
 
         ; are there more digits to process?
 +       iny                     ; move to next character
@@ -422,16 +461,56 @@ term_parse_number:
 @neg:   jmp term_neg            ; flip the number to make it negative
 
 
-; parse-string ( -- i )
+; parse-string ( -- i | EOD )
 ;===============================================================================
-; parses the term-name buffer for a string; the string is written to user-space
-; and the address of the string is returned on the stack
+; parses the term-name buffer for a string:
+; if there's not a valid string
+;
+; TODO: the string should only be compiled to user-space when compiling a term
+;       that contains static strings. when interpretting terms, the string
+;       needs to be allocated to the heap, otherwise once the interpretting
+;       is finished, user-space will permentantly bloated with strings!
 ;
 ;-------------------------------------------------------------------------------
         .term   "parse-string"
 
 term_parse_string:
         ;-----------------------------------------------------------------------
+        ; the first character must be a speech-mark
+        ;
+        lda.w pl_term_name      ; read the first character
+        cmp # ASC_SMARK         ; is it a speech mark?
+        bne @eod
+
+        ; the contents of the string don't matter,
+        ; so long as the last character is a speech-mark
+        ;
+        ldy.w pl_term_len       ; get the length of the string
+        lda pl_term_name-1, y   ; (note that length is 1-based)
+        cmp # ASC_SMARK         ; is the last character a speech mark?
+        bne @eod
+
+        ; copy the string to user-space:
+        ;-----------------------------------------------------------------------
+        ; the address of the string will be placed on the stack;
+        ; push down the stack to make room (checking for overflow)
+        ;
+        lda zp_here+LO
+        ldy zp_here+HI
+        jsr push_word
+        
+        ldy.w pl_term_len       ; get the length of the string
+-       lda pl_term_name, y     ; read byte from the string
+        jsr asm                 ; write the byte to user-space
+        dey
+        bpl -
+
++       rts
+
+        ; not a valid string, return EOD token:
+        ;-----------------------------------------------------------------------
+@eod:   jmp push_token_EOD
+
 
 ;;parse_decimal:
 ;;        ;=====================================================================

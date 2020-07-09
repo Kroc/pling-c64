@@ -85,17 +85,18 @@ term_extend:
         ; top-of-stack is already a word, exit
         rts
 
-        ;-----------------------------------------------------------------------
 +       bne @err
+        ;-----------------------------------------------------------------------
+        ; the current item on the stack is a byte, so expand it to a word
 
         .lowerStack             ; lower the stack by one
-        lda zp_stack+1, x       ; read the old byte
-        sta zp_stack+0, x       ; write it to the word lo-byte
+        lda zp_stack+HI, x      ; read the old byte
+        sta zp_stack+LO, x      ; write it to the word lo-byte
 .IFDEF  CPU_65C02
-        stz zp_stack+1, x       ; set word hi-byte to zero
+        stz zp_stack+HI, x      ; set word hi-byte to zero
 .ELSE   ;6502
         lda # 0
-        sta zp_stack+1, x       ; set word hi-byte to zero
+        sta zp_stack+HI, x      ; set word hi-byte to zero
 .ENDIF
         ; change the data-types for the top two bytes to word-lo/hi
         jmp set_type_word

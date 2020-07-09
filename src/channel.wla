@@ -8,115 +8,39 @@
 ; portable interface. channels isolate the programmer from manual memory
 ; management as well as providing protection from buffer-overruns
 ;
-; a channel consists of a set of variables
-; for tracking the channel's state:
+;       +------------+           +-----------+
+;       |  instance  |---------->|  channel  |
+;       +------------+           +-----+-----+
+;                                      |
+;            +------------+------------+------------+------------+-- ...
+;            |            |            |            |            |
+;       +----+----+  +----+----+  +----+----+  +----+----+  +----+----+
+;       |  open   |  |  read   |  |  write  |  |  seek   |  |  close  |
+;       +---------+  +---------+  +---------+  +---------+  +---------+
 ;
-; * a base address (for example, strings in RAM, rather than disk I/O)
-; * an index (where the read/write cursor is in the channel)
-; * the length of the channel's data (if known)
-;
-;
+.ENUMID 0
+.ENUMID CHANNEL_OPEN
+.ENUMID CHANNEL_READ
+.ENUMID CHANNEL_WRITE
+.ENUMID CHANNEL_SEEK
+.ENUMID CHANNEL_CLOSE
 
-; currently attached channel object,
-; as used by channel I/O operations:
-;
-.RAMSECTION "PL_ZP5"    SLOT $00        RETURNORG
-        ;-----------------------------------------------------------------------
-        zp_channel      WORD    ; contains address of the channel object
- 
-        zp_chan        .WORD    ; start of the channel variables:
-        zp_chan_base    WORD    ; copy of the channel's base address
-        zp_chan_index   WORD    ; copy of the channel's index
-        zp_chan_len     WORD    ; copy of the channel's length
-.ENDS
-
-
-.INC    "channel_input.wla"
 .INC    "channel_str.wla"
-.INC    "channel_str_ro.wla"
+.INC    "channel_input.wla"
 
 
-channel_reserve:
-;===============================================================================
-; creates a new channel by reserving user-space for the channel's variables:
-; this routine does not actually populate the channel's variables though
+; static strings:
 ;
-;-------------------------------------------------------------------------------
-        ; the current position in user space will form the new channel;
-        ; we need to remember this address, for the channel's terms to
-        ; refer to for their data
-        ;
-        lda zp_here+LO
-        sta zp_channel+LO
-        lda zp_here+HI
-        sta zp_channel+HI
-
-        ; move the user-space pointer `here`
-        ; over the new channel header
-        clc
-        lda zp_here+LO
-        adc # 2
-        sta zp_here+LO
-        bcc +
-        inc zp_here+HI
-+       
-        rts
-
-
-channel_attach:
-;===============================================================================
-; attach to a channel to begin operating with it:
+; 1. write the static string to user-space, noting the starting address
 ;
-; this routine copies the channel's variables into the zero-page addresses
-; used by all other channel routines. you *MUST* attach to a channel before
-; using it, otherwise all actions will happen to the previously used channel,
-; or even a 'channel' coming from undefined RAM!
+; 2. create a new term to push that address to the stack and execute
+;    the string-channel interface
 ;
-; once channel operations are complete, use `channel_detach` to write-back
-; the updated zero-page variables to the channel's variable space -- changes
-; to a channel object will *NOT* be reflected until `channel_detach` is used
-;
-; in:   A       channel object's address, lo-byte
-;       Y       channel object's address, hi-byte
-;
-; out   A, Y    (clobbered)
-;       X       (preserved)
-;
-; TODO: we want to optimise attaching to the same channel
-; TODO: detach current channel, before attaching the other,
-;       need to be able to identify a 'null' channel
-;-------------------------------------------------------------------------------
-        ; remember the channel's object address; this is so we know where
-        ; to copy the variables back to when we detach from the channel
-        sta zp_channel+LO
-        sty zp_channel+HI
 
-        ; copy the channel's variables to zero-page
-        ;-----------------------------------------------------------------------
-        ldy # 6                 ; TODO: use a size_of / struct to know this
--       lda [zp_channel], y     ; read a byte from the channel's variables
-        sta zp_chan, y          ; copy to the zero-page channel
-        dey                     ; next byte...
-        bpl -                   ; any remaining?
-
-        rts
-
-
-channel_detach:
-;===============================================================================
-; detach from a channel:
+; creating a channel involves:
 ;
-; writes back changes made to the zero-page channel to the original channel
-; object -- changes to a channel object will *NOT* be reflected until detached!
+; * reserving space for the instance's variables, e.g. seek-position
 ;
-; out:  A, Y    (clobbered)
-;       X       (preserved)
+; * creating a new term that pushes the channel instance's address on the stack
+;   and calling the generic interface, e.g. `: my_channel $nnnn channel_str ;`
 ;
-;-------------------------------------------------------------------------------
-        ldy # 6                 ; TODO: use a size_of / struct to know this
--       lda zp_chan, y          ; read a byte from the zero-page channel
-        sta [zp_channel], y     ; write back to the original channel object
-        dey                     ; next byte...
-        bpl -                   ; any remaining?
-
-        rts

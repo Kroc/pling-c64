@@ -1,0 +1,55 @@
+; Pling! (c) copyright Kroc Camen 2019-2020. unless otherwise noted,
+; licenced under a MIT licence; you may reuse and modify this code
+; how you please as long as you retain the copyright notice
+;
+;===============================================================================
+.RAMSECTION "ZP_TERM"   SLOT $00        RETURNORG
+        ;-----------------------------------------------------------------------
+        ; address of the last defined term:
+        ; (updated when new terms are added)
+        zp_last         WORD
+        ; address of the next free byte of memory in user-space:
+        ; this is where new terms are compiled
+        zp_here         WORD
+.ENDS
+
+.DEF    prev_term       $0000
+
+.MACRO  .term   ARGS    str
+        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+__\.\@: .WORD   prev_term
+        .REDEF  prev_term       __\.\@
+        .BYTE   str.length, str, NUL
+        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+.ENDM
+
+; TODO:
+; the system-specific terms go first so that the code layout is weighted
+; toward criticality nearest to the start, so that more and more of the
+; non-system terms can be ejected, if desired, leaving a minimal runtime
+
+.INC    "term_core.wla"         ; core native primitives
+.INC    "term_math.wla"         ; core number & math routines
+.INC    "term_muldiv.wla"       ; multiply & divide math
+.INC    "term_string.wla"       ; core string routines
+.INC    "term_disk.wla"         ; disk I/O
+
+.INC    "term_print.wla"        ; printing text/data to screen
+.INC    "term_assemble.wla"     ; assembling/compiling
+.INC    "term_interpret.wla"    ; parser, interpreter & compiler
+
+
+; last-term ( -- w )
+;===============================================================================
+; pushes the address of the last term defined.
+; used by the interpreter to begin the search for term names
+;
+;-------------------------------------------------------------------------------
+_last:
+        .term   "last-term"
+
+term_last_term:
+        ;-----------------------------------------------------------------------
+        lda zp_last+LO
+        ldy zp_last+HI
+        jmp push_word

@@ -16,18 +16,23 @@ asm:
 ;-------------------------------------------------------------------------------
         ; write the byte to the current cursor position:
 .IFDEF  CPU_65C02
+        ;///////////////////////////////////////////////////////////////////////
         sta [zp_here]
-.ELSE   ;6502:
-        sty zp_index            ; backup Y                              ;+3
+
+.ELSE   ; 6502:
+        ;///////////////////////////////////////////////////////////////////////
+        .put_y                  ; backup Y                              ;+3
 
         ldy # 0                                                         ;+2
         sta [zp_here], y                                                ;+6
         
-        ldy zp_index          ; restore Y                               ;+3
-.ENDIF
+        .get_y                  ; restore Y                             ;+3
+.ENDIF  ;///////////////////////////////////////////////////////////////////////
         inc zp_here+LO
         beq +                   ; 1-cycle faster for the common case,
         rts                     ; at the cost of one extra byte
+        
+        ; TODO: check that user-space doesn't overrun
 +       inc zp_here+HI
         rts
 

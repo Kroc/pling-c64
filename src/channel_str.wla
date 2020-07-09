@@ -2,50 +2,14 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-; channel_str.wla : implementation for 8-bit indexed, null-terminated channel
+; channel_str.wla : a built-in channel for strings
 ;===============================================================================
 
-channel_str:
+channel_str_interface:
 ;===============================================================================
-;
-;-------------------------------------------------------------------------------
-
-
-
-
-channel_str_write:
-;===============================================================================
-; writes a byte to a string channel already defined in the zero-page channel
-;
-; in:   A       byte to write to the channel
-;
-; TODO: handle cursor overflow
-;-------------------------------------------------------------------------------
-        ldy zp_chan_index       ; read the current string index
-        sta [zp_chan_base], y   ; write the byte to the string
-        iny                     ; move the cursor forward
-        
-        cpy zp_chan_len         ; has the string increased in length?
-        bcc +                   ; i.e. the cursor is > length
-        inc zp_chan_len         ; increase the length of the string
-
-+       lda # 0
-        sta [zp_chan_base], y   ; ensure the string is always null-terminated
-        sty zp_chan_index       ; update the index
-        rts
-
 
 channel_str_read:
 ;===============================================================================
-; reads a byte from a string channel already defined in the zero-page channel
+; in:   A       string-channel instance address, lo-byte
+;       X       string-channel instance address, hi-byte
 ;
-; out:   A       byte read from the channel
-;
-; TODO: handle cursor overflow
-;-------------------------------------------------------------------------------
-        ldy zp_chan_index       ; get the current string index
-        lda [zp_chan_base], y   ; read the byte from the string
-        iny                     ; move the cursor forward
-        sty zp_chan_index       ; update the cursor position
-        
-        rts

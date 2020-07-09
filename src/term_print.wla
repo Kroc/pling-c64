@@ -67,6 +67,8 @@ term_print_int:
 ; adapted from:
 ; <http://forum.6502.org/viewtopic.php?p=55800#p55800>
 ;
+; TODO: obviously move this to "term_math" and use that instead
+;
 @print: lda # 0                 ; null delimiter for print
         pha
 @div10: ; divide value by 10
@@ -119,9 +121,9 @@ term_print_hex:
         bcc @byte
 
         ;-----------------------------------------------------------------------
-@word:  sty zp_temp2
-        jsr @byte
-        lda zp_temp2
+@word:  sty zp_temp2            ; put aside hi-byte
+        jsr @byte               ; print lo-byte
+        lda zp_temp2            ; get hi-byte and print
 
         ;-----------------------------------------------------------------------
 @byte:  tay
@@ -156,17 +158,19 @@ term_print_hex:
         ; user-input when scrolling
         ;
 .IFDEF  CPU_6502
+        ;///////////////////////////////////////////////////////////////////////
         sei                     ; disable interrupts
+.ENDIF  ;///////////////////////////////////////////////////////////////////////
         sed                     ; turn decimal mode on
-.ENDIF
-        clc
+        clc                     ; clear carry before adding
         adc # $90               ; produce $90-$99 or $00-$05
         adc # $40               ; produce $30-$39 or $41-$46
+        cld                     ; turn decimal mode off
 
 .IFDEF  CPU_6502
-        cld                     ; turn decimal mode off
+        ;///////////////////////////////////////////////////////////////////////
         cli                     ; re-enable interrupts
-.ENDIF
+.ENDIF  ;///////////////////////////////////////////////////////////////////////
         jmp sys_chrout
 
 
@@ -182,18 +186,20 @@ term_print_hex:
 term_print_bin:
         ;-----------------------------------------------------------------------
         jsr pop_int
-        sta zp_temp1
         bcc @byte
 
-@word:  pha
-        sty zp_temp1
-        jsr @byte
-        pla
-        sta zp_temp1
+        ;-----------------------------------------------------------------------
+@word:  pha                     ; put aside lo-byte
+        sty zp_temp1            ; prepare hi-byte for printing
+        jsr @byte               ; print the hi-byte first
+        pla                     ; retrieve the lo-byte...
 
-@byte:  ldy # SYS_0 >> 1
-        lda # 0
-        pha
+        ;-----------------------------------------------------------------------
+@byte:  sta zp_temp1            ; prepare byte to print
+        ldy # SYS_0 >> 1
+        
+        lda # 0                 ; insert null terminator,
+        pha                     ; used to detect number of digits pulled
         
         asl zp_temp1
         tya
@@ -269,7 +275,7 @@ term_print_stack:
             .BYTE   NUL
         rts
 
-        ;-----------------------------------------------------------------------
+        ;=======================================================================
 @done:  .plx                    ; restore original stack index
         rts
 
@@ -379,23 +385,23 @@ term_print_stack:
             .BYTE   " word $"
             .BYTE   NUL
 
-        lda zp_stack+0, x
-        ldy zp_stack+1, x
+        lda zp_stack+LO, x
+        ldy zp_stack+HI, x
         jsr term_print_hex@word
 
         jsr print_this
             .BYTE   " %"
             .BYTE   NUL
 
-        lda zp_stack+0, x
-        ldy zp_stack+1, x
+        lda zp_stack+LO, x
+        ldy zp_stack+HI, x
         jsr term_print_bin@word
 
         lda # SYS_SPC
         jsr sys_chrout
 
-        lda zp_stack+0, x
-        ldy zp_stack+1, x
+        lda zp_stack+LO, x
+        ldy zp_stack+HI, x
         jsr term_print_int@word
 
         lda # SYS_RETURN
@@ -418,8 +424,8 @@ term_print_stack:
             .BYTE   " %........"
             .BYTE   NUL
 
-        lda zp_stack+0, x
-        ldy zp_stack+1, x
+        lda zp_stack+LO, x
+        ldy # 0
         jsr term_print_bin@byte
 
         lda # SYS_SPC
