@@ -121,12 +121,12 @@ term_print_hex:
         bcc @byte
 
         ;-----------------------------------------------------------------------
-@word:  sty zp_temp2            ; put aside hi-byte
-        jsr @byte               ; print lo-byte
-        lda zp_temp2            ; get hi-byte and print
+@word:  sta zp_temp2            ; put aside lo-byte
+        jsr @byte               ; print hi-byte
+        ldy zp_temp2            ; get lo-byte and print
 
         ;-----------------------------------------------------------------------
-@byte:  tay
+@byte:  tya
 
         ; move top nybble to bottom nybble
         lsr
@@ -192,58 +192,54 @@ term_print_bin:
 @word:  pha                     ; put aside lo-byte
         sty zp_temp1            ; prepare hi-byte for printing
         jsr @byte               ; print the hi-byte first
+        
         pla                     ; retrieve the lo-byte...
+        sta zp_temp1            ; prepare byte to print
 
         ;-----------------------------------------------------------------------
-@byte:  sta zp_temp1            ; prepare byte to print
-        ldy # SYS_0 >> 1
+        ; instead of working out if each bit is 0 or 1 and converting these to
+        ; ASCII digits, we will instead use ASCII "0" and bump it up to "1"
+        ;
+@byte:  ldy # SYS_0 >> 1        ; this is our base constant for "0"
         
-        lda # 0                 ; insert null terminator,
-        pha                     ; used to detect number of digits pulled
+        asl zp_temp1            ; pop a bit off the source number
+        tya                     ; retrieve our "0" constant
+        rol                     ; add the bit to it
+        jsr sys_chrout          ; print the 8th digit
         
         asl zp_temp1
         tya
         rol
-        pha
-        
-        asl zp_temp1
-        tya
-        rol
-        pha
+        jsr sys_chrout          ; print the 7th digit
 
         asl zp_temp1
         tya
         rol
-        pha
+        jsr sys_chrout          ; print the 6th digit
 
         asl zp_temp1
         tya
         rol
-        pha
+        jsr sys_chrout          ; print the 5th digit
 
         asl zp_temp1
         tya
         rol
-        pha
+        jsr sys_chrout          ; print the 4th digit
 
         asl zp_temp1
         tya
         rol
-        pha
+        jsr sys_chrout          ; print the 3rd digit
 
         asl zp_temp1
         tya
         rol
-        pha
+        jsr sys_chrout          ; print the 2nd digit
 
         asl zp_temp1
         tya
-        rol
-
--       jsr sys_chrout
-        pla
-        bne -
-        rts
+        jmp sys_chrout          ; print the 1st digit
 
 
 ; .stack ( -- )
@@ -370,6 +366,8 @@ term_print_stack:
         ; when you have eliminated the impossible,
         ; whatever remains, however improbable,
         ; must be a token
+        ;
+        ; TODO: print token type & value
 @token: jsr print_this
             .BYTE   " tokn "
             .BYTE   NUL
