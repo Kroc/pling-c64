@@ -8,7 +8,7 @@
 ; from disk or tape. it's a simple 1-line BASIC program that automatically
 ; jumps to the machine language code immediately after the BASIC code
 ;
-.SLOT   "main"
+.SLOT   "MAIN"
 .ORGA   basic_start
 
 ;===============================================================================

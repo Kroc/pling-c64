@@ -59,13 +59,16 @@ term_line_input:
 
 term_interpret:
         ;-----------------------------------------------------------------------
+        ; extract a "term" from the input buffer
+        ;
 @loop:  jsr term_read_term      ; check the input buffer
         jsr pop_token_EOD       ; did we reach the end of the buffer?
         beq @rts                ; if yes, all work is done
 
         ; search for the term in the terminology:
+        ;
         ; note that we do this before attempting to parse numbers & strings,
-        ; as this allows for "overrides" such as "0" for speed purposes
+        ; as this allows for "overrides" such as "0", for speed purposes
         jsr term_find_term
         jsr pop_token_EOD       ; did we find the term?
         beq +                   ; not found; could it be a string/number?
@@ -73,15 +76,22 @@ term_interpret:
         jsr term_exec           ; execute it!
         jmp @loop               ; check for any further terms
 
-        ; TODO: handle parse-number error
-        ; TODO: handle strings
-+       ;;jsr term_parse_string
-        ;;jsr pop_token_EOD
-        ;;bne @loop
+        ; is it a string?
+        ;
++       jsr term_parse_string
+        jsr pop_token_EOD
+        bne @loop
 
+        ; is it a number?
+        ;
         jsr term_parse_number   ; attempt to parse as a number
-        jmp @loop               ; check for any further terms
+        jsr pop_token_EOD       ; was it a number?
+        bne @loop               ; if yes, continue interpretting
 
+        ; could not parse as any known term, error out:
+        jmp err_parse
+
+        ;-----------------------------------------------------------------------
 @rts:   rts
 
 
@@ -268,7 +278,7 @@ term_exec:                                                              ;=6
         ; to compensate for having already popped the stack
         jmp [zp_stack-2, x]                                             ;+6=22
 
-.ELSE   ; 6502:
+.ELSE   ;6502:
         ;///////////////////////////////////////////////////////////////////////
         ; if there's a faster way to do this, I'm all ears...
         ; (we could manipulate the return stack but RTS takes 6 cycles :/)
@@ -310,7 +320,7 @@ term_exec:                                                              ;=6
 @err:   jmp err_type
 
 
-; parse-number ( -- i )
+; parse-number ( -- i | EOD )
 ;===============================================================================
 ; parses the term-name buffer for a number and pushes a byte or word
 ; (as appropriate) to the stack. numbers can be in the format:
@@ -336,7 +346,7 @@ term_exec:                                                              ;=6
 term_parse_number:
         ;-----------------------------------------------------------------------
         ldy.w pl_term_len       ; how many characters?
-        beq @err                ; sanity check: should NOT be zero!
+        beq @eod                ; sanity check: should NOT be zero!
         dey                     ; 1-character only?
         beq @single             ; optimisation for single character
         
@@ -354,12 +364,11 @@ term_parse_number:
         
 +       sty zp_sign             ; put aside the sign-bit for later
 
-        ; check for `$` (hexadecimal) or `%` (binary) sigil:
-        lda pl_term_name, y
-        cmp # '$'
-        beq @hex
-        cmp # '%'
-        beq @bin
+        lda pl_term_name, y     ; check character for...
+        cmp # '$'               ; `$` (hexadecimal)
+        beq @hex                ; process a hexadecimal number
+        cmp # '%'               ; `%` (binary)
+        beq @bin                ; process a binary number
 
         ; parse decimal string:
         ;-----------------------------------------------------------------------
@@ -374,6 +383,7 @@ term_parse_number:
         iny                     ; skip over the "$" sigil
         bne @loop               ; (always branches)
 
+        ;-----------------------------------------------------------------------
 @bin:   lda # 2
         sta zp_int_base
         iny                     ; skip over the "%" sigil
@@ -387,7 +397,7 @@ term_parse_number:
         sec                     ; subtract:
         sbc # '0'               ; ASCI "0" or above?
         cmp # 10                ; no higher than 9?
-        bcs @err                ; not a valid single-character number?
+        bcs @eod                ; not a valid single-character number?
 
         ; A is now the number
         jmp push_byte
@@ -451,8 +461,13 @@ term_parse_number:
         ; fall through if base was incorrect
         ; for the size of the digit
         ;
-@err:   jmp err_parse           ; raise an error
+        ;-----------------------------------------------------------------------
+        ; not a number: return End Of Data; the caller
+        ; can decide if that's an error or not
+        ;
+@eod:   jmp push_token_EOD
 
+        ; number processed, return:
         ;-----------------------------------------------------------------------
 @done:  lda zp_sign             ; retrieve the negative-bit
         bne @neg                ; was it a negative number?
@@ -492,18 +507,16 @@ term_parse_string:
 
         ; copy the string to user-space:
         ;-----------------------------------------------------------------------
-        ; the address of the string will be placed on the stack;
-        ; push down the stack to make room (checking for overflow)
-        ;
-        lda zp_here+LO
+        lda zp_here+LO          ; place the address of the string...
         ldy zp_here+HI
-        jsr push_word
+        jsr push_word           ; ...on the stack
         
-        ldy.w pl_term_len       ; get the length of the string
+        ldy # 0
 -       lda pl_term_name, y     ; read byte from the string
         jsr asm                 ; write the byte to user-space
-        dey
-        bpl -
+        iny
+        cpy.w pl_term_len
+        bne -
 
 +       rts
 

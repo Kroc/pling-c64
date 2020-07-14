@@ -55,12 +55,12 @@
 ; the same number of bytes for the data-type stack to match
 .DEF    PL_STACK_SIZE   64
 
-.RAMSECTION "PL_STACK"  SLOT $00        RETURNORG
+.RAMSECTION "PL_STACK"  SLOT "ZP"       RETURNORG
         ;-----------------------------------------------------------------------
         zp_stack        DSB PL_STACK_SIZE
 .ENDS
 
-.RAMSECTION "PL_TYPE"   SLOT $00        RETURNORG
+.RAMSECTION "PL_TYPE"   SLOT "ZP"       RETURNORG
         ;-----------------------------------------------------------------------
         zp_type_und     BYTE
         zp_type         DSB PL_STACK_SIZE
@@ -163,8 +163,9 @@ push_byte:
         ; use the 65C02's "store zero" instruction to save
         ; a couple of bytes not having to `lda # 0`
         stz zp_type, x
-.ELSE   ;///////////////////////////////////////////////////////////////////////
-        ;6502
+
+.ELSE   ;6502:
+        ;///////////////////////////////////////////////////////////////////////
         lda # TYPE_BYTE
         sta zp_type, x
 .ENDIF  ;///////////////////////////////////////////////////////////////////////

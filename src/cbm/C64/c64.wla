@@ -45,6 +45,7 @@
 .DEF    PL_TERM_LEN     31
 
 .RAMSECTION "PL_TERM"   SLOT $200 ORGA $33b FORCE
+        ;-----------------------------------------------------------------------
         pl_term_len     BYTE
         pl_term_name    DSB PL_TERM_LEN
 .ENDS

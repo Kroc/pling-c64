@@ -7,30 +7,77 @@
 
 ; ! ( b w -- )
 ;===============================================================================
-; pokes the byte atop the stack into the address below.
+; pokes the byte atop the stack into the address below it:
 ; all items are consumed
 ;
 ;-------------------------------------------------------------------------------
-;;        .term   "!"
-;;
-;;term_set:
-;;        ;---------------------------------------------------------------------
-;;        lda zp_stack+2, x       ; get value to store (3rd byte)
-;;        sta [zp_stack, x]       ; store via the address on the stack
-;;
-;;        inx                     ; consume...
-;;        inx                     ; three...
-;;        inx                     ; bytes
-;;
-;;        rts
+        .term   "!"
 
-; @ ( w -- b )
+term_set:                                                               ;=6
+        ;-----------------------------------------------------------------------
+        ; this is a core term so it needs to be fast. we could just pop the
+        ; byte and word but we need to save whatever cycles we can here, so
+        ; we verify the stack contents first and manually raise the stack
+        ;
+        lda zp_type, x          ; check if the top item is a byte       ;+4=10
+        bne @err                ; -- top byte must be a byte            ;+2=12
+        inx                     ; raise the stack by one                ;+2=14
+        lda zp_type, x          ; check if the next item is a word      ;+4=18
+        bpl @err                ; high-bit means word                   ;+2=20
+        inx                     ; increment the stack...                ;+2=22
+        inx                     ; ...past the word                      ;+2=24
+
+        ; (note that now that the stack pointer is above the byte+word, we
+        ;  need to reference our parameters accounting for this extra offset) 
+        ;
+.ifdef  CPU_65C02
+        ;///////////////////////////////////////////////////////////////////////
+        ; we can indirect X-reference on the 65C02! this also allows
+        ; for the same code for RAM and ROM operation
+        ;
+        lda zp_stack-3, x       ; read poke value from the stack        ;+4=28
+        sta [zp_stack-2, x]     ; write via poke address on the stack   ;+6=34
+
+        ;6502:
+.else   ;///////////////////////////////////////////////////////////////////////
+        .ifdef  OPTIMIZE_ROM
+                ;///////////////////////////////////////////////////////////////
+                ; for ROM operation, copy the address into zero-page:
+                ;
+                lda zp_stack-2, x       ; read poke-address, lo-byte    ;+4=28
+                sta zp_addr+LO                                          ;+3=31
+                lda zp_stack-1, x       ; read poke-address, hi-byte    ;+4=35
+                sta zp_addr+HI                                          ;+3=38
+                ldy # 0                 ; required for 6502, :/         ;+2=40
+                lda zp_stack-3, x       ; read poke value               ;+4=44
+                sta [zp_addr], y                                        ;+6=50
+
+        .else   ;///////////////////////////////////////////////////////////////
+                ; in RAM, we can rewrite the address of
+                ; the STA instruction that follows
+                ;
+                lda zp_stack-2, x       ; read poke-address, lo-byte    ;+4=28
+                sta.w @sta+1+LO                                         ;+4=32
+                lda zp_stack-1, x       ; read poke-address, hi-byte    ;+4=36
+                sta.w @sta+1+HI                                         ;+4=40
+                lda zp_stack-3, x       ; read poke value               ;+4=44
+@sta:           sta $8888               ; write the byte                ;+4=48
+
+        .endif  ;///////////////////////////////////////////////////////////////
+.endif  ;///////////////////////////////////////////////////////////////////////
+        rts
+
+        ;-----------------------------------------------------------------------
+@err:   jmp err_type
+
+
+; ? ( w -- b )
 ;===============================================================================
 ; peeks a byte from the address on the stack, (consuming the address)
 ; and pushes the value to the stack
 ;
 ;-------------------------------------------------------------------------------
-;;        .term   "@"
+;;        .term   "?"
 ;;
 ;;term_get:
 ;;        ;---------------------------------------------------------------------
@@ -93,11 +140,15 @@ term_extend:
         lda zp_stack+HI, x      ; read the old byte
         sta zp_stack+LO, x      ; write it to the word lo-byte
 .IFDEF  CPU_65C02
+        ;///////////////////////////////////////////////////////////////////////
         stz zp_stack+HI, x      ; set word hi-byte to zero
-.ELSE   ;6502
+
+.ELSE   ;6502:
+        ;///////////////////////////////////////////////////////////////////////
         lda # 0
         sta zp_stack+HI, x      ; set word hi-byte to zero
-.ENDIF
+
+.ENDIF  ;///////////////////////////////////////////////////////////////////////
         ; change the data-types for the top two bytes to word-lo/hi
         jmp set_type_word
 

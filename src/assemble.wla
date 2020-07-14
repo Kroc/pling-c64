@@ -19,8 +19,15 @@ asm:
         ;///////////////////////////////////////////////////////////////////////
         sta [zp_here]
 
-.ELSE   ; 6502:
+.ELSE   ;6502:
         ;///////////////////////////////////////////////////////////////////////
+        ; TODO: speed of this routine will be critical! we could make this
+        ; faster by doing away with the need to use the Y register, but we
+        ; could only achieve that by making the `sta $nnnn` parameter be the
+        ; `HERE` value (i.e. we use that address as the storage for the HERE
+        ; variable). additionally, moving this entire routine to zero-page
+        ; (if it'll fit) will improve speed for every `HERE` read/write
+        ;
         .put_y                  ; backup Y                              ;+3
 
         ldy # 0                                                         ;+2

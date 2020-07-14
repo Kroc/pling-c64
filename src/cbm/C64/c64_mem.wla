@@ -15,20 +15,20 @@
         ;-----------------------------------------------------------------------
         DEFAULTSLOT     2
         SLOTSIZE        $0100
-        SLOT 0          $0000   "zero-page"
-        SLOT 1          $0100   "stack"
+        SLOT 0          $0000   "ZP"
+        SLOT 1          $0100   "STACK"
         
         ; main program RAM
         ; ("ROM" in WLA-DX parlance)
         ;
         SLOTSIZE        $FDFA   ; $FFFA-$FFFF are 6502 interrupt vectors
-        SLOT 2          $0200   "main"
+        SLOT 2          $0200   "MAIN"
 
         SLOTSIZE        $1000
-        SLOT 3          $C000   "hiram"
-        SLOT 4          $D000   "io"
+        SLOT 3          $C000   "HIRAM"
+        SLOT 4          $D000   "IO"
         SLOTSIZE        $2000
-        SLOT 5          $E000   "kernal"
+        SLOT 5          $E000   "KERNAL"
 .ENDME
 
 ; the Commodore 64 has only one "bank" of RAM,
@@ -48,7 +48,7 @@
 
 ; critical zero-page addresses used by KERNAL / BASIC:
 ;===============================================================================
-.RAMSECTION "ZP_00"     SLOT $00 ORGA $00 FORCE
+.RAMSECTION "ZP_00"     SLOT "ZP"       ORGA $00 FORCE
         ;-----------------------------------------------------------------------
         ; CPU port: memory layout & Datasette
         ;
@@ -73,7 +73,7 @@
 ;;        ZP_RND_SEED     DSB 5
 ;;.ENDS
 
-.RAMSECTION "ZP_90"     SLOT $00 ORGA $90 FORCE
+.RAMSECTION "ZP_90"     SLOT "ZP"       ORGA $90 FORCE
         ;-----------------------------------------------------------------------
         ; KERNAL I/O status, bit 6 = EOF
         ZP_IO_STATUS    BYTE    ;=$90
@@ -83,7 +83,7 @@
         ZP_KEY_FLAG     BYTE    ;=$91
 .ENDS
 
-.RAMSECTION "ZP_93"     SLOT $00 ORGA $93 FORCE
+.RAMSECTION "ZP_93"     SLOT "ZP"       ORGA $93 FORCE
         ;-----------------------------------------------------------------------
         ; 0 = LOAD, 1 = VERIFY
         ZP_KERNAL_LOAD  BYTE    ;=93
@@ -94,7 +94,7 @@
         ZP_SERIAL_OUT   BYTE    ;=$95
 .ENDS
 
-.RAMSECTION "ZP_97"     SLOT $00 ORGA $97 FORCE
+.RAMSECTION "ZP_97"     SLOT "ZP"       ORGA $97 FORCE
         ;-----------------------------------------------------------------------
         ; temporary storage for X-register,
         ; used in `KERNAL_CHRIN`
@@ -107,14 +107,14 @@
         ZP_DEV_OUT      BYTE    ;=$9A
 .ENDS
 
-.RAMSECTION "ZP_9D"     SLOT $00 ORGA $9d FORCE
+.RAMSECTION "ZP_9D"     SLOT "ZP"       ORGA $9d FORCE
         ;-----------------------------------------------------------------------
         ;KERNAL message display control:
         ; bit 6 = error messages, bit 7 = control message 
         .               BYTE
 .ENDS
 
-.RAMSECTION "ZP_A0"     SLOT $00 ORGA $a0 FORCE
+.RAMSECTION "ZP_A0"     SLOT "ZP"       ORGA $a0 FORCE
         ;-----------------------------------------------------------------------
         ; C64's "jiffy clock", updated every 60th/s, even on PAL
         ZP_JIFFY        DSB 3   ;=$A0/1/2
@@ -122,13 +122,13 @@
         .               WORD    ;=$A3
 .ENDS
 
-.RAMSECTION "ZP_AE"     SLOT $00 ORGA $ae FORCE
+.RAMSECTION "ZP_AE"     SLOT "ZP"       ORGA $ae FORCE
         ;-----------------------------------------------------------------------
         ; pointer to the last byte after a LOAD/VERIFY/SAVE operation
         ZP_LOAD_LAST    WORD    ;=$AE
 .ENDS
 
-.RAMSECTION "ZP_B7"     SLOT $00 ORGA $b7 FORCE
+.RAMSECTION "ZP_B7"     SLOT "ZP"       ORGA $b7 FORCE
         ;-----------------------------------------------------------------------
         ; length of current filename
         ZP_FILE_NAMELEN BYTE    ;=$B7
@@ -142,7 +142,7 @@
         ZP_FILENAME     WORD    ;=$BB
 .ENDS
 
-.RAMSECTION "ZP_C1"     SLOT $00 ORGA $c1 FORCE
+.RAMSECTION "ZP_C1"     SLOT "ZP"       ORGA $c1 FORCE
         ;-----------------------------------------------------------------------
         ; start address for LOAD / SAVE
         .               WORD    ;=$C1
@@ -157,7 +157,7 @@
         ZP_PRINT_RVRS   BYTE    ;=$C7
 .ENDS
 
-.RAMSECTION "ZP_CB"     SLOT $00 ORGA $cb FORCE
+.RAMSECTION "ZP_CB"     SLOT "ZP"       ORGA $cb FORCE
         ;-----------------------------------------------------------------------
         ; index into key-decoding table for currently pressed key, $40 = none
         ZP_KEY_INDEX    BYTE    ;=$CB
@@ -187,7 +187,7 @@
         .               BYTE    ;$=D8
 .ENDS
 
-.RAMSECTION "ZP_F3"     SLOT $00 ORGA $f3 FORCE
+.RAMSECTION "ZP_F3"     SLOT "ZP"       ORGA $f3 FORCE
         ;-----------------------------------------------------------------------
         .               BYTE    ;=$F3
         .               BYTE    ;=$F4

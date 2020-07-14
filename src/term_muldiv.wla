@@ -30,20 +30,25 @@ term_multiply:
         ;-----------------------------------------------------------------------
         ; pop the top integer off the stack, be it a byte or word:
         ; this routine will return A = lo, Y = hi, where Y = 0 if the
-        ; integer was a byte (i.e. automatically forming a word)
+        ; integer was a byte (i.e. automatically forming a word).
+        ; the carry flag is 0 for a byte, 1 for a word, which we
+        ; will make use of in a moment
         jsr pop_int
-        ; this word is our "multiplier"
-        ; -- the amount we're multiplying *by*
-        sta zp_temp+LO
-        sty zp_temp+HI
+        sta zp_temp+LO          ; this word is our "multiplier"
+        sty zp_temp+HI          ; -- the amount we're multiplying *by*
+;;        bcc +
+
+        ldy # 16                ; set binary count to 16 digits
+;;        .bit_skip2              ; (skip the next instruction)
+;;+       ldy # 8                 ; set binary count to 8 digits
 
         ; the top of the stack is now the "multiplicand", the starting number
         ; to multiply. result will be a word so we extend the top integer to
         ; fill a word; if it's already a word, no change will occur
         jsr term_extend
 
-        ; copy the multiplicand, we'll reuse the top
-        ; of the stack for the result named the "product"
+        ; copy the multiplicand; we'll reuse the top of
+        ; the stack for the result named the "product"
         lda zp_stack+0, x
         sta zp_word+LO
         lda zp_stack+1, x
@@ -53,9 +58,6 @@ term_multiply:
         lda # $00               ; NB: A=$00 is required below,
         sta zp_overflow+LO      ; do not use `stz` on 65C02!
         sta zp_overflow+HI
-
-        ; set binary count to 16 digits
-        ldy # 16
 
         ; downshift the multipler:
         ;-----------------------------------------------------------------------

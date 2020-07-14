@@ -100,8 +100,8 @@
 .DEF    VIC_BKGND_EXTRA2        $d023   ; extended background colour 2
 .DEF    VIC_BKGND_EXTRA3        $d024   ; extended background colour 3
 
-.DEF    VIC_SPRITE_EXTRA1       $d025 ; sprite extra colour 1
-.DEF    VIC_SPRITE_EXTRA2       $d026 ; sprite extra colour 2
+.DEF    VIC_SPRITE_EXTRA1       $d025   ; sprite extra colour 1
+.DEF    VIC_SPRITE_EXTRA2       $d026   ; sprite extra colour 2
 
 .DEF    VIC_SPRITE0_COLOR       $d027
 .DEF    VIC_SPRITE1_COLOR       $d028

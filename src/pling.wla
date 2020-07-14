@@ -20,7 +20,7 @@
 
 ; RAM variables:
 ;===============================================================================
-.RAMSECTION "ZP_ADDR"   SLOT $00        RETURNORG
+.RAMSECTION "ZP_ADDR"   SLOT "ZP"       RETURNORG
         ;-----------------------------------------------------------------------
         ; a temporary address available for indirect addressing
         zp_addr         WORD
@@ -30,7 +30,7 @@
         zp_word         WORD
 .ENDS
 
-.RAMSECTION "ZP_TEMP"   SLOT $00        RETURNORG
+.RAMSECTION "ZP_TEMP"   SLOT "ZP"       RETURNORG
         ;-----------------------------------------------------------------------
         ; a temporary value available for conversions
         zp_temp        .WORD
@@ -38,7 +38,7 @@
         zp_temp2        DB
 .ENDS
 
-.RAMSECTION "ZP_REG"    SLOT $00        RETURNORG
+.RAMSECTION "ZP_REG"    SLOT "ZP"       RETURNORG
         ;-----------------------------------------------------------------------
         ; temporary locations for backing up registers;
         ; cannot be nested, so should only be used within
@@ -47,7 +47,7 @@
         zp_y            BYTE
 .ENDS
 
-.RAMSECTION "ZP_NUM"    SLOT $00        RETURNORG
+.RAMSECTION "ZP_NUM"    SLOT "ZP"       RETURNORG
         ;-----------------------------------------------------------------------
         ; number base (2, 10, 16) used during number parsing
         zp_int_base     BYTE

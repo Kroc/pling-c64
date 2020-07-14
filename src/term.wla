@@ -3,7 +3,7 @@
 ; how you please as long as you retain the copyright notice
 ;
 ;===============================================================================
-.RAMSECTION "ZP_TERM"   SLOT $00        RETURNORG
+.RAMSECTION "ZP_TERM"   SLOT "ZP"       RETURNORG
         ;-----------------------------------------------------------------------
         ; address of the last defined term:
         ; (updated when new terms are added)
