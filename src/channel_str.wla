@@ -3,7 +3,7 @@
 ; how you please as long as you retain the copyright notice
 ;
 ; channel_str.wla : a built-in channel for strings
-;===============================================================================
+;
 
 channel_str_interface:
 ;===============================================================================

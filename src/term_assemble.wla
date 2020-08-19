@@ -15,7 +15,6 @@
 ; writes the integer atop the stack to the current position in user-space:
 ;
 ; in:   int     integer, byte or word, to be written to user-space
-;
 ;-------------------------------------------------------------------------------
         .term   ">here"
 

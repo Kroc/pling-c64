@@ -21,7 +21,6 @@ asc2lower:
 ;
 ; out:  A       ASCII code
 ;       X, Y    (preserved)
-;
 ;-------------------------------------------------------------------------------
         ; is the character within the upper-case letters?
         ;
@@ -41,7 +40,6 @@ asc2upper:
 ;
 ; out:  A       ASCII code
 ;       X, Y    (preserved)
-;
 ;-------------------------------------------------------------------------------
         ; is the character within the lower-case letters?
         ;

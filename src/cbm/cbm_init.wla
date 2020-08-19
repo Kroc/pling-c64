@@ -56,4 +56,4 @@ sys_init:
         ; begin the system-independent
         ; Pling! initialisation
         jmp pling_init
-.ENDIF
+.ENDIF  ;///////////////////////////////////////////////////////////////////////

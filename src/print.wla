@@ -3,7 +3,7 @@
 ; how you please as long as you retain the copyright notice
 ;
 ; print.wla : screen output
-;===============================================================================
+;
 
 print_asc:
 ;===============================================================================
@@ -13,7 +13,6 @@ print_asc:
 ;
 ; out:  A       (clobbered)
 ;       X, Y    (preserved)
-;
 ;-------------------------------------------------------------------------------
         jsr sys_asc2chr         ; convert ASCII code to native encoding
         jmp sys_chrout          ; print using the system-specific routine
@@ -29,7 +28,6 @@ print_str:
 ; out:  Y       number of bytes printed       
 ;       A       (clobbered)
 ;       X       (preserved)
-;
 ;-------------------------------------------------------------------------------
         sta zp_addr+LO          ; load the string address into our indexer
         sty zp_addr+HI
@@ -55,7 +53,6 @@ print_this:
 ;
 ; out:  X       (preserved)
 ;       A, Y    (clobbered)
-;
 ;-------------------------------------------------------------------------------
         ; this routine finds the address that called it from the return stack;
         ; when calling this routine, the return stack will look like this:

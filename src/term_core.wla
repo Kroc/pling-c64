@@ -3,7 +3,7 @@
 ; how you please as long as you retain the copyright notice
 ;
 ; term_core.wla : stack routines available to Pling scripts
-;===============================================================================
+;
 
 ; ! ( b w -- )
 ;===============================================================================
@@ -13,7 +13,7 @@
 ;-------------------------------------------------------------------------------
         .term   "!"
 
-term_set:                                                               ;=6
+term_poke:                                                              ;=6
         ;-----------------------------------------------------------------------
         ; this is a core term so it needs to be fast. we could just pop the
         ; byte and word but we need to save whatever cycles we can here, so
@@ -30,7 +30,7 @@ term_set:                                                               ;=6
         ; (note that now that the stack pointer is above the byte+word, we
         ;  need to reference our parameters accounting for this extra offset) 
         ;
-.ifdef  CPU_65C02
+.IFDEF  CPU_65C02
         ;///////////////////////////////////////////////////////////////////////
         ; we can indirect X-reference on the 65C02! this also allows
         ; for the same code for RAM and ROM operation
@@ -38,9 +38,9 @@ term_set:                                                               ;=6
         lda zp_stack-3, x       ; read poke value from the stack        ;+4=28
         sta [zp_stack-2, x]     ; write via poke address on the stack   ;+6=34
 
-        ;6502:
-.else   ;///////////////////////////////////////////////////////////////////////
-        .ifdef  OPTIMIZE_ROM
+.ELSE   ;6502:
+        ;///////////////////////////////////////////////////////////////////////
+        .IFDEF  OPTIMIZE_ROM
                 ;///////////////////////////////////////////////////////////////
                 ; for ROM operation, copy the address into zero-page:
                 ;
@@ -52,7 +52,7 @@ term_set:                                                               ;=6
                 lda zp_stack-3, x       ; read poke value               ;+4=44
                 sta [zp_addr], y                                        ;+6=50
 
-        .else   ;///////////////////////////////////////////////////////////////
+        .ELSE   ;///////////////////////////////////////////////////////////////
                 ; in RAM, we can rewrite the address of
                 ; the STA instruction that follows
                 ;
@@ -63,29 +63,84 @@ term_set:                                                               ;=6
                 lda zp_stack-3, x       ; read poke value               ;+4=44
 @sta:           sta $8888               ; write the byte                ;+4=48
 
-        .endif  ;///////////////////////////////////////////////////////////////
-.endif  ;///////////////////////////////////////////////////////////////////////
+        .ENDIF  ;///////////////////////////////////////////////////////////////
+.ENDIF  ;///////////////////////////////////////////////////////////////////////
         rts
 
-        ;-----------------------------------------------------------------------
+-       ;-----------------------------------------------------------------------
 @err:   jmp err_type
 
 
 ; ? ( w -- b )
 ;===============================================================================
 ; peeks a byte from the address on the stack, (consuming the address)
-; and pushes the value to the stack
+; and pushes the byte value to the stack:
 ;
 ;-------------------------------------------------------------------------------
-;;        .term   "?"
-;;
-;;term_get:
-;;        ;---------------------------------------------------------------------
-;;        lda [zp_stack, x]
-;;        inx
-;;        sta zp_stack, x
-;;
-;;        rts
+        .term   "?"
+
+term_peek:                                                              ;=6
+        ;-----------------------------------------------------------------------
+        lda zp_type, x          ; check the data-type atop the stack    ;+4=10
+        bpl -                   ; not a word? error                     ;+2=12
+        
+        ; since we're reading a word and writing back a byte, we can just
+        ; move the stack by a byte to cut the word in half. we will need
+        ; to fix the data-type, which is done later
+        ;
+        inx                                                             ;+2=14
+
+.IFDEF  CPU_65C02
+        ;///////////////////////////////////////////////////////////////////////
+        ; we can read directly from the stack on a 65C02:
+        ;
+        lda [zp_stack-1, x]     ; peek via the address on the stack     ;+6=20
+        sta zp_stack, x         ; and store the value on the stack      ;+4=24
+
+        ; set the data-type:
+        ;
+        ; this 65C02 optimisation relies upon `TYPE_BYTE` being zero...
+        ; sanity check this in case of unintended change in the future
+        .IF TYPE_BYTE != 0
+                .PRINT "TYPE_BYTE is not 0!"
+                .FAIL
+        .ENDIF
+        ; use the 65C02's "store zero" instruction to save
+        ; a couple of bytes not having to `lda # 0`
+        stz zp_type, x                                                  ;+4=28
+
+.ELSE   ;6502:
+        ;///////////////////////////////////////////////////////////////////////
+        .IFDEF  OPTIMIZE_ROM
+                ;///////////////////////////////////////////////////////////////
+                ; for ROM operation, copy the address into zero-page:
+                ;
+                lda zp_stack-1+LO, x    ; read peek-address, lo-byte    ;+4=18
+                sta zp_addr+LO                                          ;+3=21
+                lda zp_stack-1+HI, x    ; read peek-address, hi-byte    ;+4=25
+                sta zp_addr+HI                                          ;+3=28
+                ldy # 0                 ; required for 6502, :/         ;+2=30
+                lda [zp_addr], y        ; read peek value               ;+5=35
+                sta zp_stack, x         ; write peek value              ;+4=39
+
+        .ELSE   ;///////////////////////////////////////////////////////////////
+                ; in RAM, we can rewrite the address of
+                ; the STA instruction that follows:
+                ;
+                lda zp_stack-1, x       ; read peek-address, lo-byte    ;+4=18
+                sta.w @lda+1+LO                                         ;+4=22
+                lda zp_stack-0, x       ; read poke-address, hi-byte    ;+4=26
+                sta.w @lda+1+HI                                         ;+4=30
+@lda:           lda $8888               ; read peek value               ;+4=34
+                sta zp_stack, x         ; write peek value              ;+4=38
+
+        .ENDIF  ;///////////////////////////////////////////////////////////////
+        
+        lda # TYPE_BYTE         ; fix the data-type of
+        sta zp_type, x          ; the item atop the stack
+.ENDIF  ;///////////////////////////////////////////////////////////////////////
+        rts
+
 
 ; drop ( x -- )
 ;===============================================================================
@@ -101,6 +156,7 @@ term_drop:
         
         ; this leaves either words or tokens,
         ; check for the stack-underflow token:
+        ; TODO: token is dropping a word instead of a byte!
         cmp # TOKEN_STK
         beq @err                ; stack is empty, can't drop!
         
@@ -123,8 +179,8 @@ term_drop:
 term_extend:
         ;-----------------------------------------------------------------------
         ; read the data-type without checking stack position;
-        ; error tokens exist at the bytes just outside the data-type stack
-        ; to easily tell us of stack under/overflow without checking the index
+        ; error tokens exist at the bytes just outside the data-type stack to
+        ; easily tell us of stack under/overflow without checking the index
         ;
         lda zp_type, x
         bpl +                   ; handle byte or token...
@@ -132,7 +188,7 @@ term_extend:
         ; top-of-stack is already a word, exit
         rts
 
-+       bne @err
++       bne @err                ; can't extend a token
         ;-----------------------------------------------------------------------
         ; the current item on the stack is a byte, so expand it to a word
 

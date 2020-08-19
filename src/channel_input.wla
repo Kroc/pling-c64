@@ -3,7 +3,7 @@
 ; how you please as long as you retain the copyright notice
 ;
 ; channel_input.wla : a built-in channel for reading the line-input buffer
-;===============================================================================
+;
 ; TODO: should this just be a regular string-channel, rather than custom?
 
 

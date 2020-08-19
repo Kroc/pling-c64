@@ -2,7 +2,6 @@
 ; licenced under a MIT licence; you may reuse and modify this code
 ; how you please as long as you retain the copyright notice
 ;
-;===============================================================================
 .DEF    NUL             0
 .DEF    LO              0
 .DEF    HI              1

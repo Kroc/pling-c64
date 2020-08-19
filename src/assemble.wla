@@ -3,7 +3,7 @@
 ; how you please as long as you retain the copyright notice
 ;
 ; assemble.wla : routines for assembling code into new terms
-;===============================================================================
+;
 
 asm:
 ;===============================================================================
@@ -12,7 +12,6 @@ asm:
 ; in:   A       byte value to write
 ;
 ; out:  A, X, Y (preserved)
-;
 ;-------------------------------------------------------------------------------
         ; write the byte to the current cursor position:
 .IFDEF  CPU_65C02
@@ -53,7 +52,6 @@ asm_jsr:
 ;
 ; out:  X       (preserved)
 ;       A, Y    (clobbered)
-;
 ;-------------------------------------------------------------------------------
         pha                     ; put aside lo-byte, Y is hi-byte
 

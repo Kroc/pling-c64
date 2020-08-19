@@ -3,7 +3,7 @@
 ; how you please as long as you retain the copyright notice
 ;
 ; console.wla : the interactive Pling! shell "UI"
-;===============================================================================
+;
 
 console_init:
 ;===============================================================================

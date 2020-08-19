@@ -23,6 +23,7 @@ sys_console_init:
             .BYTE   NUL
 
 .IFDEF  SYSTEM_C64
+        ;///////////////////////////////////////////////////////////////////////
         ; TODO: install BSOD64 hooks
         jsr print_this
             .BYTE   PET_YELLOW, PET_RETURN
@@ -30,5 +31,5 @@ sys_console_init:
             .BYTE   "    Press RESTORE to break/debug"
             .BYTE   PET_WHITE, PET_RETURN
             .BYTE   NUL
-.ENDIF
+.ENDIF  ;///////////////////////////////////////////////////////////////////////
         rts

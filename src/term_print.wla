@@ -11,13 +11,13 @@
 ; term_print_int:           i --                ".int"
 ; term_print_hex:           i --                ".hex"
 ; term_print_bin:           i --                ".bin"
+; term_printStr:            a --                ".str"
 ; term_print_stack            --                ".stack"
 ;
 
 ; .n ( -- )
 ;===============================================================================
 ; print a newline (CR/LF) character:
-;
 ;-------------------------------------------------------------------------------
         .term   ".n"
 
@@ -33,7 +33,6 @@ term_print_newline:
 ; data-type error occurs if top of stack is not a byte
 ;
 ; in:   byte    ASCII code to print to screen
-;
 ;-------------------------------------------------------------------------------
         .term   "."
 
@@ -51,7 +50,6 @@ term_print:
 ; print the integer atop the stack as a decimal string:
 ;
 ; in:   int     integer (byte or word) to print as decimal
-;
 ;-------------------------------------------------------------------------------
         .term   ".int"
 
@@ -179,7 +177,6 @@ term_print_hex:
 ; print the integer atop the stack as a binary string:
 ;
 ; in:   int     integer (byte or word) to print as binary
-;
 ;-------------------------------------------------------------------------------
         .term   ".bin"
 
@@ -239,7 +236,22 @@ term_print_bin:
 
         asl zp_temp1
         tya
+        rol
         jmp sys_chrout          ; print the 1st digit
+
+
+; .str ( a -- )
+;===============================================================================
+; print the string pointed to by the address atop the stack:
+; the address is consumed
+;-------------------------------------------------------------------------------
+        .term   ".str"
+
+term_print_str:
+        ;-----------------------------------------------------------------------
+        ; pop the address, error if not a word
+        jsr pop_word            ; returns address in A/Y
+        jmp print_str           ; takes address in A/Y and prints!
 
 
 ; .stack ( -- )
@@ -378,6 +390,7 @@ term_print_stack:
         .plx
         rts
 
+        ; deconstruct a word:
         ;-----------------------------------------------------------------------
 @word:  jsr print_this
             .BYTE   " word $"
@@ -410,6 +423,7 @@ term_print_stack:
         inc zp_index
         jmp @item
 
+        ; deconstruct a byte:
         ;-----------------------------------------------------------------------
 @byte:  jsr print_this
             .BYTE   " byte $.."

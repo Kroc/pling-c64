@@ -51,6 +51,10 @@
 ; the *currently active* cell, unlike the C64 which moves the stack index
 ; to an *unused* cell
 ;
+; TODO: investiagte using A+Y registers for 'top of stack', that is,
+;       when we compile `5 +` we could assemble `lda # 5, jsr term_add`
+;       and avoiding having to 'push' to the top of the stack
+;
 ; number of bytes in the data stack: note that this also implies
 ; the same number of bytes for the data-type stack to match
 .DEF    PL_STACK_SIZE   64
@@ -75,27 +79,27 @@
 ; to Pling scripts
 ;
 .MACRO  .lowerStack
-        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         dex
         bpl @\.__\@
         jmp err_stack_overflow
 
 @\.__\@:
-        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM
 
 ; lower the stack twice, using one
 ; error check for efficiency
 ;-------------------------------------------------------------------------------
 .MACRO  .lowerStack2
-        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         dex
         dex
         bpl @\.__\@
         jmp err_stack_overflow
 
 @\.__\@:
-        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM
 
 ; raise the stack:
@@ -105,7 +109,7 @@
 ; to Pling scripts
 ;
 .MACRO  .raiseStack
-        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         inx
         ; note that raising the stack to the empty position is okay,
         ; therefore what we are checking for is raising above empty
@@ -114,13 +118,13 @@
         jmp err_stack_underflow
 
 @\.__\@:
-        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM
 
 ; raise the stack twice, using one error check for efficiency
 ;-------------------------------------------------------------------------------
 .MACRO  .raiseStack2
-        ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         inx
         inx
         ; note that raising the stack to the empty position is okay,
@@ -130,7 +134,7 @@
         jmp err_stack_underflow
 
 @\.__\@:
-        ;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 .ENDM
 
 
@@ -145,7 +149,6 @@ push_byte:
 ; out:  X       stack index, updated
 ;       Y       (preserved)
 ;       A       (clobbered)
-;
 ;-------------------------------------------------------------------------------
         dex                     ; push stack down,
         bmi err_stack_overflow  ; check for overflow
@@ -183,7 +186,6 @@ push_word:
 ;
 ; out:  X       stack index, updated
 ;       A, Y    (clobbered)
-;
 ;-------------------------------------------------------------------------------
         dex                     ; push stack down,
         dex                     ; twice
@@ -203,7 +205,6 @@ set_type_word:
 ;
 ; out:  A       (clobbered)
 ;       X, Y    (preserved)
-;
 ;-------------------------------------------------------------------------------
 .IFDEF  CPU_65C02
         ;///////////////////////////////////////////////////////////////////////
@@ -251,7 +252,6 @@ push_token:
 ;
 ; out:  X       stack index, updated
 ;       A, Y    (clobbered)
-;
 ;-------------------------------------------------------------------------------
         dex                     ; lower the stack
         bmi err_stack_underflow ; if underflow, error
@@ -315,7 +315,6 @@ get_type_byte:
 ;
 ; out:  A       data-type (byte)
 ;       X, Y    (preserved)
-;
 ;-------------------------------------------------------------------------------
         ; read the data-type without checking stack position;
         ; error tokens exist at the bytes just outside the data-type stack
@@ -335,7 +334,6 @@ get_type_word:
 ;
 ; out:  A       data-type (word)
 ;       X, Y    (preserved)
-;
 ;-------------------------------------------------------------------------------
         ; read the data-type without checking stack position:
         ; error tokens exist at the bytes just outside the data-type stack
@@ -389,7 +387,6 @@ peek_byte:
 ;
 ; out:  A       byte value
 ;       X, Y    (preserved)
-;
 ;-------------------------------------------------------------------------------
         ; read the data-type without checking stack position:
         ; error tokens exist at the bytes just outside the data-type stack
@@ -410,7 +407,6 @@ peek_word:
 ;
 ; out:  A       byte value
 ;       X, Y    (preserved)
-;
 ;-------------------------------------------------------------------------------
         lda zp_type, x
         bpl err_type            ; not a word!
@@ -432,7 +428,6 @@ pop_int:
 ;       A       word lo-byte, or single byte
 ;       Y       word hi-byte, or zero if byte
 ;       c       0 for a byte, 1 for a word
-;
 ;-------------------------------------------------------------------------------
         ; get the data-type from the current position in the stack:
         ;
@@ -451,9 +446,9 @@ pop_int:
         beq @byte               ; pop a byte
         bpl err_type            ; it's a token -- handle error
 
-@word:  ; read a word:
+        ; read a word:
         ;-----------------------------------------------------------------------
-        lda zp_stack+LO, x
+@word:  lda zp_stack+LO, x
         ldy zp_stack+HI, x
         
         inx                     ; raise the stack...
@@ -472,13 +467,11 @@ pop_int:
 
 pop_byte:
 ;===============================================================================
-;
 ; in:   X       stack-index
 ;
 ; out:  A       byte value
 ;       X       stack-index, updated
 ;       Y       (preserved)
-;
 ;-------------------------------------------------------------------------------
         ; read the data-type without checking stack position:
         ; error tokens exist at the bytes just outside the data-type stack
@@ -522,7 +515,6 @@ pop_if_token:
 ; out:  Y       token's data-type, zero for no-token
 ;       A       the token's value, zero for no-token
 ;       X       stack-index, updated if token
-;
 ;-------------------------------------------------------------------------------
         ; read the data-type without checking stack position:
         ; error tokens exist at the bytes just outside the data-type stack
@@ -551,11 +543,10 @@ pop_if_token:
 
 pop_token_EOD:
 ;===============================================================================
-; 
-; out:  z       z=1: no EOD token present.
+; out:  z       z=1: no EOD token present
 ;               z=0: EOD was present, and removed
-;       A, Y    (clobbered)
-;
+;       A       the EOD token's value (typically 0)
+;       Y       (clobbered)
 ;-------------------------------------------------------------------------------
         ; check the top item and remove it only if it's a token
         jsr pop_if_token

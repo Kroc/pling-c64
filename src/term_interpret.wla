@@ -38,15 +38,19 @@ term_line_input:
 ;===============================================================================
 ; read source code input and execute:
 ;
-; out:  *       execution of the intepretted code may push any quantity
+; out:  *       execution of the interpretted code may push any quantity
 ;               of data of any type (including none at all) on the stack
+;
+; TODO: do not allow the interpretter to be called when it's already running.
+;       this will make it much easier to work directly off of the bytes in
+;       the input channel rather than having to copy everything(?)
 ;
 ; TODO: this needs to better handle non-executable returns,
 ;       such as strings and numbers
 ;
 ;       term    -> execution token
 ;       integer -> integer on stack
-;       string  -> string-channel execution token? (how to differentiate)
+;       string  -> static string address on stack
 ;
 ; TODO: this should be able to interpret from any input channel,
 ;       such as a string or disk channel
@@ -161,7 +165,6 @@ term_read_term:
 ;
 ; out:  word    execution address of the found term
 ;  or/  EOD     if the term name is not found, an End Of Data token
-;
 ;-------------------------------------------------------------------------------
         .term   "find-term"
 
@@ -266,54 +269,59 @@ term_exec:                                                              ;=6
         ;-----------------------------------------------------------------------
         lda zp_type, x          ; check data-type                       ;+4=10
         bpl @err                ; *MUST* be a word!                     ;+2=12
-        
+
+.IFDEF  CPU_65C02
+        ;///////////////////////////////////////////////////////////////////////
         ; we must raise the stack by
         ; 2 bytes *before* we jump!
         inx                                                             ;+2=14
         inx                                                             ;+2=16
-
-.IFDEF  CPU_65C02
-        ;///////////////////////////////////////////////////////////////////////
         ; do a jump directly from the data stack, with -2
         ; to compensate for having already popped the stack
         jmp [zp_stack-2, x]                                             ;+6=22
 
-.ELSE   ;6502:
-        ;///////////////////////////////////////////////////////////////////////
+        ;6502:
+.ELSE   ;///////////////////////////////////////////////////////////////////////
         ; if there's a faster way to do this, I'm all ears...
         ; (we could manipulate the return stack but RTS takes 6 cycles :/)
         ;
-        ;       lda zp_stack-2, x       ;+4=26
-        ;       pha                     ;+3=29
-        ;       lda zp_stack-1, x       ;+4=33
-        ;       pha                     ;+3=36
-        ;       rts                     ;+6=42
+        ;                                                       ;bytes  ;cycles
+        ;-----------------------------------------------------------------------
+        ;       lda zp_stack, x                                 ;+2=6   ;+4=16
+        ;       pha                                             ;+1=7   ;+3=19
+        ;       inx                                             ;+1=8   ;+2=21
+        ;       lda zp_stack, x                                 ;+2=10   ;+4=25
+        ;       pha                                             ;+1=11  ;+3=28
+        ;       inx                                             ;+1=12  ;+2=30
+        ;       rts                                             ;+1=13  ;+6=36
         ;
-        lda zp_stack-2, x                                               ;+4=26
-        sta zp_addr+LO                                                  ;+3=29
-        lda zp_stack-1, x                                               ;+4=33
-        sta zp_addr+HI                                                  ;+3=36
-        jmp [zp_addr]                                                   ;+5=41
+        lda zp_stack, x                                         ;+2=6   ;+4=16
+        inx                                                     ;+1=7   ;+2=18
+        sta zp_addr+LO                                          ;+2=9   ;+3=21
+        lda zp_stack, x                                         ;+2=11  ;+4=25
+        inx                                                     ;+1=12  ;+2=27
+        sta zp_addr+HI                                          ;+2=14  ;+3=30
+        jmp [zp_addr]                                           ;+3=17  ;+5=35
 
         ; TODO: this requires a lookup table of stack-index to stack-addr
         ;       (not usable with ROM build)
-        ;
-        ;       inx                                                     ;+2=14
-        ;       lda stack_map, x                                        ;+4=18
-        ;       sta @jmp+1                                              ;+4=22
-        ;       inx                                                     ;+2=24
-        ; @jmp: jmp [$0088]                                             ;+5=29
+        ;-----------------------------------------------------------------------
+        ;       inx                                             ;+1=5   ;+2=14
+        ;       lda stack_map, x                                ;+3=8   ;+4=18
+        ;       sta @jmp+1                                      ;+3=11  ;+4=22
+        ;       inx                                             ;+1=12  ;+2=24
+        ; @jmp: jmp [$0088]                                     ;+3=15  ;+5=29
 
         ; TODO: slightly slower version that does not need the lookup tables
         ;       (not usable with ROM build)
-        ;
-        ;       inx                                                     ;+2=14
-        ;       txa                                                     ;+2=16
-        ;       clc                                                     ;+2=18
-        ;       adc # zp_stack                                          ;+2=20
-        ;       sta @jmp+1                                              ;+4=24
-        ;       inx                                                     ;+2=26
-        ; @jmp: jmp [$0088]                                             ;+5=31
+        ;-----------------------------------------------------------------------
+        ;       inx                                             ;+1=5   ;+2=14
+        ;       txa                                             ;+1=6   ;+2=16
+        ;       clc                                             ;+1=7   ;+2=18
+        ;       adc # zp_stack                                  ;+2=9   ;+2=20
+        ;       sta @jmp+1                                      ;+3=12  ;+4=24
+        ;       inx                                             ;+1=13  ;+2=26
+        ; @jmp: jmp [$0088]                                     ;+3=16  ;+5=31
 
 .ENDIF  ;///////////////////////////////////////////////////////////////////////
 
@@ -479,7 +487,6 @@ term_parse_number:
 ; parse-string ( -- i | EOD )
 ;===============================================================================
 ; parses the term-name buffer for a string:
-; if there's not a valid string
 ;
 ; TODO: the string should only be compiled to user-space when compiling a term
 ;       that contains static strings. when interpretting terms, the string
@@ -507,15 +514,22 @@ term_parse_string:
 
         ; copy the string to user-space:
         ;-----------------------------------------------------------------------
+        ; TODO: just call the HERE term, no?
         lda zp_here+LO          ; place the address of the string...
         ldy zp_here+HI
         jsr push_word           ; ...on the stack
         
-        ldy # 0
--       lda pl_term_name, y     ; read byte from the string
+        ; when we copy the string, we need to exclude the wrapping speech-
+        ; marks; we could DECrement the term-length but that costs an extra
+        ; instruction. if we index the term-name buffer from 1 character back
+        ; the term-length will fall short of the last character. we start at
+        ; index 2 to account for that offset AND to skip the first character
+        ;
+        ldy # 2                 ; skip the first speech-mark!
+-       lda pl_term_name-1, y   ; read byte from the string
         jsr asm                 ; write the byte to user-space
-        iny
-        cpy.w pl_term_len
+        iny                     ; move to the next character
+        cpy.w pl_term_len       ; have we reached the end (less one)?
         bne -
 
 +       rts
@@ -598,7 +612,7 @@ term_parse_string:
 ;===============================================================================
 ; the term that defines new terms:
 ;
-; TODO: cannot define a term, when a term is already being defined
+; TODO: cannot define a term, when a term is already being defined?
 ;-------------------------------------------------------------------------------
         .term   ":"
 
@@ -612,6 +626,8 @@ term_define:
 
         ; create term header:
         ;-----------------------------------------------------------------------
+        ; TODO: this will be its own term
+        ;
         ; each term begins with a backlink
         ; -- the address of the previous term:
         
@@ -652,7 +668,7 @@ term_define:
         ;
 @loop:  jsr term_read_term      ; read a term name from the input buffer
         jsr pop_token_EOD       ; any result?
-        beq @done               ; should we error if EOD before ";"?
+        beq @done
         jsr term_find_term      ; try find the name in the terminology
         jsr pop_token_EOD       ; did we find the term?
         bne @int
