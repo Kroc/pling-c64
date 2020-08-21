@@ -3,7 +3,85 @@
 ; how you please as long as you retain the copyright notice
 ;
 ; term_core.wla : stack routines available to Pling scripts
+;===============================================================================
+; label:                    stack:              term-name:
+;-------------------------------------------------------------------------------
+; term_peek:                w -- b              ?
+; term_poke:              b w --                !
+; term_drop:                x --                drop
+; term_extend:              b -- w              extend
 ;
+
+; ? ( w -- b )
+;===============================================================================
+; peeks a byte from the address on the stack, (consuming the address)
+; and pushes the byte value to the stack:
+;
+;-------------------------------------------------------------------------------
+        .term   "?"
+
+term_peek:                                                              ;=6
+        ;-----------------------------------------------------------------------
+        lda zp_type, x          ; check the data-type atop the stack    ;+4=10
+        bpl -                   ; not a word? error                     ;+2=12
+        
+        ; since we're reading a word and writing back a byte, we can just
+        ; move the stack by a byte to cut the word in half. we will need
+        ; to fix the data-type, which is done later
+        ;
+        inx                                                             ;+2=14
+
+.IFDEF  CPU_65C02
+        ;///////////////////////////////////////////////////////////////////////
+        ; we can read directly from the stack on a 65C02:
+        ;
+        lda [zp_stack-1, x]     ; peek via the address on the stack     ;+6=20
+        sta zp_stack, x         ; and store the value on the stack      ;+4=24
+
+        ; set the data-type:
+        ;
+        ; this 65C02 optimisation relies upon `TYPE_BYTE` being zero...
+        ; sanity check this in case of unintended change in the future
+        .IF TYPE_BYTE != 0
+                .PRINT "TYPE_BYTE is not 0!"
+                .FAIL
+        .ENDIF
+        ; use the 65C02's "store zero" instruction to save
+        ; a couple of bytes not having to `lda # 0`
+        stz TYPE_TOP, x                                                 ;+4=28
+
+.ELSE   ;6502:
+        ;///////////////////////////////////////////////////////////////////////
+        .IFDEF  OPTIMIZE_ROM
+                ;///////////////////////////////////////////////////////////////
+                ; for ROM operation, copy the address into zero-page:
+                ;
+                lda zp_stack-1+LO, x    ; read peek-address, lo-byte    ;+4=18
+                sta zp_addr+LO                                          ;+3=21
+                lda zp_stack-1+HI, x    ; read peek-address, hi-byte    ;+4=25
+                sta zp_addr+HI                                          ;+3=28
+                ldy # 0                 ; required for 6502, :/         ;+2=30
+                lda [zp_addr], y        ; read peek value               ;+5=35
+                sta zp_stack, x         ; write peek value              ;+4=39
+
+        .ELSE   ;///////////////////////////////////////////////////////////////
+                ; in RAM, we can rewrite the address of
+                ; the STA instruction that follows:
+                ;
+                lda zp_stack-1, x       ; read peek-address, lo-byte    ;+4=18
+                sta.w @lda+1+LO                                         ;+4=22
+                lda zp_stack-0, x       ; read poke-address, hi-byte    ;+4=26
+                sta.w @lda+1+HI                                         ;+4=30
+@lda:           lda $8888               ; read peek value               ;+4=34
+                sta zp_stack, x         ; write peek value              ;+4=38
+
+        .ENDIF  ;///////////////////////////////////////////////////////////////
+        
+        lda # TYPE_BYTE         ; fix the data-type of
+        sta TYPE_TOP, x         ; the item atop the stack
+.ENDIF  ;///////////////////////////////////////////////////////////////////////
+        rts
+
 
 ; ! ( b w -- )
 ;===============================================================================
@@ -71,100 +149,52 @@ term_poke:                                                              ;=6
 @err:   jmp err_type
 
 
-; ? ( w -- b )
-;===============================================================================
-; peeks a byte from the address on the stack, (consuming the address)
-; and pushes the byte value to the stack:
-;
-;-------------------------------------------------------------------------------
-        .term   "?"
-
-term_peek:                                                              ;=6
-        ;-----------------------------------------------------------------------
-        lda zp_type, x          ; check the data-type atop the stack    ;+4=10
-        bpl -                   ; not a word? error                     ;+2=12
-        
-        ; since we're reading a word and writing back a byte, we can just
-        ; move the stack by a byte to cut the word in half. we will need
-        ; to fix the data-type, which is done later
-        ;
-        inx                                                             ;+2=14
-
-.IFDEF  CPU_65C02
-        ;///////////////////////////////////////////////////////////////////////
-        ; we can read directly from the stack on a 65C02:
-        ;
-        lda [zp_stack-1, x]     ; peek via the address on the stack     ;+6=20
-        sta zp_stack, x         ; and store the value on the stack      ;+4=24
-
-        ; set the data-type:
-        ;
-        ; this 65C02 optimisation relies upon `TYPE_BYTE` being zero...
-        ; sanity check this in case of unintended change in the future
-        .IF TYPE_BYTE != 0
-                .PRINT "TYPE_BYTE is not 0!"
-                .FAIL
-        .ENDIF
-        ; use the 65C02's "store zero" instruction to save
-        ; a couple of bytes not having to `lda # 0`
-        stz zp_type, x                                                  ;+4=28
-
-.ELSE   ;6502:
-        ;///////////////////////////////////////////////////////////////////////
-        .IFDEF  OPTIMIZE_ROM
-                ;///////////////////////////////////////////////////////////////
-                ; for ROM operation, copy the address into zero-page:
-                ;
-                lda zp_stack-1+LO, x    ; read peek-address, lo-byte    ;+4=18
-                sta zp_addr+LO                                          ;+3=21
-                lda zp_stack-1+HI, x    ; read peek-address, hi-byte    ;+4=25
-                sta zp_addr+HI                                          ;+3=28
-                ldy # 0                 ; required for 6502, :/         ;+2=30
-                lda [zp_addr], y        ; read peek value               ;+5=35
-                sta zp_stack, x         ; write peek value              ;+4=39
-
-        .ELSE   ;///////////////////////////////////////////////////////////////
-                ; in RAM, we can rewrite the address of
-                ; the STA instruction that follows:
-                ;
-                lda zp_stack-1, x       ; read peek-address, lo-byte    ;+4=18
-                sta.w @lda+1+LO                                         ;+4=22
-                lda zp_stack-0, x       ; read poke-address, hi-byte    ;+4=26
-                sta.w @lda+1+HI                                         ;+4=30
-@lda:           lda $8888               ; read peek value               ;+4=34
-                sta zp_stack, x         ; write peek value              ;+4=38
-
-        .ENDIF  ;///////////////////////////////////////////////////////////////
-        
-        lda # TYPE_BYTE         ; fix the data-type of
-        sta zp_type, x          ; the item atop the stack
-.ENDIF  ;///////////////////////////////////////////////////////////////////////
-        rts
-
-
 ; drop ( x -- )
 ;===============================================================================
-; forget the top-most item on the stack, raising the stack to the next item
+; forget the top-most item on the stack, raising the stack to the next item:
 ;
 ;-------------------------------------------------------------------------------
         .term   "drop"
 
 term_drop:
         ;-----------------------------------------------------------------------
-        lda zp_type, x          ; get the data-type of the top item
-        beq @byte               ; drop a byte
+        lda TYPE_TOP, x         ; get the data-type of the top item
+        beq @byte               ; drop a byte?
+        bmi @word               ; drop a word?
         
-        ; this leaves either words or tokens,
+        ; this leaves only tokens;
         ; check for the stack-underflow token:
-        ; TODO: token is dropping a word instead of a byte!
         cmp # TOKEN_STK
-        beq @err                ; stack is empty, can't drop!
-        
+        bne @byte               ; not stack-underflow, drop the token
+@err:   jmp err_type            ; stack-underflow! throw error
+
+        ;-----------------------------------------------------------------------
 @word:  inx                     ; drop word
 @byte:  inx                     ; drop byte
         rts
+
+; dupe ( x -- x x )
+;===============================================================================
+; duplicate the item atop the stack:
+;
+;-------------------------------------------------------------------------------
+        .term   "dupe"
+
+term_dupe:
         ;-----------------------------------------------------------------------
-@err:   jmp err_type
+        lda TYPE_TOP, x         ; get the data-type of the top item
+        beq @byte
+        bmi @word
+
+@token: lda STACK_TOP, x
+        jmp push_token
+
+@byte:  lda STACK_TOP, x
+        jmp push_byte
+
+@word:  lda STACK_BYTE1, x
+        ldy STACK_BYTE2, x
+        jmp push_word
 
 
 ; extend ( b -- w )
@@ -182,27 +212,26 @@ term_extend:
         ; error tokens exist at the bytes just outside the data-type stack to
         ; easily tell us of stack under/overflow without checking the index
         ;
-        lda zp_type, x
+        lda TYPE_TOP, x
         bpl +                   ; handle byte or token...
-
-        ; top-of-stack is already a word, exit
-        rts
+        rts                     ; top-of-stack is already a word, exit
 
 +       bne @err                ; can't extend a token
         ;-----------------------------------------------------------------------
         ; the current item on the stack is a byte, so expand it to a word
-
+        ;
+        lda STACK_BYTE1, x      ; read the old byte
         .lowerStack             ; lower the stack by one
-        lda zp_stack+HI, x      ; read the old byte
-        sta zp_stack+LO, x      ; write it to the word lo-byte
+        sta STACK_BYTE1, x      ; write it to the word lo-byte
+
 .IFDEF  CPU_65C02
         ;///////////////////////////////////////////////////////////////////////
-        stz zp_stack+HI, x      ; set word hi-byte to zero
+        stz STACK_BYTE2, x      ; set word hi-byte to zero
 
 .ELSE   ;6502:
         ;///////////////////////////////////////////////////////////////////////
         lda # 0
-        sta zp_stack+HI, x      ; set word hi-byte to zero
+        sta STACK_BYTE2, x      ; set word hi-byte to zero
 
 .ENDIF  ;///////////////////////////////////////////////////////////////////////
         ; change the data-types for the top two bytes to word-lo/hi

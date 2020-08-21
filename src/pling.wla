@@ -76,9 +76,9 @@ pling_init:
         ;-----------------------------------------------------------------------
         ldy # PL_STACK_SIZE-1
 -       lda # $00               ; set stack data to $00
-        sta zp_stack, y
+        sta STACK_TOP, y
         lda # TOKEN_EOD         ; set data-type to EOD
-        sta zp_type, y
+        sta TYPE_TOP, y
         dey
         bpl -
         

@@ -6,17 +6,17 @@
 ;===============================================================================
 ; label:                    stack:              term-name:
 ;-------------------------------------------------------------------------------
-; term_0                      -- b              "0"
-; term_00                     -- w              "00"
-; term_add                i i -- i              "+"
-; term_add1                 i -- i              "+1"
-; term_sub                i i -- i              "-"
-; term_sub1                 i -- i              "-1"
-; term_neg                  i -- i              "neg"
-; term_not                  i -- i              "not"
-; term_and                i i -- i              "and"
-; term_or                 i i -- i              "or"
-; term_xor                i i -- i              "xor"
+; term_0:                     -- b              0
+; term_00:                    -- w              00
+; term_add:               i i -- i              +
+; term_add1:                i -- i              +1
+; term_sub:               i i -- i              -
+; term_sub1:                i -- i              -1
+; term_neg:                 i -- i              neg
+; term_not:                 i -- i              not
+; term_and:               i i -- i              and
+; term_or:                i i -- i              or
+; term_xor:               i i -- i              xor
 ;
 
 ; 0 ( -- b )

@@ -14,10 +14,7 @@
 
 term_disk_chain:
         ;-----------------------------------------------------------------------
-        ; put the string address aside
-        jsr pop_word
-        sta zp_addr+LO
-        sty zp_addr+HI
+        jsr pop_addr            ; put the string address aside
         jsr pop_byte            ; get the string-length
         sta zp_temp             ; (put aside)
 

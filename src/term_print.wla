@@ -6,13 +6,13 @@
 ;===============================================================================
 ; label:                    stack:              term-name:
 ;-------------------------------------------------------------------------------
-; term_print_newline:         --                ".n"
-; term_print:               b --                "."
-; term_print_int:           i --                ".int"
-; term_print_hex:           i --                ".hex"
-; term_print_bin:           i --                ".bin"
-; term_printStr:            a --                ".str"
-; term_print_stack            --                ".stack"
+; term_print_newline:         --                .n
+; term_print:               b --                .
+; term_print_int:           i --                .int
+; term_print_hex:           i --                .hex
+; term_print_bin:           i --                .bin
+; term_printStr:            a --                .str
+; term_print_stack            --                .stack
 ;
 
 ; .n ( -- )
@@ -50,6 +50,8 @@ term_print:
 ; print the integer atop the stack as a decimal string:
 ;
 ; in:   int     integer (byte or word) to print as decimal
+;
+; TODO: use the top of the stack as the working space?
 ;-------------------------------------------------------------------------------
         .term   ".int"
 
@@ -58,6 +60,7 @@ term_print_int:
         ; pop the integer (byte or word), checking for underflow
         ; TODO: optimised routine for printing a byte
         jsr pop_int
+        bcc @byte
 
 @word:  sta zp_word+LO
         sty zp_word+HI
@@ -102,6 +105,44 @@ term_print_int:
 
         rts
 
+        ;-----------------------------------------------------------------------
+@byte:  ; this routine for converting a byte to decimal digits is adapted from:
+        ; <https://codebase64.org/doku.php?id=base:tiny_.a_to_ascii_routine>
+        ;
+        ; hundreds:
+        ;-----------------------------------------------------------------------
+        sec
+        ldy # '0'-1             ; increment using an ASCII digit!
+-       iny                     ; increment hundreds-digit,
+        sbc # 100               ; for each 100 decimal subtracted
+        bcs -                   ; keep going?
+        pha                     ; (put aside the remainder)
+
+        tya                     ; get hundreds-digit:
+        cmp # '0'               ; is it a zero?
+        beq +                   ; if yes, don't print leading zeroes
+        jsr sys_chrout          ; print the digit
++       clc                     ; (carry state unknown)
+
+        ; tens & ones:
+        ;-----------------------------------------------------------------------
+        pla                     ; retrieve the working remainder
+        ldy # '9'+1             ; decrement using an ASCII digit!
+-       dey                     ; decrement the tens-digit,
+        adc # 10                ; for each 10 decimal subtracted
+        bmi -                   ; keep going?
+
+        adc # '0'-1             ; make it an ASCII numeral
+        pha                     ; (put aside the remainder!)
+
+        tya                     ; get tens-digit:
+        cmp # '0'               ; is the digit a zero?
+        beq +                   ; if yes, don't print leading zeroes
+        jsr sys_chrout          ; print the digit
+
++       pla                     ; retrieve the 1s-digit
+        jmp sys_chrout          ; print the digit
+
 
 ; .hex ( i -- )
 ;===============================================================================
@@ -119,12 +160,16 @@ term_print_hex:
         bcc @byte
 
         ;-----------------------------------------------------------------------
-@word:  sta zp_temp2            ; put aside lo-byte
+        ; TODO: this is clumsy, and we could do much better
+        ;       by manually reading the stack
+        ;
+@word:  pha                     ; put aside lo-byte
+        tya                     ; start with hi-byte first
         jsr @byte               ; print hi-byte
-        ldy zp_temp2            ; get lo-byte and print
+        pla                     ; get lo-byte and print
 
         ;-----------------------------------------------------------------------
-@byte:  tya
+@byte:  tay                     ; backup original value
 
         ; move top nybble to bottom nybble
         lsr
@@ -133,7 +178,7 @@ term_print_hex:
         lsr
         jsr @conv
 
-        tya
+        tya                     ; restore original value
         and # %00001111         ; mask out original bottom nybble
 
 @conv:  ;-----------------------------------------------------------------------
@@ -199,11 +244,11 @@ term_print_bin:
         ;
 @byte:  ldy # SYS_0 >> 1        ; this is our base constant for "0"
         
-        asl zp_temp1            ; pop a bit off the source number
-        tya                     ; retrieve our "0" constant
-        rol                     ; add the bit to it
-        jsr sys_chrout          ; print the 8th digit
-        
+        asl zp_temp1            ; pop a bit off the source number       ;+5
+        tya                     ; retrieve our "0" constant             ;+2
+        rol                     ; add the bit to it                     ;+2
+        jsr sys_chrout          ; print the 8th digit                   ;+6
+
         asl zp_temp1
         tya
         rol
@@ -272,9 +317,8 @@ term_print_str:
 
 term_print_stack:
         ;-----------------------------------------------------------------------
-        ; is the stack empty?
-        cpx # PL_STACK_SIZE
-        bcc +
+        cpx # PL_STACK_SIZE     ; is the stack empty?
+        bcc +                   ; not empty, skip ahead
 
         ; print the "empty" message:
         ;-----------------------------------------------------------------------
@@ -311,58 +355,22 @@ term_print_stack:
         cmp # TOKEN_STK         ; is it the bottom of the stack?
         beq @done               ; yes? finish printing
         
+        ; print the item number:
+        ;
         pha                     ; put aside the data type;
         lda zp_index            ; begin printing the line-item
+        cmp # 10
+        bcs +
         
-        ; print the item number:
-        ;-----------------------------------------------------------------------
-        ; this routine for converting a byte to decimal digits is adapted from:
-        ; <https://codebase64.org/doku.php?id=base:tiny_.a_to_ascii_routine>
-        ;
-        ; we happen to know that this cannot be in the hundreds, at least on
-        ; the 6502, as Pling's stack is not > 99 bytes; the data-type stack
-        ; doubles the space required and there's only 256 bytes in zero-page!
-        ;
-        ; hundreds:
-        ;-----------------------------------------------------------------------
-        sec
-        ldy # '0'-1             ; increment using an ASCII digit!
--       iny                     ; increment hundreds-digit,
-        sbc # 100               ; for each 100 decimal subtracted
-        bcs -                   ; keep going?
-        ;;pha                     ; (put aside the remainder)
+        lda # SYS_SPC
+        jsr sys_chrout
+        lda zp_index
 
-        ;;tya                     ; get hundreds-digit:
-        ;;cmp # '0'               ; is it a zero?
-        ;;bne +                   ; if not, print the digit as-is
-        ;;lda # PET_SPC           ; (print a space instead of a leading "0")
-+       ;;jsr sys_chrout          ; print the digit
-        ;;clc                     ; (carry state unknown)
++       jsr term_print_int@byte
 
-        ; tens & ones:
-        ;-----------------------------------------------------------------------
-        ;;pla                     ; retrieve the working remainder
-        ldy # '9'+1             ; decrement using an ASCII digit!
--       dey                     ; decrement the tens-digit,
-        adc # 10                ; for each 10 decimal subtracted
-        bmi -                   ; keep going?
-
-        adc # '0'-1             ; make it an ASCII numeral
-        pha                     ; (put aside the remainder!)
-
-        tya                     ; get tens-digit:
-        cmp # '0'               ; is the digit a zero?
-        bne +                   ; if not, print the digit as-is
-        lda # ' '               ; (print a space instead of a leading "0")
-+       jsr print_asc           ; print the digit
-        clc                     ; (carry state unknown)
-
-        pla                     ; retrieve the 1s-digit
         tay
-        jsr print_asc           ; print the digit
-
         cpy # '5'
-        bne +
+        bcc +
         ldy # '4'
 +       lda @ord1-'0', y
         jsr print_asc
@@ -381,11 +389,8 @@ term_print_stack:
         ;
         ; TODO: print token type & value
 @token: jsr print_this
-            .BYTE   " tokn "
+            .BYTE   " tokn ", SYS_RETURN
             .BYTE   NUL
-        
-        lda # SYS_RETURN
-        jsr sys_chrout
         
         .plx
         rts
@@ -444,8 +449,7 @@ term_print_stack:
         jsr sys_chrout
 
         lda zp_stack+0, x
-        ldy # 0
-        jsr term_print_int@word
+        jsr term_print_int@byte
 
         lda # SYS_RETURN
         jsr sys_chrout

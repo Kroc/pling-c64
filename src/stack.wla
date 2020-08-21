@@ -44,7 +44,7 @@
 ;     +--------------------------------------+
 ;     |                              $34 $12 | < little-Endian words on stack
 ;     +--------------------------------------+
-;     ^ bottom of stack         top of stack ^  
+;                          stack top ^       ^ stack bottom  
 ;
 ; Pling's stack index is pre-inc/decrement, and not post-inc/decrement like
 ; the C64's hardware stack. this means that Pling's stack index points to
@@ -71,6 +71,17 @@
         zp_type_ovr     BYTE
 .ENDS
 
+.DEF    STACK_TOP       zp_stack        ; the top byte of the stack
+.DEF    STACK_BYTE1     zp_stack        ; the 1st byte on the stack
+.DEF    STACK_BYTE2     zp_stack+1      ; the 2nd byte on the stack
+.DEF    STACK_BYTE3     zp_stack+2      ; the 3rd byte on the stack
+.DEF    STACK_BYTE4     zp_stack+3      ; the 4th byte on the stack
+
+.DEF    TYPE_TOP        zp_type         ; the top byte of the type-stack
+.DEF    TYPE_BYTE1      zp_type         ; the 1st byte on the type-stack
+.DEF    TYPE_BYTE2      zp_type+1       ; the 2nd byte on the type-stack
+.DEF    TYPE_BYTE3      zp_type+2       ; the 3rd byte on the type-stack
+.DEF    TYPE_BYTE4      zp_type+3       ; the 4th byte on the type-stack
 
 ; lower the stack:
 ;===============================================================================
@@ -152,7 +163,7 @@ push_byte:
 ;-------------------------------------------------------------------------------
         dex                     ; push stack down,
         bmi err_stack_overflow  ; check for overflow
-        sta zp_stack, x         ; set the byte value
+        sta STACK_TOP, x        ; set the byte value
 
         ; set the data-type:
 .IFDEF  CPU_65C02
@@ -165,12 +176,12 @@ push_byte:
         .ENDIF
         ; use the 65C02's "store zero" instruction to save
         ; a couple of bytes not having to `lda # 0`
-        stz zp_type, x
+        stz TYPE_TOP, x
 
 .ELSE   ;6502:
         ;///////////////////////////////////////////////////////////////////////
         lda # TYPE_BYTE
-        sta zp_type, x
+        sta TYPE_TOP, x
 .ENDIF  ;///////////////////////////////////////////////////////////////////////
         rts
 
@@ -193,13 +204,14 @@ push_word:
 
         ; write the lo-byte first,
         ; at the new top-most position
-        sta zp_stack+LO, x
+        sta STACK_BYTE1, x
         ; write the hi-byte underneath that
-        sty zp_stack+HI, x
+        sty STACK_BYTE2, x
         ; note the fall-through to the next routine...
+        ;
 
 set_type_word:
-;-------------------------------------------------------------------------------
+;===============================================================================
 ; sets the data-type for the top two bytes on the stack to a word.
 ; this is an internal tail-call, no validation is done at all
 ;
@@ -216,16 +228,16 @@ set_type_word:
         .ENDIF
 
         lda # TYPE_WORD_LO
-        sta zp_type+LO, x
+        sta TYPE_BYTE1, x
         inc                     ; saves 1-byte
-        sta zp_type+HI, x
+        sta TYPE_BYTE2, x
 
 .ELSE   ;6502:
         ;///////////////////////////////////////////////////////////////////////
         lda # TYPE_WORD_LO
-        sta zp_type+LO, x
+        sta TYPE_BYTE1, x
         lda # TYPE_WORD_HI
-        sta zp_type+HI, x
+        sta TYPE_BYTE2, x
 .ENDIF  ;///////////////////////////////////////////////////////////////////////
         rts
 
@@ -257,8 +269,8 @@ push_token:
         bmi err_stack_underflow ; if underflow, error
 
         ; define the token!
-        sta zp_stack, x
-        sty zp_type, x
+        sta STACK_TOP, x
+        sty TYPE_TOP, x
         rts
 
 ; a stack over/under-flow error:
@@ -320,7 +332,7 @@ get_type_byte:
         ; error tokens exist at the bytes just outside the data-type stack
         ; to easily tell us of stack under/overflow without checking the index
         ;
-        lda zp_type, x
+        lda TYPE_TOP, x
         bne err_type            ; error if not a byte
         rts                     ; is a byte, return
 
@@ -339,7 +351,7 @@ get_type_word:
         ; error tokens exist at the bytes just outside the data-type stack
         ; to easily indicate stack under/overflow without checking the index
         ;
-        lda zp_type, x
+        lda TYPE_TOP, x
         bpl err_type            ; not a word?
         rts                     ; is a word, return
 
@@ -392,27 +404,27 @@ peek_byte:
         ; error tokens exist at the bytes just outside the data-type stack
         ; to easily indicate stack under/overflow without checking the index
         ;
-        lda zp_type, x          ; read data-type for current stack position
+        lda TYPE_TOP, x         ; read data-type for current stack position
         bne err_type            ; any non-byte data-type is an error (this
         ;                         includes the under/overflow tokens!)
-        lda zp_stack, x         ; all valid, get the byte
+        lda STACK_TOP, x        ; all valid, get the byte
         rts
 
 
 peek_word:
 ;===============================================================================
-; reads the word value atop the stack, checking underflow and data-type
+; reads the word value atop the stack, checking underflow and data-type:
 ;
 ; in:   X       stack index
 ;
 ; out:  A       byte value
 ;       X, Y    (preserved)
 ;-------------------------------------------------------------------------------
-        lda zp_type, x
+        lda TYPE_TOP, x
         bpl err_type            ; not a word!
 
-        lda zp_stack+LO, x
-        ldy zp_stack+HI, x
+        lda STACK_BYTE1, x
+        ldy STACK_BYTE2, x
 
         rts
 
@@ -428,6 +440,8 @@ pop_int:
 ;       A       word lo-byte, or single byte
 ;       Y       word hi-byte, or zero if byte
 ;       c       0 for a byte, 1 for a word
+;
+; TODO: could we use a CMP or something to do away with the manual SEC/CLC?
 ;-------------------------------------------------------------------------------
         ; get the data-type from the current position in the stack:
         ;
@@ -436,20 +450,20 @@ pop_int:
         ; time for stack under/over-flow -- the under/over-flowed positions
         ; in the stack already contain a special token for this purpose
         ;
-        lda zp_type, x
+        lda TYPE_TOP, x
         
         ; we want bytes to be the fastest, so even though the branch-taken
         ; comparison takes an extra cycle, it is faster than going through
         ; the additional comparisons that follow, i.e. 3 cycles for one BEQ,
-        ; is faster than 4 cycles for skipping BEQ+BPL
+        ; is faster than 4 cycles for running through two CMPs
         ; 
         beq @byte               ; pop a byte
         bpl err_type            ; it's a token -- handle error
 
         ; read a word:
         ;-----------------------------------------------------------------------
-@word:  lda zp_stack+LO, x
-        ldy zp_stack+HI, x
+@word:  lda STACK_BYTE1, x
+        ldy STACK_BYTE2, x
         
         inx                     ; raise the stack...
         inx                     ; ...twice
@@ -458,7 +472,7 @@ pop_int:
 
         ; read a byte:
         ;-----------------------------------------------------------------------
-@byte:  lda zp_stack, x         ; read the byte atop the stack
+@byte:  lda STACK_TOP, x        ; read the byte atop the stack
         ldy # 0                 ; set Y to 0 to form a word
         inx                     ; raise the stack level
         clc                     ; return c=0 for byte
@@ -477,10 +491,10 @@ pop_byte:
         ; error tokens exist at the bytes just outside the data-type stack
         ; to easily indicate stack under/overflow without checking the index
         ;
-        lda zp_type, x
+        lda TYPE_TOP, x
         bne err_type            ; any non-byte type is an error!
 
-        lda zp_stack, x         ; read the byte
+        lda STACK_TOP, x        ; read the byte
         inx                     ; raise the stack
         rts
 
@@ -493,15 +507,33 @@ pop_word:
         ; error tokens exist at the bytes just outside the data-type stack
         ; to easily indicate stack under/overflow without checking the index
         ;
-        lda zp_type, x
+        lda TYPE_TOP, x
         bpl err_type            ; any non-word type is an error!
 
-        lda zp_stack+LO, x      ; word lo-byte
-        ldy zp_stack+HI, x      ; word hi-byte
+        lda STACK_BYTE1, x      ; word lo-byte
+        ldy STACK_BYTE2, x      ; word hi-byte
         
         ; raise the stack twice
         inx
         inx
+        rts
+
+
+pop_addr:
+;===============================================================================
+; pop the top item on the stack, only if it's a word, and load it
+; into the address pointer in zero-page (for convenience)
+;
+; in:   X       stack index
+;
+; out:  A       address, lo-byte (also copied to `zp_addr` lo-byte)
+;       Y       address, hi-byte (also copied to `zp_addr` hi-byte)
+;-------------------------------------------------------------------------------
+        ; TODO: if an error occurs in here, we'll need to clear
+        ;       up the stack rather than returning here, no?
+        jsr pop_word
+        sta zp_addr+LO
+        sty zp_addr+HI
         rts
 
 
@@ -520,7 +552,7 @@ pop_if_token:
         ; error tokens exist at the bytes just outside the data-type stack
         ; to easily indicate stack under/overflow without checking the index
         ;
-        ldy zp_type, x
+        ldy TYPE_TOP, x
         ; is it a token-type?
         beq @skip               ; it's a byte, ignore
         bmi @skip               ; it's a word, ignore
@@ -531,7 +563,7 @@ pop_if_token:
         ; when you have eliminated the impossible,
         ; whatever remains, however improbable,
         ; must be a token
-        lda zp_stack, x         ; read the token's value
+        lda STACK_TOP, x        ; read the token's value
         inx                     ; raise the stack level
         rts
 

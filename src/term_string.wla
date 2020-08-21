@@ -6,8 +6,9 @@
 ;===============================================================================
 ; label:                    stack:              term-name:
 ;-------------------------------------------------------------------------------
-; term_asc2lower:           b -- b              "asc2lower"
-; term_asc2upper:           b -- b              "asc2upper"
+; term_asc2lower:           b -- b              asc2lower
+; term_asc2upper:           b -- b              asc2upper
+; str-len:                  a -- b              str-len
 ;
 
 ; asc2lower ( b -- b )
@@ -28,7 +29,7 @@ term_asc2lower:
         ; update the value already on the stack:
         ; we've already error-checked with the peek,
         ; so we don't need to use a routine for it
-        sta zp_stack, x
+        sta STACK_TOP, x
         rts
 
 
@@ -50,5 +51,30 @@ term_asc2upper:
         ; update the value already on the stack:
         ; we've already error-checked with the peek,
         ; so we don't need to use a routine for it
-        sta zp_stack, x
+        sta STACK_TOP, x
         rts
+
+
+; str-len ( a -- b )
+;===============================================================================
+; get the length of a string:
+; the address of the string is consumed and the length is returned
+;
+;-------------------------------------------------------------------------------
+        .term   "str-len"
+
+term_str_len:
+        ;-----------------------------------------------------------------------
+        jsr pop_addr            ; pull the string address from the stack
+
+        ; count the non-null bytes:
+        ;
+        ; if there's a way to do this faster,
+        ; illegal opcodes included, please let me know
+        ldy # 0
+-       lda [zp_addr], y                                                ;+5=5
+        bne +                                                           ;+2=7
+        iny                                                             ;+2=9
+        bne -                                                           ;+3=12
+
++       rts
